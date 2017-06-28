@@ -19,6 +19,7 @@ where: \n\
 2. [genotype_data] is a file that has genotype data \n\
 3. [out_prefix] is what prefix will our output filename look like? \n\
 4. [work_dir] is where we want to output our files? \n\
+5. [extraction] is where our extraction_SNPs.pl script is located \n\
 " >&2
 exit 1
 }
