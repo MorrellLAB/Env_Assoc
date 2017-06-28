@@ -12,15 +12,15 @@ module load R/3.4.0
 
 #   User provided paths
 #   Genotype data frame that is sorted by SNP name
-GENO=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/Chr2_sorted_EXISTS.txt
+GENO=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/Chr1_sorted_EXISTS.txt
 #   SNP_BAC.txt file that has two columns called "Query_SNP" and "PhysPos"
-PHYS_POS=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/SNP_BAC_Chr2_filtered.txt
+PHYS_POS=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/SNP_BAC_Chr1_filtered.txt
 #   Heatmap plot name
-PLOT_NAME="Chr 2 All Landrace"
+PLOT_NAME="Chr 1 All Landrace"
 #   Output file prefix
-PREFIX=Chr2
+PREFIX=Chr1
 #   Where do our output files go?
-OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/Chr2_All
+OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/Chr1_All
 #   Valid options are: include or exclude
 INCLUDE_SNP_NAME=exclude
 
