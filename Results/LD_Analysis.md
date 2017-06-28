@@ -83,7 +83,9 @@ VCF_To_Htable-TK.py env_assoc_sig_snps_NAM_fixedName.txt > env_assoc_sig_snps_NA
 
 The total number of samples is: **180**
 
-The total number of loci after running the `VCF_To_Htable-TK.py` script is: **4,535**
+The total number of loci after running the `VCF_To_Htable-TK.py` script filtering by 5% MAF is: **4,535**
+
+The total number of loci after running the `VCF_To_Htable-TK.py` script filtering by 1.5% MAF is: **9,840**
 
 #### Step 4: Transpose data frame
 
@@ -109,7 +111,7 @@ for i in $(seq 1 7); do printf 'Query_SNP\tPhysPos\tChr\n' > SNP_BAC_env_assoc-C
 #   This does not include headers
 #   Output file columns are in following order
 #       Chr, Physical Position, Marker ID
-(grep -v "##" WBDC_July2016_production_PTP.vcf | awk '{ print $3 "\t" $2 "\t" $1 }' | tail -n +2 | sort -k2n,2) > tmp_snp_bac_all.txt
+awk '{ print $3 "\t" $2 "\t" $1 }' env_assoc_sig_snps_NAM_fixedName.txt | tail -n +2 | sort -k2n,2 > ~/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/tmp_snp_bac_all_chr.txt
 #   Then grep for each chromosome and append to SNP_BAC_env_assoc-Chr$i.txt
 ```
 
