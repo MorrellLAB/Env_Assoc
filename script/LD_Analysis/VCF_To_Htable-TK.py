@@ -11,7 +11,7 @@
 import sys
 #   If the "minor genotype frequency" falls below this threshhold, then we
 #   omit the site.
-MAFThreshhold = 0.05
+MAFThreshhold = 0.015
 
 #   A function to calculate the minor allele frequency
 def MAF(x):
