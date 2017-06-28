@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+#PBS -l mem=22gb,nodes=1:ppn=16,walltime=24:00:00
+#PBS -m abe
+#PBS -M liux1299@umn.edu
+#PBS -q lab
+
+set -e
+set -o pipefail
+
+module load R/3.4.0
+
+#   User provided paths
+#   Genotype data frame that is sorted by SNP name
+GENO=/home/morrellp/liux1299/Shared/Projects/WBDC_inversions/LDheatmap/WBDC_GBS/data/Chr2_sorted_EXISTS.txt
+#   SNP_BAC.txt file that has two columns called "Query_SNP" and "PhysPos"
+PHYS_POS=/home/morrellp/liux1299/Shared/Projects/WBDC_inversions/LDheatmap/WBDC_GBS/data/SNP_BAC_Chr2_filtered.txt
+#   Heatmap plot name
+PLOT_NAME="Chr 2 All WBDC GBS Data"
+#   Output file prefix
+PREFIX=Chr2
+#   Where do our output files go?
+OUT_DIR=/home/morrellp/liux1299/Shared/Projects/WBDC_inversions/LDheatmap/WBDC_GBS/results/Chr2_All
+#   Valid options are: include or exclude
+INCLUDE_SNP_NAME=exclude
+
+/home/morrellp/liux1299/GitHub/Barley_Inversions/analyses/LD_Analysis/LDheatmap_GBS.R "${GENO}" "${PHYS_POS}" "${PLOT_NAME}" "${PREFIX}" "${OUT_DIR}" "${INCLUDE_SNP_NAME}"
