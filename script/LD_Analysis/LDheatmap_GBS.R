@@ -155,7 +155,7 @@ outFile <- function(outName, directory, heatmap, LDcalc) {
     #   Output file naming
     outputName <- paste("HM", LDcalc, sep = "_")
     #   Name output .svg file
-    name <- paste0(outName, "_", outputName, ".txt")
+    name <- paste0(directory, "/", outName, "_", outputName, ".txt")
     heatmap.df <- as.data.frame(x = heatmap$LDmatrix, row.names = NULL)
     write.table(x = heatmap.df,
                 file = name,
