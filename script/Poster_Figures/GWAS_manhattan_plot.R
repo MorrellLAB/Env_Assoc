@@ -10,6 +10,22 @@ readCsv <- function(filename) {
     return(data.file)
 }
 
+#   Plot function
+plot.manhattan <- function(x.val, y.val, color.pheno, p.sym) {
+    p <- plot(
+        x = x.val,
+        y = y.val,
+        col = color.pheno,
+        xlim = c(0, 4569031868),
+        ylim = c(0, 12),
+        pch = p.sym,
+        cex = 1.5,
+        xlab = "Chromosome",
+        ylab = expression(-log[10](italic(p))),
+        xaxt = "n"
+    )
+}
+
 #   Set path to file
 gwas.filepath <- "/Users/chaochih/Dropbox/Landrace Environmental Assocation/Analyses/GWAS-GAPIT/compiled.5e_4.0.01.v2_physPos.csv"
 gwas.data <- readCsv(filename = gwas.filepath)
@@ -50,6 +66,8 @@ chr5.whole <- chr5H_part1 + chr5H_part2
 chr6.whole <- chr6H_part1 + chr6H_part2
 chr7.whole <- chr7H_part1 + chr7H_part2
 #   Define ticks
+#   Row 1 is the scaled position of the center of the chromosome
+#   Row 2 is the scaled position of the end of the chromosome
 chr1.t <- c(chr1.whole/2, chr1.whole)
 chr2.t <- c(chr2.whole/2 + chr1.whole, chr1.whole + chr2.whole)
 chr3.t <- c(chr3.whole/2 + chr1.whole + chr2.whole, chr1.whole + chr2.whole + chr3.whole)
@@ -58,15 +76,7 @@ chr5.t <- c(chr5.whole/2 + chr1.whole + chr2.whole + chr3.whole + chr4.whole, ch
 chr6.t <- c(chr6.whole/2 + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole, chr6.whole + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole)
 chr7.t <- c(chr7.whole/2 + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole + chr6.whole, chr7.whole + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole + chr6.whole)
 ticks <- as.vector(cbind(chr1.t, chr2.t, chr3.t, chr4.t, chr5.t, chr6.t, chr7.t))
-#   Define labels
-chr1.l <- c(chr1.whole/2, chr1.whole)
-chr2.l <- c(chr2.whole/2 + chr1.whole, chr1.whole + chr2.whole)
-chr3.l <- c(chr3.whole/2 + chr1.whole + chr2.whole, chr1.whole + chr2.whole + chr3.whole)
-chr4.l <- c(chr4.whole/2 + chr1.whole + chr2.whole + chr3.whole, chr4.whole + chr1.whole + chr2.whole + chr3.whole)
-chr5.l <- c(chr5.whole/2 + chr1.whole + chr2.whole + chr3.whole + chr4.whole, chr5.whole + chr1.whole + chr2.whole + chr3.whole + chr4.whole)
-chr6.t <- c(chr6.whole/2 + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole, chr6.whole + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole)
-chr7.t <- c(chr7.whole/2 + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole + chr6.whole, chr7.whole + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole + chr6.whole)
-ticks <- cbind(chr1.t, chr2.t, chr3.t, chr4.t, chr5.t, chr6.t, chr7.t)
+
 #   Subset chromosomes
 gwas.df.chr1 <- subset(gwas.df, subset = gwas.df$CHR == 1)
 gwas.df.chr2 <- subset(gwas.df, subset = gwas.df$CHR == 2)
@@ -101,22 +111,8 @@ c5.inv2.start <- 598975647 + chr1.whole + chr2.whole + chr3.whole + chr4.whole
 c5.inv2.end <- 609073831 + chr1.whole + chr2.whole + chr3.whole + chr4.whole
 c2.inv.start <- 267303750 + chr1.whole
 c2.inv.end <- 508786535 + chr1.whole
-#   Plot function
-plot.manhattan <- function(x.val, y.val, color.pheno, p.sym) {
-    p <- plot(
-        x = x.val,
-        y = y.val,
-        col = color.pheno,
-        xlim = c(0, 4569031868),
-        ylim = c(0, 12),
-        pch = p.sym,
-        cex = 1.5,
-        xlab = "Chromosome",
-        ylab = expression(-log[10](italic(p))),
-        xaxt = "n"
-    )
-}
 
+#   Generate Plots
 plot.manhattan(x.val = d.all$scaled.BP[d.all$PHENO == "Latitude"], y.val = -log10(d.all$P[d.all$PHENO == "Latitude"]), color.pheno = "orange", p.sym = 20)
 par(new = TRUE)
 plot.manhattan(x.val = d.all$scaled.BP[d.all$PHENO == "Longitude"], y.val = -log10(d.all$P[d.all$PHENO == "Longitude"]), color.pheno = "orange", p.sym = 20)
