@@ -190,3 +190,33 @@ abline(v = c5.inv2.start, col = "red", lty = 3)
 abline(v = c5.inv2.end, col = "red", lty = 3)
 abline(v = c2.inv.start, col = "blue", lty = 3)
 abline(v = c2.inv.end, col = "blue", lty = 3)
+#   11_20361 chr 4H AFB2
+arrows(x0 = l.dfs.wrvshighLat80$scaled.BP[l.dfs.wrvshighLat80$SNP == "11_20361"], 
+       y1 = l.dfs.wrvshighLat80$FST[l.dfs.wrvshighLat80$SNP == "11_20361"],
+       y0 = l.dfs.wrvshighLat80$FST[l.dfs.wrvshighLat80$SNP == "11_20361"] + 0.075,
+       length = 0.1, lwd = 2
+)
+#   11_10496 chr 6H AOC
+arrows(x0 = e.dfs.1000vsAll$scaled.BP[e.dfs.1000vsAll$SNP == "11_10496"], 
+       y1 = e.dfs.1000vsAll$FST[e.dfs.1000vsAll$SNP == "11_10496"],
+       y0 = e.dfs.1000vsAll$FST[e.dfs.1000vsAll$SNP == "11_10496"] - 0.075,
+       length = 0.1, lwd = 2
+)
+#   12_30848 chr 5H CBF3
+arrows(x0 = l.dfs.topvsBotLat$scaled.BP[l.dfs.topvsBotLat$SNP == "12_30848"], 
+       y1 = l.dfs.topvsBotLat$FST[l.dfs.topvsBotLat$SNP == "12_30848"],
+       y0 = l.dfs.topvsBotLat$FST[l.dfs.topvsBotLat$SNP == "12_30848"] + 0.075,
+       length = 0.1, lwd = 2
+)
+#   12_20187 chr 1H PEAMT
+arrows(x0 = e.dfs.5000vs2500$scaled.BP[e.dfs.5000vs2500$SNP == "12_20187"], 
+       y1 = e.dfs.5000vs2500$FST[e.dfs.5000vs2500$SNP == "12_20187"],
+       y0 = e.dfs.5000vs2500$FST[e.dfs.5000vs2500$SNP == "12_20187"] - 0.075,
+       length = 0.1, lwd = 2
+)
+#   SCRI_RS_179411 chr 5H SPP
+arrows(x0 = l.dfs.80samp_10iter$scaled.BP[l.dfs.80samp_10iter$SNP == "SCRI_RS_179411"], 
+       y1 = l.dfs.80samp_10iter$FST[l.dfs.80samp_10iter$SNP == "SCRI_RS_179411"],
+       y0 = l.dfs.80samp_10iter$FST[l.dfs.80samp_10iter$SNP == "SCRI_RS_179411"] - 0.075,
+       length = 0.1, lwd = 2
+)
