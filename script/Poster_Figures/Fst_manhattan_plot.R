@@ -155,13 +155,13 @@ c5.inv2.start <- 598975647 + chr1.whole + chr2.whole + chr3.whole + chr4.whole
 c5.inv2.end <- 609073831 + chr1.whole + chr2.whole + chr3.whole + chr4.whole
 
 #   Generate Plots
-plot.manhattan(x.val = l.dfs.80samp_10iter$scaled.BP, y.val = l.dfs.80samp_10iter$FST, color.cat = "#FD93B4", p.sym = 2)
+plot.manhattan(x.val = l.dfs.80samp_10iter$scaled.BP, y.val = l.dfs.80samp_10iter$FST, color.cat = "#BD1550", p.sym = 2)
 par(new = TRUE)
-plot.manhattan(x.val = l.dfs.topvsBotLat$scaled.BP, y.val = l.dfs.topvsBotLat$FST, color.cat = "#B984F3", p.sym = 2)
+plot.manhattan(x.val = l.dfs.topvsBotLat$scaled.BP, y.val = l.dfs.topvsBotLat$FST, color.cat = "#005C9E", p.sym = 2)
 par(new = TRUE)
-plot.manhattan(x.val = l.dfs.wrvshighLat80$scaled.BP, y.val = l.dfs.wrvshighLat80$FST, color.cat = "cornflowerblue", p.sym = 2)
+plot.manhattan(x.val = l.dfs.wrvshighLat80$scaled.BP, y.val = l.dfs.wrvshighLat80$FST, color.cat = "orange", p.sym = 2)
 par(new = TRUE)
-plot.manhattan(x.val = l.dfs.wrvshighLat$scaled.BP, y.val = l.dfs.wrvshighLat$FST, color.cat = "#F8ED00", p.sym = 2)
+plot.manhattan(x.val = l.dfs.wrvshighLat$scaled.BP, y.val = l.dfs.wrvshighLat$FST, color.cat = "limegreen", p.sym = 2)
 par(new = TRUE)
 plot.manhattan(x.val = e.dfs.1000vsAll$scaled.BP, y.val = e.dfs.1000vsAll$FST, color.cat = "#BD1550", p.sym = 20)
 par(new = TRUE)
