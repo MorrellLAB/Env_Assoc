@@ -56,7 +56,7 @@ plot.manhattan <- function(x.val, y.val, color.cat, p.sym) {
         xlim = c(0, 4569031868),
         ylim = c(0, 0.8),
         pch = p.sym,
-        cex = 1.5,
+        cex = 1,
         xlab = "Chromosome",
         ylab = expression('F'[ST]), # subscript
         xaxt = "n"
@@ -163,23 +163,23 @@ plot.manhattan(x.val = l.dfs.wrvshighLat80$scaled.BP, y.val = l.dfs.wrvshighLat8
 par(new = TRUE)
 plot.manhattan(x.val = l.dfs.wrvshighLat$scaled.BP, y.val = l.dfs.wrvshighLat$FST, color.cat = "limegreen", p.sym = 2)
 par(new = TRUE)
-plot.manhattan(x.val = e.dfs.1000vsAll$scaled.BP, y.val = e.dfs.1000vsAll$FST, color.cat = "#BD1550", p.sym = 20)
+plot.manhattan(x.val = e.dfs.1000vsAll$scaled.BP, y.val = e.dfs.1000vsAll$FST, color.cat = adjustcolor(col = "#BD1550", alpha.f = 0.5), p.sym = 19)
 par(new = TRUE)
-plot.manhattan(x.val = e.dfs.2500vs1000$scaled.BP, y.val = e.dfs.2500vs1000$FST, color.cat = "#005C9E", p.sym = 20)
+plot.manhattan(x.val = e.dfs.2500vs1000$scaled.BP, y.val = e.dfs.2500vs1000$FST, color.cat = adjustcolor(col = "#005C9E", alpha.f = 0.5), p.sym = 19)
 par(new = TRUE)
-plot.manhattan(x.val = e.dfs.5000vs1000$scaled.BP, y.val = e.dfs.5000vs1000$FST, color.cat = "orange", p.sym = 20)
+plot.manhattan(x.val = e.dfs.5000vs1000$scaled.BP, y.val = e.dfs.5000vs1000$FST, color.cat = adjustcolor(col = "orange", alpha.f = 0.5), p.sym = 19)
 par(new = TRUE)
-plot.manhattan(x.val = e.dfs.5000vs2500$scaled.BP, y.val = e.dfs.5000vs2500$FST, color.cat = "limegreen", p.sym = 20)
+plot.manhattan(x.val = e.dfs.5000vs2500$scaled.BP, y.val = e.dfs.5000vs2500$FST, color.cat = adjustcolor(col = "limegreen", alpha.f = 0.5), p.sym = 19)
 legend("topright",
-       bty = 'n', 
+       bty = 'n',
        legend = c("Elev: 1000 vs All", "Elev: 2500 vs 1000",
                   "Elev: 5000 vs 1000", "Elev: 5000 vs 2500",
-                  "Lat: 80 samp 10 iter", "Lat: top vs bottom", 
-                  "Lat: wild range vs higher lat 80 samp", 
+                  "Lat: 80 samp 10 iter", "Lat: top vs bottom",
+                  "Lat: wild range vs higher lat 80 samp",
                   "Lat: wild range vs higher lat"),
-       pch = c(2, 2, 2, 2, 20, 20, 20, 20), 
-       col = c("#FD93B4", "#B984F3", "cornflowerblue", "#F8ED00",
-               "#BD1550", "#005C9E", "orange", "limegreen"), 
+       pch = c(2, 2, 2, 2, 20, 20, 20, 20),
+       col = c("#BD1550", "#005C9E", "orange", "limegreen",
+               "#BD1550", "#005C9E", "orange", "limegreen"),
        cex = 1,
        ncol = 3)
 axis(side = 1, at = c(0, ticks[2, ]), labels = FALSE, tick = TRUE)
@@ -191,31 +191,31 @@ abline(v = c5.inv2.end, col = "red", lty = 3)
 abline(v = c2.inv.start, col = "blue", lty = 3)
 abline(v = c2.inv.end, col = "blue", lty = 3)
 #   11_20361 chr 4H AFB2
-arrows(x0 = l.dfs.wrvshighLat80$scaled.BP[l.dfs.wrvshighLat80$SNP == "11_20361"], 
+arrows(x0 = l.dfs.wrvshighLat80$scaled.BP[l.dfs.wrvshighLat80$SNP == "11_20361"],
        y1 = l.dfs.wrvshighLat80$FST[l.dfs.wrvshighLat80$SNP == "11_20361"],
        y0 = l.dfs.wrvshighLat80$FST[l.dfs.wrvshighLat80$SNP == "11_20361"] + 0.075,
        length = 0.1, lwd = 2
 )
 #   11_10496 chr 6H AOC
-arrows(x0 = e.dfs.1000vsAll$scaled.BP[e.dfs.1000vsAll$SNP == "11_10496"], 
+arrows(x0 = e.dfs.1000vsAll$scaled.BP[e.dfs.1000vsAll$SNP == "11_10496"],
        y1 = e.dfs.1000vsAll$FST[e.dfs.1000vsAll$SNP == "11_10496"],
        y0 = e.dfs.1000vsAll$FST[e.dfs.1000vsAll$SNP == "11_10496"] - 0.075,
        length = 0.1, lwd = 2
 )
 #   12_30848 chr 5H CBF3
-arrows(x0 = l.dfs.topvsBotLat$scaled.BP[l.dfs.topvsBotLat$SNP == "12_30848"], 
+arrows(x0 = l.dfs.topvsBotLat$scaled.BP[l.dfs.topvsBotLat$SNP == "12_30848"],
        y1 = l.dfs.topvsBotLat$FST[l.dfs.topvsBotLat$SNP == "12_30848"],
        y0 = l.dfs.topvsBotLat$FST[l.dfs.topvsBotLat$SNP == "12_30848"] + 0.075,
        length = 0.1, lwd = 2
 )
 #   12_20187 chr 1H PEAMT
-arrows(x0 = e.dfs.5000vs2500$scaled.BP[e.dfs.5000vs2500$SNP == "12_20187"], 
+arrows(x0 = e.dfs.5000vs2500$scaled.BP[e.dfs.5000vs2500$SNP == "12_20187"],
        y1 = e.dfs.5000vs2500$FST[e.dfs.5000vs2500$SNP == "12_20187"],
        y0 = e.dfs.5000vs2500$FST[e.dfs.5000vs2500$SNP == "12_20187"] - 0.075,
        length = 0.1, lwd = 2
 )
 #   SCRI_RS_179411 chr 5H SPP
-arrows(x0 = l.dfs.80samp_10iter$scaled.BP[l.dfs.80samp_10iter$SNP == "SCRI_RS_179411"], 
+arrows(x0 = l.dfs.80samp_10iter$scaled.BP[l.dfs.80samp_10iter$SNP == "SCRI_RS_179411"],
        y1 = l.dfs.80samp_10iter$FST[l.dfs.80samp_10iter$SNP == "SCRI_RS_179411"],
        y0 = l.dfs.80samp_10iter$FST[l.dfs.80samp_10iter$SNP == "SCRI_RS_179411"] - 0.075,
        length = 0.1, lwd = 2
