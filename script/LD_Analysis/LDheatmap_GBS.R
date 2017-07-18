@@ -92,7 +92,7 @@ hm.r2 <- function(genoData, PhysPos, plotName, snpName, outName, directory) {
     heatmapColors <- brewer.pal(n = 9, name = "YlOrRd")
     #   Output file naming
     outputName <- paste("HM", "r2", sep = "-")
-    svg(filename = paste0(directory, "/", outName, "-", outputName, ".svg"))
+    pdf(file = paste0(directory, "/", outName, "-", outputName, ".pdf"))
     #   Run LDheatmap
     heatmap.r2 <- LDheatmap(gdat = genoData,
                             genetic.distances = PhysPos$PhysPos,
@@ -114,7 +114,7 @@ hm.Dprime <- function(genoData, PhysPos, plotName, snpName, outName, directory) 
     heatmapColors <- brewer.pal(n = 9, name = "YlOrRd")
     #   Output file naming
     outputName <- paste("HM", "Dprime", sep = "-")
-    svg(filename = paste0(directory, "/", outName, "-", outputName, ".svg"))
+    pdf(file = paste0(directory, "/", outName, "-", outputName, ".pdf"))
     #   Generate D' plot
     heatmap.D <- LDheatmap(gdat = genoData,
                            genetic.distances = PhysPos$PhysPos,
@@ -139,7 +139,7 @@ outCsv <- function(df, rowNames, outName) {
 
 #   Write data to output file
 outCompatibleFile <- function(df, outName, outDirectory) {
-    #   Name output .svg file
+    #   Name output .pdf file
     name <- paste0(outDirectory, "/", outName, ".txt")
     write.table(x = df,
                 file = name,
@@ -150,11 +150,11 @@ outCompatibleFile <- function(df, outName, outDirectory) {
                 row.names = TRUE) # Want to keep SNP names
 }
 
-#   Save heatmap to .svg file
+#   Save heatmap to .pdf file
 outFile <- function(outName, directory, heatmap, LDcalc) {
     #   Output file naming
     outputName <- paste("HM", LDcalc, sep = "_")
-    #   Name output .svg file
+    #   Name output .pdf file
     name <- paste0(directory, "/", outName, "_", outputName, ".txt")
     heatmap.df <- as.data.frame(x = heatmap$LDmatrix, row.names = NULL)
     write.table(x = heatmap.df,
@@ -271,12 +271,12 @@ main <- function() {
     cat("LDheatmap - D' done", sep = "\n")
 
     cat("Saving files to out directory...", sep = "\n")
-    #   Save r2 plot to .svg file
+    #   Save r2 plot to .pdf file
     outFile(outName = outPrefix,
             directory = outDir,
             heatmap = plot.r2,
             LDcalc = "r2")
-    #   Save D' plot to .svg file
+    #   Save D' plot to .pdf file
     outFile(outName = outPrefix,
             directory = outDir,
             heatmap = plot.D,
