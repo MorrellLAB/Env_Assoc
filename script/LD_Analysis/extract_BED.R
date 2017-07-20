@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-#   This is a script that extracts intervals from a VCF file
+#   This is a script that extracts intervals from a VCF file and outputs a BED file
 #   Script written by Chaochih Liu
 #   June 27, 2017
 
