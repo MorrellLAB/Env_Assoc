@@ -60,3 +60,5 @@ main <- function() {
     #   Save file
     writeOutFile(data.file = bed.df, outName = outFile)
 }
+
+main()
