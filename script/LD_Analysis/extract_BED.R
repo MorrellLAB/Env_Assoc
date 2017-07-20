@@ -43,7 +43,7 @@ main <- function() {
     #   User provided arguments
     args <- commandArgs(trailingOnly = TRUE)
     vcf.filepath <- args[1] # 1) VCF file we want to extract interval from
-    bp.size <- args[2] # 2) What is the window size upstream/downstream of our SNP?
+    bp.size <- as.numeric(args[2]) # 2) What is the window size upstream/downstream of our SNP?
     outFile <- args[3] # 3) Full filepath to our output file (include filename)
 
     #   Read in file
@@ -53,7 +53,7 @@ main <- function() {
     #   Expected output is BED file
     bed.df <- data.frame(
         Chr = vcf.df$V1,
-        Start.pos = vcf.df$V2 - (bp.size + 1), # BED file is 0-based
+        Start.pos = (vcf.df$V2 - (bp.size + 1)), # BED file is 0-based
         End.pos = vcf.df$V2 + bp.size
     )
 
