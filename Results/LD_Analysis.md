@@ -12,15 +12,15 @@ Note: `LDheatmap` package does not include self-comparison values in it's matrix
 
 ### Data
 
-The VCF file used to create the genotype matrix is: `/home/morrellp/liux1299/Shared/Projects/Barley_NAM_Parents/SNP_calling/Variants/Barley_NAM_Parents_Final_Fixed.vcf`
+The VCF file used to create the genotype matrix is: `/panfs/roc/groups/9/morrellp/shared/Projects/Barley_NAM_Parents/SNP_calling/Variants/New_Filtering/landrace_Barley_NAM_Parents_Final.vcf.recode.vcf`
 
 This file has already been filtered for missing data, multi-nucleotide polymorphisms, and non-biallelic SNPs.
 
 Check total number of markers before starting analysis:
 
 ```bash
-grep -v "#" Barley_NAM_Parents_Final_Fixed.vcf| cut -f 1,2,3 | wc -l
-
+grep -v "#" landrace_Barley_NAM_Parents_Final.vcf.recode.vcf | wc -l
+645685
 ```
 
 ### Data Preparation
@@ -30,12 +30,24 @@ grep -v "#" Barley_NAM_Parents_Final_Fixed.vcf| cut -f 1,2,3 | wc -l
 Create a list of significant SNPs:
 
 ```bash
-cut -d "," -f 1 compiled.5e_4.0.01.v2_physPos.csv > ~/Downloads/significant_snp_names.txt
-grep "#" sorted_all_9k_masked_90idt.vcf > ~/Downloads/env_assoc_sig_snps_9k.vcf
-grep -f significant_snp_names.txt ~/GitHub/9k_BOPA_SNP/BOPA_9k_vcf_Morex_refv1/sorted_all_9k_masked_90idt.vcf >> ~/Downloads/env_assoc_sig_snps_9k.vcf
+#   Create list of significant SNP names
+#   SNP names are in column 1
+cut -d "," -f 1 compiled.5e_4.0.01.v2_physPos.csv > ~/Dropbox/Landrace\ Environmental\ Assocation/Analyses/LD/gwas_sig_snp_names.txt
+#   Check number of unique SNP names
+uniq gwas_sig_snp_names.txt | wc -l
+     159
+#   Create vcf header for significant SNPs (will append data to this in next step)
+grep "#" sorted_all_9k_masked_90idt.vcf > ~/Dropbox/Landrace\ Environmental\ Assocation/Analyses/LD/env_assoc_sig_snps_9k.vcf
+#   Extract significant SNPs from 9k masked VCF file
+grep -f gwas_sig_snp_names.txt ~/GitHub/9k_BOPA_SNP/BOPA_9k_vcf_Morex_refv1/sorted_all_9k_masked_90idt.vcf >> env_assoc_sig_snps_9k.vcf
 ```
 
 We are looking at 50Kb upstream and downstream of the significant SNP. Used `extract_BED.R` script to create bed file.
+
+```bash
+#   Create BED file that is 50Kb upstream/downstream of the significant SNP
+~/GitHub/Env_Assoc/script/LD_Analysis/extract_BED.R env_assoc_sig_snps_9k.vcf 50000 ~/Dropbox/Landrace_Environmental_Assocation/Analyses/LD/env_assoc_sig_snps_9k.bed
+```
 
 ```bash
 #   Extract SNPs that fall within intevals in BED file
@@ -70,7 +82,7 @@ cat tmp_header.txt env_assoc_sig_snps_NAM_renamed.txt > env_assoc_sig_snps_NAM_f
 
 #### Step 3: Create a fake Hudson table from VCF file
 
-Convert VCF to fake Hudson table format using a modified version of Tom's `VCF_To_Htable-TK.py` script located in [`Env_Assoc/script/LD_Analysis` GitHub](https://github.com/MorrellLAB/Env_Assoc/tree/master/script/LD_Analysis). This script filters on **MAF of 0.05**. The output Htable should have marker names (i.e. S1H1_42239) as columns and sample names (i.e. WBDC-025) as row names.
+Convert VCF to fake Hudson table format using a modified version of Tom's `VCF_To_Htable-TK.py` script located in [`Env_Assoc/script/LD_Analysis` GitHub](https://github.com/MorrellLAB/Env_Assoc/tree/master/script/LD_Analysis). This script filters on **MAF of 0.015**. The output Htable should have marker names (i.e. S1H1_42239) as columns and sample names (i.e. WBDC-025) as row names.
 
 Command used to convert file format:
 
