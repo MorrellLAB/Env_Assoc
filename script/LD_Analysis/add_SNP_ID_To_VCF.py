@@ -39,8 +39,10 @@ def read_vcf_to_edit(vcf):
                 info = tmp[7]
                 form = tmp[8] # FORMAT column
                 genotypes = tmp[9:] # genotype fields
+                #   Join chrom and pos
+                chrom_pos = chrom + "_" + pos
                 #   Store fields in a dictionary
-                vcf_dat[chrom] = [pos, snp_id, ref, alt, qual, filt, info, form, genotypes]
+                vcf_dat[chrom_pos] = [pos, snp_id, ref, alt, qual, filt, info, form, genotypes]
         return vcf_dat
 
 def read_vcf_w_names(vcf):
@@ -63,8 +65,10 @@ def read_vcf_w_names(vcf):
                 chrom = tmp[0]
                 pos = tmp[1]
                 snp_id = tmp[2]
+                #   Join chrom and pos
+                chrom_pos = chrom + "_" + pos
                 #   Store fields in a dictionary
-                vcf_dat[chrom] = [pos, snp_id]
+                vcf_dat[chrom_pos] = [pos, snp_id]
         return vcf_dat
 
 
