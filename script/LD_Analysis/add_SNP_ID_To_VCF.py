@@ -45,6 +45,7 @@ def read_vcf_to_edit(vcf):
                 vcf_dat[chrom_pos] = [pos, snp_id, ref, alt, qual, filt, info, form, genotypes]
         return vcf_dat
 
+
 def read_vcf_w_names(vcf):
     """Function that reads through file and skips any lines that start with '##'. Only first 3 fields will be stored in a dictionary."""
     vcf_dat = {}
@@ -68,14 +69,47 @@ def read_vcf_w_names(vcf):
                 #   Join chrom and pos
                 chrom_pos = chrom + "_" + pos
                 #   Store fields in a dictionary
-                vcf_dat[chrom_pos] = [pos, snp_id]
+                vcf_dat[chrom_pos] = [snp_id]
         return vcf_dat
 
 
-def main(vcf):
+def rename_id(v1, v2):
+    #   Create empty dictionary
+    renamed = {}
+    for keys in v1.keys():
+        #   If keys in v1 exist in v2,
+        #   replace ID with SNP name
+        if keys in v2.keys():
+            #   store values in keys as list
+            v1d = v1[keys]
+            v2d = v2[keys]
+            #   replace 2nd element (ID) with SNP name
+            v1d[1] = v2d[0]
+            #   add updated key-value pair to dictionary
+            renamed[keys] = v1d
+        #   If keys in v1 do not exist in v2,
+        #   replace ID with chrom_pos naming scheme
+        elif keys not in v2.keys():
+            #   store values in keys as list
+            v1d = v1[keys]
+            v1d[1] = keys
+            #   add updated key-value pair to dictionary
+            renamed[keys] = v1d
+    return renamed
+
+
+def main(file1, file2):
     """Main function that runs the program."""
-    vcf_to_edit = read_vcf_to_edit(vcf)
-    vcf_with_names = read_vcf_w_names(vcf)
-    return
+    vcf1 = read_vcf_to_edit(file1)
+    vcf2 = read_vcf_w_names(file2)
+    prd = rename_id(vcf1, vcf2)
+    for key, val in list(prd.items()):
+        print(
+            key + '\t' + val[0] + '\t' + val[1] + '\t' + \
+            val[2] + '\t' + val[3][0] + '\t' + val[4] + '\t' + \
+            val[5] + '\t' + val[6] + '\t' + val[7] + '\t' \
+            + '\t'.join(map(str, val[8]))
+        )
+
 
 main(sys.argv[1], sys.argv[2])
