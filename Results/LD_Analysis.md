@@ -51,7 +51,8 @@ We are looking at 50Kb upstream and downstream of the significant SNP. Used `ext
 
 ```bash
 #   Extract SNPs that fall within intevals in BED file
-vcfintersect -b env_assoc_sig_snps_9k.bed ~/Shared/Projects/Barley_NAM_Parents/SNP_calling/Variants/Barley_NAM_Parents_Final_Fixed.vcf > env_assoc_sig_snps_NAM.vcf
+module load vcflib_ML/1.0.0
+vcfintersect -b env_assoc_sig_snps_9k.bed ~/Shared/Projects/Barley_NAM_Parents/SNP_calling/Variants/New_Filtering/landrace_Barley_NAM_Parents_Final.vcf.recode.vcf > env_assoc_sig_snps_intersect.vcf
 ```
 
 #### Step 2: Create SNP name for column 3 (originally filled with "." in VCF file)
