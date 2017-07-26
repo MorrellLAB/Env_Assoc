@@ -22,10 +22,8 @@ def read_vcf_to_edit(vcf):
                 continue
             #   #CHROM line contains sample information
             elif line.startswith('#CHROM'):
-                #   Split up the line on tabs
                 tmp = line.strip().split('\t')
             else:
-                #   Split up the lines on tabs
                 tmp = line.strip().split('\t')
                 #   Assign variables for clarity
                 chrom = tmp[0]
@@ -39,9 +37,7 @@ def read_vcf_to_edit(vcf):
                 info = tmp[7]
                 form = tmp[8] # FORMAT column
                 genotypes = tmp[9:] # genotype fields
-                #   Join chrom and pos
                 chrom_pos = chrom + "_" + pos
-                #   Store fields in a dictionary
                 vcf_dat[chrom_pos] = [pos, snp_id, ref, alt, qual, filt, info, form, genotypes]
         return vcf_dat
 
@@ -55,10 +51,8 @@ def read_vcf_w_names(vcf):
                 continue
             #   #CHROM line contains sample information
             elif line.startswith('#CHROM'):
-                #   Split up the line on tabs
                 tmp = line.strip().split('\t')
             else:
-                #   Split up the lines on tabs
                 tmp = line.strip().split('\t')
                 #   Assign variables for clarity
                 #   We are mostly interested in the SNP names (ID column)
@@ -66,21 +60,17 @@ def read_vcf_w_names(vcf):
                 chrom = tmp[0]
                 pos = tmp[1]
                 snp_id = tmp[2]
-                #   Join chrom and pos
                 chrom_pos = chrom + "_" + pos
-                #   Store fields in a dictionary
                 vcf_dat[chrom_pos] = [snp_id]
         return vcf_dat
 
 
 def rename_id(v1, v2):
-    #   Create empty dictionary
     renamed = {}
     for keys in v1.keys():
         #   If keys in v1 exist in v2,
         #   replace ID with SNP name
         if keys in v2.keys():
-            #   store values in keys as list
             v1d = v1[keys]
             v2d = v2[keys]
             #   replace 2nd element (ID) with SNP name
@@ -90,7 +80,6 @@ def rename_id(v1, v2):
         #   If keys in v1 do not exist in v2,
         #   replace ID with chrom_pos naming scheme
         elif keys not in v2.keys():
-            #   store values in keys as list
             v1d = v1[keys]
             v1d[1] = keys
             #   add updated key-value pair to dictionary
@@ -99,13 +88,13 @@ def rename_id(v1, v2):
 
 
 def main(file1, file2):
-    """Main function that runs the program."""
+    """Function that runs the program."""
     vcf1 = read_vcf_to_edit(file1)
     vcf2 = read_vcf_w_names(file2)
     prd = rename_id(vcf1, vcf2)
     for key, val in list(prd.items()):
         print(
-            key + '\t' + val[0] + '\t' + val[1] + '\t' + \
+            key.strip().split('_')[0] + '\t' + val[0] + '\t' + val[1] + '\t' + \
             val[2] + '\t' + val[3][0] + '\t' + val[4] + '\t' + \
             val[5] + '\t' + val[6] + '\t' + val[7] + '\t' \
             + '\t'.join(map(str, val[8]))
