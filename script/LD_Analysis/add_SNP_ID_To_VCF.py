@@ -22,7 +22,7 @@ def read_vcf_to_edit(vcf):
                 continue
             #   #CHROM line contains sample information
             elif line.startswith('#CHROM'):
-                tmp = line.strip().split('\t')
+                header = line.strip().split('\t')
             else:
                 tmp = line.strip().split('\t')
                 #   Assign variables for clarity
@@ -39,7 +39,7 @@ def read_vcf_to_edit(vcf):
                 genotypes = tmp[9:] # genotype fields
                 chrom_pos = chrom + "_" + pos
                 vcf_dat[chrom_pos] = [pos, snp_id, ref, alt, qual, filt, info, form, genotypes]
-        return vcf_dat
+        return (header, vcf_dat)
 
 
 def read_vcf_w_names(vcf):
@@ -91,7 +91,10 @@ def main(file1, file2):
     """Function that runs the program."""
     vcf1 = read_vcf_to_edit(file1)
     vcf2 = read_vcf_w_names(file2)
-    prd = rename_id(vcf1, vcf2)
+    prd = rename_id(vcf1[1], vcf2)
+    #   header line
+    for i in range(len(vcf1[0])):
+        print(vcf1[0][i], sep='\t')
     for key, val in list(prd.items()):
         print(
             key.strip().split('_')[0] + '\t' + val[0] + '\t' + val[1] + '\t' + \
