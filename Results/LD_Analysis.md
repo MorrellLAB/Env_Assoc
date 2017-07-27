@@ -12,9 +12,11 @@ Note: `LDheatmap` package does not include self-comparison values in it's matrix
 
 ### Data
 
-The VCF file used to create the genotype matrix is: `/panfs/roc/groups/9/morrellp/shared/Projects/Barley_NAM_Parents/SNP_calling/Variants/New_Filtering/landrace_Barley_NAM_Parents_Final.vcf.recode.vcf`
+The VCF file used to create the genotype matrix is: `/home/morrellp/liux1299/Shared/Projects/Barley_NAM_Parents/SNP_calling/Variants/New_Filtering/OnlyLandrace_Barley_NAM_Parents_Final_renamed.vcf`
 
 This file has already been filtered for missing data, multi-nucleotide polymorphisms, and non-biallelic SNPs.
+
+Rename ID column of VCF file so we know which SNPs in the 100Kb window are the significant SNPs. Run `add_SNP_ID_To_VCF.py` script (job script is located in `Env_Assoc/script/LD_Analysis/job_scripts/rename_vcf_id.job`).
 
 Check total number of markers before starting analysis:
 
@@ -32,10 +34,10 @@ Create a list of significant SNPs:
 ```bash
 #   Create list of significant SNP names
 #   SNP names are in column 1
-cut -d "," -f 1 compiled.5e_4.0.01.v2_physPos.csv > ~/Dropbox/Landrace\ Environmental\ Assocation/Analyses/LD/gwas_sig_snp_names.txt
+cut -d "," -f 1 compiled.5e_4.0.01.v2_physPos.csv | tail -n +2 | sort -uV > ~/Dropbox/Landrace\ Environmental\ Assocation/Analyses/LD/gwas_sig_snp_names.txt
 #   Check number of unique SNP names
 uniq gwas_sig_snp_names.txt | wc -l
-     159
+     158
 #   Create vcf header for significant SNPs (will append data to this in next step)
 grep "#" sorted_all_9k_masked_90idt.vcf > ~/Dropbox/Landrace\ Environmental\ Assocation/Analyses/LD/env_assoc_sig_snps_9k.vcf
 #   Extract significant SNPs from 9k masked VCF file
