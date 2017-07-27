@@ -5,7 +5,7 @@
 #   Script written by Chaochih Liu
 #   June 13, 2016
 
-#   To run the script: ./transpose_data.R <data.txt>
+#   To run the script: ./transpose_data.R [data.txt] [out directory]
 
 
 #   Read in data and create data frame from it
@@ -17,11 +17,11 @@ readFile <- function(filename) {
 }
 
 #   Write file to outfile
-writeOutFile <- function(transposedData, filename) {
+writeOutFile <- function(transposedData, filename, outDirectory) {
     inputName <- unlist(strsplit(x = filename, split = ".txt"))
     outputName <- paste(inputName, "transposed.txt", sep = "_")
     write.table(x = transposedData,
-                file = outputName,
+                file = paste0(outDirectory, "/", outputName),
                 quote = FALSE,
                 sep = "\t",
                 eol = "\n",
@@ -32,8 +32,13 @@ writeOutFile <- function(transposedData, filename) {
 createOutFile <- function() {
     args <- commandArgs(trailingOnly = TRUE)
     originalData <- args[1]
+    outDir <- args[2]
     formatData <- readFile(originalData)
-    output <- writeOutFile(formatData, originalData)
+    output <- writeOutFile(
+        transposedData = formatData,
+        filename = originalData,
+        outDirectory = outDir
+    )
 }
 
 createOutFile() # Run program
