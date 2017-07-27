@@ -6,12 +6,13 @@
 #       And ancestral state is not printed into the table.
 
 #   Usage:
-#       VCF_To_Htable.py [VCF file] > [Htable.txt]
+#       VCF_To_Htable.py [VCF file] [MAF] > [Htable.txt]
 
 import sys
+
 #   If the "minor genotype frequency" falls below this threshhold, then we
 #   omit the site.
-MAFThreshhold = 0.015
+MAFThreshhold = sys.argv[2]
 
 #   A function to calculate the minor allele frequency
 def MAF(x):
