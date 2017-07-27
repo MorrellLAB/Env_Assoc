@@ -14,7 +14,7 @@ Arguments:
 import sys
 
 def read_vcf_to_edit(vcf):
-    """Function that reads through file and skips any lines that start with '##'. Data will be stored in a dictionary."""
+    """Function that reads through file and skips any lines that start with '##'. Header line starting with '#CHROM' will be saved for later use. Data will be stored in a dictionary."""
     vcf_dat = {}
     with open(vcf, 'r') as f:
         for line in f:
@@ -93,8 +93,8 @@ def main(file1, file2):
     vcf2 = read_vcf_w_names(file2)
     prd = rename_id(vcf1[1], vcf2)
     #   header line
-    for i in range(len(vcf1[0])):
-        print(vcf1[0][i], sep='\t')
+    print('\t'.join(vcf1[0]))
+    #   prd contains lists within lists
     for key, val in list(prd.items()):
         print(
             key.strip().split('_')[0] + '\t' + val[0] + '\t' + val[1] + '\t' + \
