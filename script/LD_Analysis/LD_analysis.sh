@@ -11,6 +11,7 @@ set -o pipefail
 module load R/3.4.0
 module load python2/2.7.8 # Tom's VCF_To_Htable-TK.py script runs in Python 2
 module load vcflib_ML/1.0.0
+module load parallel
 
 #   Define usage message
 function usage() {
@@ -35,33 +36,36 @@ GWAS_SIG_SNPS=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD
 #   Need sorted_all_9k_masked_90idt.vcf because 157 out of 158 significant SNPs exist
 #       in this VCF file while only 95 of the significant SNPs exist in the
 #       OnlyLandrace_Barley_NAM_Parents_Final_renamed.vcf file
-9K_VCF=/home/morrellp/liux1299/GitHub/9k_BOPA_SNP/BOPA_9k_vcf_Morex_refv1/sorted_all_9k_masked_90idt.vcf
+VCF_9K=/home/morrellp/liux1299/GitHub/9k_BOPA_SNP/BOPA_9k_vcf_Morex_refv1/sorted_all_9k_masked_90idt.vcf
 #   VCF file from dataset we are interested in (i.e. OnlyLandrace_Barley_NAM_Parents_Final_renamed.vcf)
-MAIN_VCF=
+MAIN_VCF=/home/morrellp/liux1299/Shared/Projects/Barley_NAM_Parents/SNP_calling/Variants/New_Filtering/OnlyLandrace_Barley_NAM_Parents_Final_renamed.vcf
 #   window size (bp) upstream/downstream of SNP for extract_BED.R
 BP=50000
 #   Minor Allele Frequency threshold to use for VCF to Htable conversion
 MAF=0.015
-N_INDIVIDUALS=
+#   Missing data threshold to use for filtering
 P_MISSING=0.015
+#   What prefix do we want to use for our output files?
 PREFIX=land_bNAM
-OUT_DIR=
+#   Where is our output directory?
+OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/testing
 
-
+#   Extract GWAS significant SNPs from 9k_masked_90idt.vcf
 function extractSNPs() {
     local snp=$1
-    local 9k_vcf=$2
+    local vcf_9k=$2
     local prefix=$3
     local out_dir=$4
     #   Create vcf header for significant SNPs
-    grep "#" ${9k_vcf} > ${out_dir}/prefix_${snp}_9k_masked_90idt.vcf
+    grep "#" ${vcf_9k} > ${out_dir}/prefix_${snp}_9k_masked_90idt.vcf
 
     #   Extract significant SNP from 9k masked VCF file
-    grep -f "${snp}" ${9k_vcf} >> ${out_dir}/${prefix}_${snp}_9k_masked_90idt.vcf
+    grep -f "${snp}" ${vcf_9k} >> ${out_dir}/${prefix}_${snp}_9k_masked_90idt.vcf
 }
 
 export -f extractSNPs
 
+#   Extract all SNPs that fall within window size defined
 function extractWin() {
     local snp=$1
     local extract_bed=$2
@@ -79,6 +83,8 @@ function extractWin() {
 
 export -f extractWin
 
+#   Use VCF_To_Htable-TK.py to create fake Hudson table
+#   from intersect.vcf file
 function vcfToHtable() {
     local snp=$1
     local vcf_to_htable=$2
@@ -104,6 +110,8 @@ function vcfToHtable() {
 
 export -f vcfToHtable
 
+#   Create a SNP_BAC.txt file that will be used in
+#   LD_data_prep.sh and LDheatmap.R script
 function makeSnpBac() {
     local snp=$1
     local prefix=$2
@@ -126,6 +134,9 @@ function makeSnpBac() {
 
 export -f makeSnpBac
 
+#   Prepare genotype data for LD heatmap:
+#   pull out SNPs that exist, filter out SNPs that don't exist, and sort
+#   SNP_BAC.txt data and genotype data
 function ldDataPrep() {
     local snp=$1
     local ld_data_prep=$2
@@ -143,7 +154,8 @@ function ldDataPrep() {
 
 export -f ldDataPrep
 
-function ldHeatmap() {
+#   Perform LD analysis and generate LD heatmap plots
+function ldHeatMap() {
     local snp=$1
     local ld_heatmap=$2
     local n_individuals=$3
@@ -158,9 +170,13 @@ function ldHeatmap() {
     done
 }
 
-export -f ldHeatmap
+export -f ldHeatMap
 
 
+#   Number of Individuals we have data for (i.e. WBDC)
+N_INDIVIDUALS=$(grep "#CHROM" "${MAIN_VCF}" | tr '\t' '\n' | tail -n +10 | wc -l)
+echo "Number of individuals in data:"
+echo ${N_INDIVIDUALS}
 #   Save the filepaths to scripts that we need
 cd "${SCRIPT_DIR}"
 #   extract_BED.R script creates a BED file that is 50Kb upstream/downstream of
@@ -181,19 +197,20 @@ LD_HEATMAP=$(find $(pwd) -name LDheatmap.R)
 
 #   Build our SNP list but skip 1st header line
 SNP_LIST=($(cat "${GWAS_SIG_SNPS}" | sort -uV))
+#   Number of GWAS Significant SNPs (GSS) in array
 GSS_LEN=${#SNP_LIST[@]}
+echo "Number of GWAS Significant SNPs in array:"
+echo ${GSS_LEN}
 
-#   Still have to figure out how to pass array to these functions
-extractSNPs "${GSS_LEN}" "${9K_VCF}" "${PREFIX}" "${OUT_DIR}"
-extractWin "${GSS_LEN}" "${EXTRACT_BED}" "${BP}" "${OUT_DIR}"/"${PREFIX}"_${GSS_LEN}_9k_masked_90idt.vcf
-vcfToHtable "${GSS_LEN}" "${VCF_TO_HTABLE}" "${MAF}" "${TRANSPOSE_DATA}" "${PREFIX}" "${OUT_DIR}"
-makeSnpBac "${GSS_LEN}" "${PREFIX}" "${OUT_DIR}"
-ldDataPrep "${GSS_LEN" "${LD_DATA_PREP}" "${EXTRACTION_SNPS}" "${OUT_DIR}"/"${PREFIX}"_${GSS_LEN}_intersect_Htable_sorted_transposed.txt "${PREFIX}" "${OUT_DIR}"
-ldHeatmap "${GSS_LEN}" "${LD_HEATMAP}" "${N_INDIVIDUALS}" "${P_MISSING}" "${PREFIX}" "${OUT_DIR}"
+#   Run program for each significant SNP in parallel
+parallel --dry-run 'extractSNPs {} "${VCF_9K}" "${PREFIX}" "${OUT_DIR}"' ::: "${SNP_LIST[@]}"
 
-# for (( i=0; i<${GSS_LEN}; i++))
-# do
-#     echo ${SNP_LIST[$i]}
-#     #   Create vcf file header for significant SNP
+parallel --dry-run 'extractWin {} "${EXTRACT_BED}" "${BP}" "${OUT_DIR}"/"${PREFIX}"_{}_9k_masked_90idt.vcf' ::: "${SNP_LIST[@]}"
 
-# done
+parallel --dry-run 'vcfToHtable {} "${VCF_TO_HTABLE}" "${MAF}" "${TRANSPOSE_DATA}" "${PREFIX}" "${OUT_DIR}"' ::: "${SNP_LIST[@]}"
+
+parallel --dry-run 'makeSnpBac {} "${PREFIX}" "${OUT_DIR}"' ::: "${SNP_LIST[@]}"
+
+parallel --dry-run 'ldDataPrep {} "${LD_DATA_PREP}" "${EXTRACTION_SNPS}" "${OUT_DIR}"/"${PREFIX}"_{}_intersect_Htable_sorted_transposed.txt "${PREFIX}" "${OUT_DIR}"' ::: "${SNP_LIST[@]}"
+
+parallel --dry-run 'ldHeatMap {} "${LD_HEATMAP}" "${N_INDIVIDUALS}" "${P_MISSING}" "${PREFIX}" "${OUT_DIR}"' ::: "${SNP_LIST[@]}"
