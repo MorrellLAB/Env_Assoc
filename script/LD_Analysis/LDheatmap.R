@@ -81,13 +81,13 @@ filterMissing <- function(df.column, n.missing) {
     #   Are number of NAs greater than threshold?
     #   If FALSE, keep the marker
     #   If TRUE, filter out the marker
-    na.summary <- sum(na.searches) > n.missing
+    na.summary <- sum(na.searches) | sum(is.na(df.column)) > n.missing
     return(na.summary)
 }
 
 #   Find incompatible markers in genotype data
 #   Paul Hoffman assisted in writing code for this function
-findIncompatible <- function(df.column) {
+findIncompatible <- function(df.column, n.individuals) {
     #   Use grepl to return logical vector of TRUE/FALSE for being compatible
     #   If compatible (i.e. A/A) or N/A, will return TRUE
     #   If incompatible (i.e. AA), will return FALSE
@@ -99,7 +99,7 @@ findIncompatible <- function(df.column) {
     search.summary <- sum(!searches)
     #   This works because all trues inverted become zero
     #   So, a single fail means that we get a sum of greater than zero
-    search.bool <- as.logical(search.summary)
+    search.bool <- search.summary == n.individuals
     return(search.bool)
 }
 
@@ -249,7 +249,8 @@ main <- function() {
     cat("Removing incompatible columns...", sep = "\n")
     results <- apply(X = results.miss.removed,
                      MARGIN = 2, # Applied over columns
-                     FUN = findIncompatible)
+                     FUN = findIncompatible,
+                     n.individuals = n.individuals)
     #   Keep a record of column names that failed
     failed.samples <- names(x = which(x = results))
     cat("Saving failed samples to spreadsheet.", sep = "\n")
