@@ -39,7 +39,7 @@ MAF=0.015
 #   Missing data threshold to use for filtering
 P_MISSING=0.015
 #   What prefix do we want to use for our output files?
-PREFIX=test
+PREFIX=ld_Barley_NAM
 #   Where is our output directory?
 OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/testing
 
