@@ -35,13 +35,13 @@ MAIN_VCF=/home/morrellp/liux1299/Shared/Projects/Barley_NAM_Parents/SNP_calling/
 #   window size (bp) upstream/downstream of SNP for extract_BED.R
 BP=50000
 #   Minor Allele Frequency threshold to use for VCF to Htable conversion
-MAF=0.015
+MAF=0.01
 #   Missing data threshold to use for filtering
-P_MISSING=0.015
+P_MISSING=0.15
 #   What prefix do we want to use for our output files?
 PREFIX=ld_Barley_NAM
 #   Where is our output directory?
-OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/testing
+OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/gwas_sig_snps
 
 #   Extract GWAS significant SNPs from 9k_masked_90idt.vcf
 function extractSNPs() {
