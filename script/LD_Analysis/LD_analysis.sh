@@ -57,7 +57,7 @@ function extractSNPs() {
     local prefix=$3
     local out_dir=$4
     #   Create vcf header for significant SNPs
-    grep "#" ${vcf_9k} > ${out_dir}/prefix_${snp}_9k_masked_90idt.vcf
+    grep "#" ${vcf_9k} > ${out_dir}/${prefix}_${snp}_9k_masked_90idt.vcf
 
     #   Extract significant SNP from 9k masked VCF file
     grep -f "${snp}" ${vcf_9k} >> ${out_dir}/${prefix}_${snp}_9k_masked_90idt.vcf
@@ -75,10 +75,10 @@ function extractWin() {
     local prefix=$6
     local out_dir=$7
     #   Create BED file of n bp upstream/downstream of the significant SNP
-    ${extract_bed} ${ss_vcf} ${bp} ${out_dir}/prefix_${snp}_9k_masked_90idt_${bp}win.bed
+    ${extract_bed} ${ss_vcf} ${bp} ${out_dir}/${prefix}_${snp}_9k_masked_90idt_${bp}win.bed
 
     #   Extract SNPs that fall within intervals in BED file
-    vcfintersect -b ${out_dir}/prefix_${snp}_9k_masked_90idt_${bp}win.bed ${main_vcf} > ${out_dir}/${prefix}_${snp}_intersect.vcf
+    vcfintersect -b ${out_dir}/${prefix}_${snp}_9k_masked_90idt_${bp}win.bed ${main_vcf} > ${out_dir}/${prefix}_${snp}_intersect.vcf
 }
 
 export -f extractWin
