@@ -13,19 +13,12 @@ module load python2/2.7.8 # Tom's VCF_To_Htable-TK.py script runs in Python 2
 module load vcflib_ML/1.0.0
 module load parallel
 
-#   Define usage message
-function usage() {
-    echo -e "\
-    $0: \n\
-    \n\
-    This script performs LD analysis on 100Kb windows around significant SNPs from Environmental Associations project GWAS analysis. This script pulls together all parts of the analysis performed by multiple scripts. \n\
-    \n\
-    Please fill out user provided argument fields and submit script as job. The script will submit each of the list of significant SNP datasets as a task array. \n\
-    " >&2
-    exit 1
-}
+#   Usage message:
+#   This script performs LD analysis on 100Kb windows around significant SNPs from Environmental
+#   Associations project GWAS analysis. This script pulls together all parts of the analysis
+#   performed by multiple scripts.
+#   Please fill out user provided argument fields and submit script as job.
 
-if [[ $# -lt 3 ]]; then usage; fi
 
 #   User provided arguments
 #   Where is the directory containing this script?
