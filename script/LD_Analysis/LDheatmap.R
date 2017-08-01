@@ -72,19 +72,6 @@ findAllNA <- function(df.column, n.individuals) {
     return(finding)
 }
 
-#   Filter out greater than n% missing data (specified in input argument)
-filterMissing <- function(df.column, n.missing) {
-    #   If number of NA's is greater than n.missing (our threshold),
-    #   we will filter out those markers
-    #   If "N/A" pattern is found, it will return TRUE
-    na.searches <- grepl(pattern = "N/A", x = df.column)
-    #   Are number of NAs greater than threshold?
-    #   If FALSE, keep the marker
-    #   If TRUE, filter out the marker
-    na.summary <- sum(na.searches) | sum(is.na(df.column)) > n.missing
-    return(na.summary)
-}
-
 #   Find incompatible markers in genotype data
 #   Paul Hoffman assisted in writing code for this function
 findIncompatible <- function(df.column, n.individuals) {
@@ -101,6 +88,19 @@ findIncompatible <- function(df.column, n.individuals) {
     #   So, a single fail means that we get a sum of greater than zero
     search.bool <- search.summary == n.individuals
     return(search.bool)
+}
+
+#   Filter out greater than n% missing data (specified in input argument)
+filterMissing <- function(df.column, n.missing) {
+    #   If number of NA's is greater than n.missing (our threshold),
+    #   we will filter out those markers
+    #   If "N/A" pattern is found, it will return TRUE
+    na.searches <- grepl(pattern = "N/A", x = df.column)
+    #   Are number of NAs greater than threshold?
+    #   If FALSE, keep the marker
+    #   If TRUE, filter out the marker
+    na.summary <- sum(na.searches) | sum(is.na(df.column)) > n.missing
+    return(na.summary)
 }
 
 #   Generate heatmap for r^2 values
@@ -220,10 +220,30 @@ main <- function() {
     #   Data frame excluding emtpy columns
     results.na.removed <- geno.converted[, !results.na]
 
+    #   Filter out incompatible genotype columns
+    cat("Removing incompatible columns...", sep = "\n")
+    results <- apply(X = results.na.removed,
+                     MARGIN = 2, # Applied over columns
+                     FUN = findIncompatible,
+                     n.individuals = n.individuals)
+    #   Keep a record of column names that failed
+    failed.samples <- names(x = which(x = results))
+    cat("Saving failed samples to spreadsheet.", sep = "\n")
+    tryCatch({
+        outCsv(df = failed.samples,
+                rowNames = FALSE,
+                outName = paste0(outname, "-failed_snps.csv"))
+    }, error = function(e) {
+        cat("No failed samples.", sep = "\n")
+        }
+    )
+    #   Remove markers with incompatible genotype columns
+    incomp.cols.removed <- results.na.removed[, !results]
+
     #   Filter out data with greater than n% missing data
     cat("Filtering out data with greater than:", sep = "\n")
     cat(p.missing * 100, "% missing data")
-    results.filt <- apply(X = results.na.removed,
+    results.filt <- apply(X = incomp.cols.removed,
                           MARGIN = 2, # Applied over columns
                           FUN = filterMissing,
                           n.missing = indv.missing)
@@ -242,40 +262,20 @@ main <- function() {
         cat("found.", sep = "\n")
         }
     )
-    #   Remove markers with more than n% missing data
-    results.miss.removed <- geno.converted[, !results.filt]
 
-    #   Remove incompatible genotype columns
-    cat("Removing incompatible columns...", sep = "\n")
-    results <- apply(X = results.miss.removed,
-                     MARGIN = 2, # Applied over columns
-                     FUN = findIncompatible,
-                     n.individuals = n.individuals)
-    #   Keep a record of column names that failed
-    failed.samples <- names(x = which(x = results))
-    cat("Saving failed samples to spreadsheet.", sep = "\n")
-    tryCatch({
-        outCsv(df = failed.samples,
-                rowNames = FALSE,
-                outName = paste0(outname, "-failed_snps.csv"))
-    }, error = function(e) {
-        cat("No failed samples.", sep = "\n")
-        }
-    )
-
-    #   Remove SNPs with emtpy columns and failed SNPs from PhysPos file
-    X.names.noEmpty <- X.names[!(X.names$Query_SNP %in% no.data.cols), ]
-    X.names.missing <- X.names.noEmpty[!(X.names.noEmpty$Query_SNP %in% miss.data.cols), ]
-    X.names.filtered <- X.names.missing[!(X.names.missing$Query_SNP %in% failed.samples), ]
-
-    #   Keep compatible data
-    pass.samples <- results.miss.removed[, !results]
+    #   Keep compatible data after removing markers with more than n% missing data
+    pass.samples <- incomp.cols.removed[, !results.filt]
     cat("Saving compatible data used for heatmap to file.", sep = "\n")
     outCompatibleFile(
         df = pass.samples,
         outName = paste0(outPrefix, "_compatibleSnps"),
         outDirectory = outDir
     )
+
+    #   Remove SNPs with empty columns, missing data > threshold, and failed SNPs from PhysPos file
+    X.names.noEmpty <- X.names[!(X.names$Query_SNP %in% no.data.cols), ]
+    X.names.failed <- X.names.noEmpty[!(X.names.noEmpty$Query_SNP %in% failed.samples), ]
+    X.names.filtered <- X.names.failed[!(X.names.failed$Query_SNP %in% miss.data.cols), ]
 
     #   Do we include SNP names or exclude SNP names in our heatmap plot?
     if(includeSnpName == "exclude") {
