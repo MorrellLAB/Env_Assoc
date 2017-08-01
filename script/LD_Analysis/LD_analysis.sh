@@ -203,14 +203,14 @@ echo "Number of GWAS Significant SNPs in array:"
 echo ${GSS_LEN}
 
 #   Run program for each significant SNP in parallel
-parallel --dry-run 'extractSNPs {} "${VCF_9K}" "${PREFIX}" "${OUT_DIR}"' ::: "${SNP_LIST[@]}"
+parallel 'extractSNPs {} "${VCF_9K}" "${PREFIX}" "${OUT_DIR}"' ::: "${SNP_LIST[@]}"
 
-parallel --dry-run 'extractWin {} "${EXTRACT_BED}" "${BP}" "${OUT_DIR}"/"${PREFIX}"_{}_9k_masked_90idt.vcf' ::: "${SNP_LIST[@]}"
+parallel 'extractWin {} "${EXTRACT_BED}" "${BP}" "${OUT_DIR}"/"${PREFIX}"_{}_9k_masked_90idt.vcf' ::: "${SNP_LIST[@]}"
 
-parallel --dry-run 'vcfToHtable {} "${VCF_TO_HTABLE}" "${MAF}" "${TRANSPOSE_DATA}" "${PREFIX}" "${OUT_DIR}"' ::: "${SNP_LIST[@]}"
+parallel 'vcfToHtable {} "${VCF_TO_HTABLE}" "${MAF}" "${TRANSPOSE_DATA}" "${PREFIX}" "${OUT_DIR}"' ::: "${SNP_LIST[@]}"
 
-parallel --dry-run 'makeSnpBac {} "${PREFIX}" "${OUT_DIR}"' ::: "${SNP_LIST[@]}"
+parallel 'makeSnpBac {} "${PREFIX}" "${OUT_DIR}"' ::: "${SNP_LIST[@]}"
 
-parallel --dry-run 'ldDataPrep {} "${LD_DATA_PREP}" "${EXTRACTION_SNPS}" "${OUT_DIR}"/"${PREFIX}"_{}_intersect_Htable_sorted_transposed.txt "${PREFIX}" "${OUT_DIR}"' ::: "${SNP_LIST[@]}"
+parallel 'ldDataPrep {} "${LD_DATA_PREP}" "${EXTRACTION_SNPS}" "${OUT_DIR}"/"${PREFIX}"_{}_intersect_Htable_sorted_transposed.txt "${PREFIX}" "${OUT_DIR}"' ::: "${SNP_LIST[@]}"
 
-parallel --dry-run 'ldHeatMap {} "${LD_HEATMAP}" "${N_INDIVIDUALS}" "${P_MISSING}" "${PREFIX}" "${OUT_DIR}"' ::: "${SNP_LIST[@]}"
+parallel 'ldHeatMap {} "${LD_HEATMAP}" "${N_INDIVIDUALS}" "${P_MISSING}" "${PREFIX}" "${OUT_DIR}"' ::: "${SNP_LIST[@]}"
