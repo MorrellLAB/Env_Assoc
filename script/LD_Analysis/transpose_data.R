@@ -21,7 +21,7 @@ writeOutFile <- function(transposedData, filename, outDirectory) {
     inputName <- unlist(strsplit(x = filename, split = ".txt"))
     outputName <- paste(inputName, "transposed.txt", sep = "_")
     write.table(x = transposedData,
-                file = paste0(outDirectory, "/", outputName),
+                file = outputName,
                 quote = FALSE,
                 sep = "\t",
                 eol = "\n",
