@@ -105,7 +105,7 @@ filterMissing <- function(df.column, n.missing) {
 
 #   Generate heatmap for r^2 values
 hm.r2 <- function(genoData, PhysPos, plotName, snpName, outName, directory) {
-    heatmapColors <- brewer.pal(n = 9, name = "YlOrRd")
+    heatmapColors <- rev(brewer.pal(n = 9, name = "YlOrRd"))
     outputName <- paste("HM", "r2", sep = "-")
     pdf(file = paste0(directory, "/", outName, "-", outputName, ".pdf"))
     heatmap.r2 <- LDheatmap(gdat = genoData,
@@ -124,7 +124,7 @@ hm.r2 <- function(genoData, PhysPos, plotName, snpName, outName, directory) {
 
 #   Generate heatmap for D' values
 hm.Dprime <- function(genoData, PhysPos, plotName, snpName, outName, directory) {
-    heatmapColors <- brewer.pal(n = 9, name = "YlOrRd")
+    heatmapColors <- rev(brewer.pal(n = 9, name = "YlOrRd"))
     outputName <- paste("HM", "Dprime", sep = "-")
     pdf(file = paste0(directory, "/", outName, "-", outputName, ".pdf"))
     heatmap.D <- LDheatmap(gdat = genoData,
