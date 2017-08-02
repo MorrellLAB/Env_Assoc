@@ -185,14 +185,26 @@ echo "Number of GWAS Significant SNPs in array:"
 echo ${GSS_LEN}
 
 #   Run program for each significant SNP in parallel
+echo "Extracting significant SNPs from 9k_masked_90idt.vcf file..."
 parallel extractSNPs {} "${VCF_9K}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST[@]}"
+echo "Done extracting significant SNPs."
 
+echo "Extracting all SNPs that fall within window defined..."
 parallel extractWin {} "${EXTRACT_BED}" "${BP}" "${OUT_DIR}"/"${PREFIX}"_{}_9k_masked_90idt.vcf "${MAIN_VCF}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST[@]}"
+echo "Done extracting SNPs within window."
 
+echo "Converting VCF to fake Hudson table..."
 parallel vcfToHtable {} "${VCF_TO_HTABLE}" "${MAF}" "${TRANSPOSE_DATA}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST[@]}"
+echo "Done converting VCF to fake Hudson table."
 
+echo "Creating SNP_BAC.txt file..."
 parallel makeSnpBac {} "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST[@]}"
+echo "Done creating SNP_BAC.txt."
 
+echo "Preparing data for LD analysis..."
 parallel ldDataPrep {} "${LD_DATA_PREP}" "${EXTRACTION_SNPS}" "${OUT_DIR}"/"${PREFIX}"_{}_intersect_Htable_sorted_transposed_noX.txt "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST[@]}"
+echo "Done preparing data."
 
+echo "Running LD analysis..."
 parallel ldHeatMap {} "${LD_HEATMAP}" "${N_INDIVIDUALS}" "${P_MISSING}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST[@]}"
+echo "Done."
