@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 #PBS -l mem=22gb,nodes=1:ppn=16,walltime=16:00:00
 #PBS -m abe
@@ -185,9 +185,9 @@ echo "Number of GWAS Significant SNPs in array:"
 echo ${GSS_LEN}
 
 #   Run program for each significant SNP in parallel
-echo "Extracting significant SNPs from 9k_masked_90idt.vcf file..."
+echo "Extracting significant SNPs from 9k_masked_90idt.vcf file..." >&2
 parallel -v extractSNPs {} "${VCF_9K}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST[@]}"
-echo "Done extracting significant SNPs."
+echo "Done extracting significant SNPs." >&2
 
 echo "Extracting all SNPs that fall within window defined..."
 parallel -v extractWin {} "${EXTRACT_BED}" "${BP}" "${OUT_DIR}"/"${PREFIX}"_{}_9k_masked_90idt.vcf "${MAIN_VCF}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST[@]}"
