@@ -12,7 +12,7 @@ Note: `LDheatmap` package does not include self-comparison values in it's matrix
 
 ### Data
 
-The VCF file used to create the genotype matrix is: `/home/morrellp/liux1299/Shared/Projects/Barley_NAM_Parents/SNP_calling/Variants/New_Filtering/OnlyLandrace_Barley_NAM_Parents_Final_renamed.vcf`
+The VCF file used to create the genotype matrix is: `/panfs/roc/groups/9/morrellp/shared/Projects/Barley_NAM_Parents/SNP_calling/Variants/New_Filtering/OnlyLandrace_biallelic_Barley_NAM_Parents_Final_renamed.vcf`
 
 This file has already been filtered for missing data, multi-nucleotide polymorphisms, and non-biallelic SNPs.
 
