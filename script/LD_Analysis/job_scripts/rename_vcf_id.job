@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#PBS -l mem=22gb,nodes=1:ppn=16,walltime=16:00:00
+#PBS -l mem=22gb,nodes=1:ppn=16,walltime=10:00:00
 #PBS -m abe
 #PBS -M liux1299@umn.edu
 #PBS -q lab
@@ -12,13 +12,13 @@ module load python3_ML/3.6.1
 
 #   User provided arguments
 #   This VCF file has ID column filled with "." for missing SNP ID
-VCF_TO_EDIT=/panfs/roc/groups/9/morrellp/shared/Projects/Barley_NAM_Parents/SNP_calling/Variants/New_Filtering/OnlyLandrace_Barley_NAM_Parents_Final.vcf.recode.vcf
+VCF_TO_EDIT=/panfs/roc/groups/9/morrellp/shared/Projects/Barley_NAM_Parents/SNP_calling/Variants/New_Filtering/OnlyLandrace_biallelic_Barley_NAM_Parents_Final.recode.vcf
 #   This VCF file contains SNP names in the ID column
 VCF_SNP_NAMES=/home/morrellp/liux1299/GitHub/9k_BOPA_SNP/BOPA_9k_vcf_Morex_refv1/sorted_all_9k_masked_90idt.vcf
 #   Full path to output directory
 OUT_DIR=~/Shared/Projects/Barley_NAM_Parents/SNP_calling/Variants/New_Filtering
 #   Output filename
-OUT_NAME=OnlyLandrace_Barley_NAM_Parents_Final_renamed.vcf
+OUT_NAME=OnlyLandrace_biallelic_Barley_NAM_Parents_Final_renamed.vcf
 
 
 /home/morrellp/liux1299/GitHub/Env_Assoc/script/LD_Analysis/add_SNP_ID_To_VCF.py "${VCF_TO_EDIT}" "${VCF_SNP_NAMES}" > "${OUT_DIR}"/"${OUT_NAME}"
