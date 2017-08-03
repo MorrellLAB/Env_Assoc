@@ -27,6 +27,8 @@ grep -v "#" OnlyLandrace_Barley_NAM_Parents_Final_renamed.vcf | wc -l
 
 ## LD Analysis
 
+If you do not have the required packages already installed, run the `installDep.R` script first before starting analyses. Use R version 3.4.0.
+
 `LD_analysis.sh` will call on all the necessary scripts to perform analysis. Fill out "User provided arguments" variables at the top of the script (lines 26-44) and then submit script as a job.
 
 ---
