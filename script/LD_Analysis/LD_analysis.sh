@@ -53,7 +53,13 @@ function extractSNPs() {
     grep "#" ${vcf_9k} > ${out_dir}/${prefix}_${snp}_9k_masked_90idt.vcf
 
     #   Extract significant SNP from 9k masked VCF file
-    grep ${snp} ${vcf_9k} >> ${out_dir}/${prefix}_${snp}_9k_masked_90idt.vcf
+    if grep -q "${snp}" ${vcf_9k}; then
+        grep "${snp}" ${vcf_9k} >> ${out_dir}/${prefix}_${snp}_9k_masked_90idt.vcf
+    else
+        echo "${snp} does not exist in 9k_masked.vcf file." >&2
+        echo ${snp} >> ${out_dir}/sig_snp_not_in_9k.txt
+        rm ${out_dir}/${prefix}_${snp}_9k_masked_90idt.vcf
+    fi
 }
 
 export -f extractSNPs
@@ -185,9 +191,17 @@ echo "Number of GWAS Significant SNPs in array:"
 echo ${GSS_LEN}
 
 #   Run program for each significant SNP in parallel
-echo "Extracting significant SNPs from 9k_masked_90idt.vcf file..." >&2
-parallel -v extractSNPs {} "${VCF_9K}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST[@]}"
-echo "Done extracting significant SNPs." >&2
+echo "Extracting significant SNPs from 9k_masked_90idt.vcf file..."
+touch "${OUT_DIR}"/sig_snp_not_in_9k.txt
+parallel extractSNPs {} "${VCF_9K}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST[@]}"
+echo "Done extracting significant SNPs."
+echo "Removing non-existent SNP from bash array..."
+DELETE=($(cat "${OUT_DIR}"/sig_snp_not_in_9k.txt))
+for del in ${DELETE[@]}
+do
+    SNP_LIST=("${SNP_LIST[@]/$del}")
+done
+echo "Done removing non-existent SNP from bash array."
 
 echo "Extracting all SNPs that fall within window defined..."
 parallel -v extractWin {} "${EXTRACT_BED}" "${BP}" "${OUT_DIR}"/"${PREFIX}"_{}_9k_masked_90idt.vcf "${MAIN_VCF}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST[@]}"
