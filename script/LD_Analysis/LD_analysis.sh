@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#PBS -l mem=22gb,nodes=1:ppn=16,walltime=16:00:00
+#PBS -l mem=22gb,nodes=1:ppn=16,walltime=24:00:00
 #PBS -m abe
 #PBS -M liux1299@umn.edu
 #PBS -q lab
@@ -34,9 +34,9 @@ VCF_9K=/home/morrellp/liux1299/GitHub/9k_BOPA_SNP/BOPA_9k_vcf_Morex_refv1/sorted
 MAIN_VCF=/panfs/roc/groups/9/morrellp/shared/Projects/Barley_NAM_Parents/SNP_calling/Variants/New_Filtering/OnlyLandrace_biallelic_Barley_NAM_Parents_Final_renamed.vcf
 #   window size (bp) upstream/downstream of SNP for extract_BED.R
 BP=50000
-#   Minor Allele Frequency threshold to use for VCF to Htable conversion
+#   Minor Allele Frequency threshold to use for VCF to Htable conversion (i.e. 0.01 for 1% MAF)
 MAF=0.01
-#   Missing data threshold to use for filtering
+#   Missing data threshold to use for filtering (i.e. 0.15 for 15% MAF)
 P_MISSING=0.15
 #   What prefix do we want to use for our output files?
 PREFIX=ld_Barley_NAM
@@ -54,8 +54,10 @@ function extractSNPs() {
 
     #   Extract significant SNP from 9k masked VCF file
     if grep -q "${snp}" ${vcf_9k}; then
+        #   If SNP exists, extract SNP from 9k masked VCF file
         grep "${snp}" ${vcf_9k} >> ${out_dir}/${prefix}_${snp}_9k_masked_90idt.vcf
     else
+        #   If SNP doesn't exist, save SNP in another file
         echo "${snp} does not exist in 9k_masked.vcf file." >&2
         echo ${snp} >> ${out_dir}/sig_snp_not_in_9k.txt
         rm ${out_dir}/${prefix}_${snp}_9k_masked_90idt.vcf
@@ -195,30 +197,32 @@ echo "Extracting significant SNPs from 9k_masked_90idt.vcf file..."
 touch "${OUT_DIR}"/sig_snp_not_in_9k.txt
 parallel extractSNPs {} "${VCF_9K}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST[@]}"
 echo "Done extracting significant SNPs."
+
 echo "Removing non-existent SNP from bash array..."
 DELETE=($(cat "${OUT_DIR}"/sig_snp_not_in_9k.txt))
-for del in ${DELETE[@]}
-do
-    SNP_LIST=("${SNP_LIST[@]/$del}")
-done
+echo ${SNP_LIST[@]} | tr ' ' '\n' > "${OUT_DIR}"/tmp_snp_list.txt
+SNP_LIST_FILT=($(grep -vf "${OUT_DIR}"/sig_snp_not_in_9k.txt "${OUT_DIR}"/tmp_snp_list.txt))
+rm "${OUT_DIR}"/tmp_snp_list.txt
 echo "Done removing non-existent SNP from bash array."
+echo "Number of GWAS Significant SNPs that exist in 9k_masked_90idt.vcf file:"
+echo ${#SNP_LIST_FILT[@]}
 
 echo "Extracting all SNPs that fall within window defined..."
-parallel -v extractWin {} "${EXTRACT_BED}" "${BP}" "${OUT_DIR}"/"${PREFIX}"_{}_9k_masked_90idt.vcf "${MAIN_VCF}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST[@]}"
+parallel extractWin {} "${EXTRACT_BED}" "${BP}" "${OUT_DIR}"/"${PREFIX}"_{}_9k_masked_90idt.vcf "${MAIN_VCF}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST_FILT[@]}"
 echo "Done extracting SNPs within window."
 
 echo "Converting VCF to fake Hudson table..."
-parallel -v vcfToHtable {} "${VCF_TO_HTABLE}" "${MAF}" "${TRANSPOSE_DATA}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST[@]}"
+parallel vcfToHtable {} "${VCF_TO_HTABLE}" "${MAF}" "${TRANSPOSE_DATA}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST_FILT[@]}"
 echo "Done converting VCF to fake Hudson table."
 
 echo "Creating SNP_BAC.txt file..."
-parallel -v makeSnpBac {} "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST[@]}"
+parallel makeSnpBac {} "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST_FILT[@]}"
 echo "Done creating SNP_BAC.txt."
 
 echo "Preparing data for LD analysis..."
-parallel -v ldDataPrep {} "${LD_DATA_PREP}" "${EXTRACTION_SNPS}" "${OUT_DIR}"/"${PREFIX}"_{}_intersect_Htable_sorted_transposed_noX.txt "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST[@]}"
+parallel ldDataPrep {} "${LD_DATA_PREP}" "${EXTRACTION_SNPS}" "${OUT_DIR}"/"${PREFIX}"_{}_intersect_Htable_sorted_transposed_noX.txt "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST_FILT[@]}"
 echo "Done preparing data."
 
 echo "Running LD analysis..."
-parallel -v ldHeatMap {} "${LD_HEATMAP}" "${N_INDIVIDUALS}" "${P_MISSING}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST[@]}"
+parallel ldHeatMap {} "${LD_HEATMAP}" "${N_INDIVIDUALS}" "${P_MISSING}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST_FILT[@]}"
 echo "Done."
