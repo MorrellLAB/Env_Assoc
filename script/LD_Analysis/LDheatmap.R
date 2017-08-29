@@ -312,7 +312,7 @@ main <- function() {
     outFile(outName = outPrefix,
             directory = outDir,
             heatmap = plot.D,
-            LDcalc = "D_prime")
+            LDcalc = "Dprime")
     cat("Done.", sep = "\n")
 }
 
