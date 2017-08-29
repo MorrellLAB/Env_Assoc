@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#PBS -l mem=22gb,nodes=1:ppn=16,walltime=24:00:00
+#PBS -l mem=22gb,nodes=1:ppn=16,walltime=4:00:00
 #PBS -m abe
 #PBS -M liux1299@umn.edu
 #PBS -q lab
@@ -97,19 +97,19 @@ function vcfToHtable() {
     #   This script filters on MAF specified in user provided argument
     #   Output Htable should have marker names (i.e. 11_20909) as columns and
     #       sample names (i.e. WBDC-025) as row names
-    ${vcf_to_htable} ${out_dir}/${prefix}_${snp}_intersect.vcf ${maf} > ${out_dir}/tmp_${snp}_intersect_Htable.txt
+    ${vcf_to_htable} ${out_dir}/extracted_window/${prefix}_${snp}_intersect.vcf ${maf} > ${out_dir}/Htable/tmp_${snp}_intersect_Htable.txt
 
     #   Sort individuals (i.e. WBDC-025) before transposing data
-    (head -n 1 ${out_dir}/tmp_${snp}_intersect_Htable.txt && tail -n +2 ${out_dir}/tmp_${snp}_intersect_Htable.txt | sort -uV -k1,1) > ${out_dir}/${prefix}_${snp}_intersect_Htable_sorted.txt
+    (head -n 1 ${out_dir}/Htable/tmp_${snp}_intersect_Htable.txt && tail -n +2 ${out_dir}/Htable/tmp_${snp}_intersect_Htable.txt | sort -uV -k1,1) > ${out_dir}/Htable/${prefix}_${snp}_intersect_Htable_sorted.txt
 
     #   Transpose data for downstream LD analysis
-    ${transpose_data} ${out_dir}/${prefix}_${snp}_intersect_Htable_sorted.txt ${out_dir}
+    ${transpose_data} ${out_dir}/Htable/${prefix}_${snp}_intersect_Htable_sorted.txt ${out_dir}/Htable
 
     #   Remove "X" in marker names
-    sed 's/X//g' ${out_dir}/${prefix}_${snp}_intersect_Htable_sorted_transposed.txt > ${out_dir}/${prefix}_${snp}_intersect_Htable_sorted_transposed_noX.txt
+    sed 's/X//g' ${out_dir}/Htable/${prefix}_${snp}_intersect_Htable_sorted_transposed.txt > ${out_dir}/Htable/${prefix}_${snp}_intersect_Htable_sorted_transposed_noX.txt
 
     #   Cleanup temporary files
-    rm ${out_dir}/tmp_${snp}_intersect_Htable.txt
+    rm ${out_dir}/Htable/tmp_${snp}_intersect_Htable.txt
 }
 
 export -f vcfToHtable
@@ -121,11 +121,11 @@ function makeSnpBac() {
     local prefix=$2
     local out_dir=$3
     #   Create tab delimited header for all chr
-    printf 'Query_SNP\tPhysPos\tChr\n' > ${out_dir}/SNP_BAC_${prefix}_${snp}-all_chr.txt
+    printf 'Query_SNP\tPhysPos\tChr\n' > ${out_dir}/snp_bac/SNP_BAC_${prefix}_${snp}-all_chr.txt
     #   Create a SNP_BAC.txt file for all chromosomes
     #   This does not include headers
     #   Output file columns are in the following order: Chr, Physical Position, Marker ID
-    awk '{ print $3 "\t" $2 "\t" $1 }' ${out_dir}/${prefix}_${snp}_intersect.vcf | tail -n +2 | sort -V -k2n,2 >> ${out_dir}/SNP_BAC_${prefix}_${snp}-all_chr.txt
+    awk '{ print $3 "\t" $2 "\t" $1 }' ${out_dir}/extracted_window/${prefix}_${snp}_intersect.vcf | tail -n +2 | sort -V -k2n,2 >> ${out_dir}/snp_bac/SNP_BAC_${prefix}_${snp}-all_chr.txt
 }
 
 export -f makeSnpBac
@@ -142,7 +142,7 @@ function ldDataPrep() {
     local out_dir=$6
     #   Run LD_data_prep.sh on whole chromosome including SNP names along heatmap plot
     #   Caveats: Query_SNP must be first column because script sorts by first column
-    ${ld_data_prep} ${out_dir}/SNP_BAC_${prefix}_${snp}-all_chr.txt ${trans_htable} Chr1-7_${snp} ${out_dir} ${extraction_snps}
+    ${ld_data_prep} ${out_dir}/snp_bac/SNP_BAC_${prefix}_${snp}-all_chr.txt ${trans_htable} Chr1-7_${snp} ${out_dir}/ld_data_prep ${extraction_snps}
 }
 
 export -f ldDataPrep
@@ -157,7 +157,7 @@ function ldHeatMap() {
     local out_dir=$6
     #   SNP_BAC.txt file must be sorted by SNP names
     #   Genotype data (i.e. *EXISTS.txt genotype data) must be sorted by SNP names
-    ${ld_heatmap} ${out_dir}/Chr1-7_${snp}_sorted_EXISTS.txt ${out_dir}/SNP_BAC_Chr1-7_${snp}_filtered.txt "Chr1-7 ${snp}" Chr1-7_${snp} ${out_dir} exclude ${n_individuals} ${p_missing}
+    ${ld_heatmap} ${out_dir}/ld_data_prep/Chr1-7_${snp}_sorted_EXISTS.txt ${out_dir}/ld_data_prep/SNP_BAC_Chr1-7_${snp}_filtered.txt "Chr1-7 ${snp}" Chr1-7_${snp} ${out_dir}/ld_results exclude ${n_individuals} ${p_missing}
 }
 
 export -f ldHeatMap
@@ -192,37 +192,116 @@ GSS_LEN=${#SNP_LIST[@]}
 echo "Number of GWAS Significant SNPs in array:"
 echo ${GSS_LEN}
 
+
 #   Run program for each significant SNP in parallel
 echo "Extracting significant SNPs from 9k_masked_90idt.vcf file..."
-touch "${OUT_DIR}"/sig_snp_not_in_9k.txt
-parallel extractSNPs {} "${VCF_9K}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST[@]}"
+#   Check if out directory exists, if not make directory
+if [ ! -d "extracted_sig_snps_vcf" ]; then
+    mkdir "${OUT_DIR}"/extracted_sig_snps_vcf
+fi
+#   Running extractSNPs will output the following file:
+#       1) 9k_masked_90idt.vcf file(s) contains significant SNPs from GWAS analysis
+touch "${OUT_DIR}"/extracted_sig_snps_vcf/sig_snp_not_in_9k.txt
+parallel extractSNPs {} "${VCF_9K}" "${PREFIX}" "${OUT_DIR}"/extracted_sig_snps_vcf ::: "${SNP_LIST[@]}"
 echo "Done extracting significant SNPs."
 
+
 echo "Removing non-existent SNP from bash array..."
-DELETE=($(cat "${OUT_DIR}"/sig_snp_not_in_9k.txt))
-echo ${SNP_LIST[@]} | tr ' ' '\n' > "${OUT_DIR}"/tmp_snp_list.txt
-SNP_LIST_FILT=($(grep -vf "${OUT_DIR}"/sig_snp_not_in_9k.txt "${OUT_DIR}"/tmp_snp_list.txt))
-rm "${OUT_DIR}"/tmp_snp_list.txt
+#   Check if out directory exists, if not make directory
+if [ ! -d "temp" ]; then
+    mkdir "${OUT_DIR}"/temp
+fi
+#   Filter out and remove SNPs that don't exist from bash array
+DELETE=($(cat "${OUT_DIR}"/extracted_sig_snps_vcf/sig_snp_not_in_9k.txt))
+echo ${SNP_LIST[@]} | tr ' ' '\n' > "${OUT_DIR}"/temp/tmp_snp_list.txt
+SNP_LIST_FILT=($(grep -vf "${OUT_DIR}"/extracted_sig_snps_vcf/sig_snp_not_in_9k.txt "${OUT_DIR}"/temp/tmp_snp_list.txt))
+rm "${OUT_DIR}"/temp/tmp_snp_list.txt
 echo "Done removing non-existent SNP from bash array."
 echo "Number of GWAS Significant SNPs that exist in 9k_masked_90idt.vcf file:"
 echo ${#SNP_LIST_FILT[@]}
 
+
 echo "Extracting all SNPs that fall within window defined..."
-parallel extractWin {} "${EXTRACT_BED}" "${BP}" "${OUT_DIR}"/"${PREFIX}"_{}_9k_masked_90idt.vcf "${MAIN_VCF}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST_FILT[@]}"
+#   Check if out directory exists, if not make directory
+if [ ! -d "extracted_window" ]; then
+    mkdir "${OUT_DIR}"/extracted_window
+fi
+#   Running extractWin will output the following files:
+#       1) BED file(s) of n Kb upstream/downstream of SNP (should have 1 line within file)
+#       2) intersect.vcf file(s) that contains all SNPs that fall within BED file interval
+parallel extractWin {} "${EXTRACT_BED}" "${BP}" "${OUT_DIR}"/extracted_sig_snps_vcf/"${PREFIX}"_{}_9k_masked_90idt.vcf "${MAIN_VCF}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST_FILT[@]}"
 echo "Done extracting SNPs within window."
 
+
+#   Filter out intersect.vcf files that are empty
+LINE_COUNT=($(find "${OUT_DIR}"/extracted_window/*.vcf))
+DEL_ARRAY=()
+for i in "${LINE_COUNT[@]}"
+do
+    #   redirect filename into wc to get integer only
+    num_lines=$(wc -l < ${i})
+    #   If there is only 1 line in the file (the header line),
+    #   save the full filepath to file
+    if [ "${num_lines}" -eq "1" ]
+    then
+        echo ${i} >> "${OUT_DIR}"/extracted_window/empty_intersect_vcf.txt
+        #   still need to add line to remove SNP from SNP_LIST_FILT array
+    fi
+done
+
+
 echo "Converting VCF to fake Hudson table..."
+#   Check if out directory exists, if not make directory
+if [ ! -d "Htable" ]; then
+    mkdir "${OUT_DIR}"/Htable
+fi
+#   Running vcfToHtable will filter on MAF and output the following files:
+#       1) Htable_sorted.txt file(s) which is the VCF converted to fake Hudson table format
+#       2) Htable_sorted_transposed.txt file(s) which outputs SNPs as rows and individuals as columns
+#       3) Htable_sorted_transposed_noX.txt which removes "X" in marker names
 parallel vcfToHtable {} "${VCF_TO_HTABLE}" "${MAF}" "${TRANSPOSE_DATA}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST_FILT[@]}"
 echo "Done converting VCF to fake Hudson table."
 
+
 echo "Creating SNP_BAC.txt file..."
+#   Check if out directory exists, if not make directory
+if [ ! -d "snp_bac" ]; then
+    mkdir "${OUT_DIR}"/snp_bac
+fi
+#   Running makeSnpBac will output file(s) that contain 3 columns:
+#       1) Query_SNP which is the SNP name
+#       2) PhysPos which is the physical position
+#       3) Chr which is the chromosome
 parallel makeSnpBac {} "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST_FILT[@]}"
 echo "Done creating SNP_BAC.txt."
 
+
 echo "Preparing data for LD analysis..."
-parallel ldDataPrep {} "${LD_DATA_PREP}" "${EXTRACTION_SNPS}" "${OUT_DIR}"/"${PREFIX}"_{}_intersect_Htable_sorted_transposed_noX.txt "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST_FILT[@]}"
+#   Check if out directory exists, if not make directory
+if [ ! -d "ld_data_prep" ]; then
+    mkdir "${OUT_DIR}"/ld_data_prep
+fi
+#   Running ldDataPrep will output the following files:
+#       1) sorted_EXISTS.txt which contains SNPs that exist in our genotyping data
+#       2) NOT_EXISTS.txt is a list of SNPs that do not exist in our genotyping data but exist in our SNP_BAC.txt file
+#       3) SNP_BAC_filtered.txt has all non-existent SNPs removed so it doesn't cause errors when using LDheatmap command in R
+parallel ldDataPrep {} "${LD_DATA_PREP}" "${EXTRACTION_SNPS}" "${OUT_DIR}"/Htable/"${PREFIX}"_{}_intersect_Htable_sorted_transposed_noX.txt "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST_FILT[@]}"
 echo "Done preparing data."
 
+
 echo "Running LD analysis..."
+if [ ! -d "ld_results" ]; then
+    mkdir "${OUT_DIR}"/ld_results
+fi
+#   Running ldHeatMap will output the following files:
+#       1) SNP_info-empty_cols.csv is a list of samples with empty columns
+#       2) SNP_info-failed_snps.csv is a list of incompatible genotype columns
+#       3) SNP_info-missing_data_cols.csv is a list of SNPs that had greater than n% missing data
+#           (missing data threshold is defined under user provided arguments section)
+#       4) compatibleSnps.txt is a matrix of SNPs that will be used for LDheatmap analyses
+#       5) HM_r2.pdf is a heatmap for r2 calculation
+#       6) HM_Dprime.pdf is a heatmap for D' calculation
+#       7) HM_r2.txt is a matrix of r2 values used in heatmap
+#       8) HM_Dprime.txt is a matrix of D' values used in heatmap
 parallel ldHeatMap {} "${LD_HEATMAP}" "${N_INDIVIDUALS}" "${P_MISSING}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST_FILT[@]}"
 echo "Done."
