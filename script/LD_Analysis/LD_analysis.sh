@@ -192,13 +192,15 @@ GSS_LEN=${#SNP_LIST[@]}
 echo "Number of GWAS Significant SNPs in array:"
 echo ${GSS_LEN}
 
+#   Check if out directory exists, if not make it
+if [ ! -d "${OUT_DIR}" ]; then
+    mkdir "${OUT_DIR}"
+fi
 
-#   Go into out directory to check if there is existing sub directory
-cd "${OUT_DIR}"
 #   Run program for each significant SNP in parallel
 echo "Extracting significant SNPs from 9k_masked_90idt.vcf file..."
 #   Check if out directory exists, if not make directory
-if [ ! -d "extracted_sig_snps_vcf" ]; then
+if [ ! -d "${OUT_DIR}/extracted_sig_snps_vcf" ]; then
     mkdir "${OUT_DIR}"/extracted_sig_snps_vcf
 fi
 #   Running extractSNPs will output the following file:
@@ -210,7 +212,7 @@ echo "Done extracting significant SNPs."
 
 echo "Removing non-existent SNP from bash array..."
 #   Check if out directory exists, if not make directory
-if [ ! -d "temp" ]; then
+if [ ! -d "${OUT_DIR}/temp" ]; then
     mkdir "${OUT_DIR}"/temp
 fi
 #   Filter out and remove SNPs that don't exist from bash array
@@ -225,7 +227,7 @@ echo ${#SNP_LIST_FILT[@]}
 
 echo "Extracting all SNPs that fall within window defined..."
 #   Check if out directory exists, if not make directory
-if [ ! -d "extracted_window" ]; then
+if [ ! -d "${OUT_DIR}/extracted_window" ]; then
     mkdir "${OUT_DIR}"/extracted_window
 fi
 #   Running extractWin will output the following files:
@@ -254,7 +256,7 @@ done
 
 echo "Converting VCF to fake Hudson table..."
 #   Check if out directory exists, if not make directory
-if [ ! -d "Htable" ]; then
+if [ ! -d "${OUT_DIR}/Htable" ]; then
     mkdir "${OUT_DIR}"/Htable
 fi
 #   Running vcfToHtable will filter on MAF and output the following files:
@@ -267,7 +269,7 @@ echo "Done converting VCF to fake Hudson table."
 
 echo "Creating SNP_BAC.txt file..."
 #   Check if out directory exists, if not make directory
-if [ ! -d "snp_bac" ]; then
+if [ ! -d "${OUT_DIR}/snp_bac" ]; then
     mkdir "${OUT_DIR}"/snp_bac
 fi
 #   Running makeSnpBac will output file(s) that contain 3 columns:
@@ -280,7 +282,7 @@ echo "Done creating SNP_BAC.txt."
 
 echo "Preparing data for LD analysis..."
 #   Check if out directory exists, if not make directory
-if [ ! -d "ld_data_prep" ]; then
+if [ ! -d "${OUT_DIR}/ld_data_prep" ]; then
     mkdir "${OUT_DIR}"/ld_data_prep
 fi
 #   Running ldDataPrep will output the following files:
@@ -292,7 +294,7 @@ echo "Done preparing data."
 
 
 echo "Running LD analysis..."
-if [ ! -d "ld_results" ]; then
+if [ ! -d "${OUT_DIR}/ld_results" ]; then
     mkdir "${OUT_DIR}"/ld_results
 fi
 #   Running ldHeatMap will output the following files:
