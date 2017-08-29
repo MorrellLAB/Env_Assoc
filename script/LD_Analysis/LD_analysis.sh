@@ -193,6 +193,8 @@ echo "Number of GWAS Significant SNPs in array:"
 echo ${GSS_LEN}
 
 
+#   Go into out directory to check if there is existing sub directory
+cd "${OUT_DIR}"
 #   Run program for each significant SNP in parallel
 echo "Extracting significant SNPs from 9k_masked_90idt.vcf file..."
 #   Check if out directory exists, if not make directory
