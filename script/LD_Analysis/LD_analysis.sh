@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#PBS -l mem=22gb,nodes=1:ppn=16,walltime=4:00:00
+#PBS -l mem=22gb,nodes=1:ppn=16,walltime=2:00:00
 #PBS -m abe
 #PBS -M liux1299@umn.edu
 #PBS -q lab
@@ -200,9 +200,7 @@ fi
 #   Run program for each significant SNP in parallel
 echo "Extracting significant SNPs from 9k_masked_90idt.vcf file..."
 #   Check if out directory exists, if not make directory
-if [ ! -d "${OUT_DIR}/extracted_sig_snps_vcf" ]; then
-    mkdir "${OUT_DIR}"/extracted_sig_snps_vcf
-fi
+mkdir -p "${OUT_DIR}/extracted_sig_snps_vcf" "${OUT_DIR}/extracted_sig_snps_vcf"
 #   Running extractSNPs will output the following file:
 #       1) 9k_masked_90idt.vcf file(s) contains significant SNPs from GWAS analysis
 touch "${OUT_DIR}"/extracted_sig_snps_vcf/sig_snp_not_in_9k.txt
@@ -212,9 +210,7 @@ echo "Done extracting significant SNPs."
 
 echo "Removing non-existent SNP from bash array..."
 #   Check if out directory exists, if not make directory
-if [ ! -d "${OUT_DIR}/temp" ]; then
-    mkdir "${OUT_DIR}"/temp
-fi
+mkdir -p "${OUT_DIR}/temp" "${OUT_DIR}/temp"
 #   Filter out and remove SNPs that don't exist from bash array
 DELETE=($(cat "${OUT_DIR}"/extracted_sig_snps_vcf/sig_snp_not_in_9k.txt))
 echo ${SNP_LIST[@]} | tr ' ' '\n' > "${OUT_DIR}"/temp/tmp_snp_list.txt
@@ -227,13 +223,11 @@ echo ${#SNP_LIST_FILT[@]}
 
 echo "Extracting all SNPs that fall within window defined..."
 #   Check if out directory exists, if not make directory
-if [ ! -d "${OUT_DIR}/extracted_window" ]; then
-    mkdir "${OUT_DIR}"/extracted_window
-fi
+mkdir -p "${OUT_DIR}/extracted_window" "${OUT_DIR}/extracted_window"
 #   Running extractWin will output the following files:
 #       1) BED file(s) of n Kb upstream/downstream of SNP (should have 1 line within file)
 #       2) intersect.vcf file(s) that contains all SNPs that fall within BED file interval
-parallel extractWin {} "${EXTRACT_BED}" "${BP}" "${OUT_DIR}"/extracted_sig_snps_vcf/"${PREFIX}"_{}_9k_masked_90idt.vcf "${MAIN_VCF}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST_FILT[@]}"
+parallel extractWin {} "${EXTRACT_BED}" "${BP}" "${OUT_DIR}"/extracted_sig_snps_vcf/"${PREFIX}"_{}_9k_masked_90idt.vcf "${MAIN_VCF}" "${PREFIX}" "${OUT_DIR}"/extracted_window ::: "${SNP_LIST_FILT[@]}"
 echo "Done extracting SNPs within window."
 
 
@@ -256,9 +250,7 @@ done
 
 echo "Converting VCF to fake Hudson table..."
 #   Check if out directory exists, if not make directory
-if [ ! -d "${OUT_DIR}/Htable" ]; then
-    mkdir "${OUT_DIR}"/Htable
-fi
+mkdir -p "${OUT_DIR}/Htable" "${OUT_DIR}/Htable"
 #   Running vcfToHtable will filter on MAF and output the following files:
 #       1) Htable_sorted.txt file(s) which is the VCF converted to fake Hudson table format
 #       2) Htable_sorted_transposed.txt file(s) which outputs SNPs as rows and individuals as columns
@@ -269,9 +261,7 @@ echo "Done converting VCF to fake Hudson table."
 
 echo "Creating SNP_BAC.txt file..."
 #   Check if out directory exists, if not make directory
-if [ ! -d "${OUT_DIR}/snp_bac" ]; then
-    mkdir "${OUT_DIR}"/snp_bac
-fi
+mkdir -p "${OUT_DIR}/snp_bac" "${OUT_DIR}/snp_bac"
 #   Running makeSnpBac will output file(s) that contain 3 columns:
 #       1) Query_SNP which is the SNP name
 #       2) PhysPos which is the physical position
@@ -282,9 +272,7 @@ echo "Done creating SNP_BAC.txt."
 
 echo "Preparing data for LD analysis..."
 #   Check if out directory exists, if not make directory
-if [ ! -d "${OUT_DIR}/ld_data_prep" ]; then
-    mkdir "${OUT_DIR}"/ld_data_prep
-fi
+mkdir -p "${OUT_DIR}/ld_data_prep" "${OUT_DIR}/ld_data_prep"
 #   Running ldDataPrep will output the following files:
 #       1) sorted_EXISTS.txt which contains SNPs that exist in our genotyping data
 #       2) NOT_EXISTS.txt is a list of SNPs that do not exist in our genotyping data but exist in our SNP_BAC.txt file
@@ -294,9 +282,7 @@ echo "Done preparing data."
 
 
 echo "Running LD analysis..."
-if [ ! -d "${OUT_DIR}/ld_results" ]; then
-    mkdir "${OUT_DIR}"/ld_results
-fi
+mkdir -p "${OUT_DIR}/ld_results" "${OUT_DIR}/ld_results"
 #   Running ldHeatMap will output the following files:
 #       1) SNP_info-empty_cols.csv is a list of samples with empty columns
 #       2) SNP_info-failed_snps.csv is a list of incompatible genotype columns
