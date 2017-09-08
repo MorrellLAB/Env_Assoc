@@ -7,11 +7,83 @@ readCsv <- function(filename) {
         header = TRUE,
         na.strings = "NA"
     )
+    
+    #   In Chr_2016 column, replace "chr" with nothing and replace "H" with nothing
+    data.file$Chr_2016 <- sub("chr", "", data.file$Chr_2016)
+    data.file$Chr_2016 <- sub("H", "", data.file$Chr_2016)
+    
+    #   Pull out columns of interest
+    gwas.data <- data.frame(
+        SNP = data.file$SNP,
+        PHENO = data.file$Phenotype,
+        CHR = data.file$Chr_2016,
+        BP = data.file$PhysPos_2016,
+        P = data.file$P.value
+    )
+    return(gwas.data)
+}
+
+readGAPIT <- function(filename) {
+    data.file <- read.csv(
+        file = filename,
+        header = TRUE,
+        na.strings = "NA"
+    )
+    #   extract phenotype from filename
+    rm.gapit <- strsplit(basename(path = filename), split = "GAPIT..")
+    pheno.names <- unlist(strsplit(rm.gapit[[1]][2], split = ".GWAS.Results.csv"))
+    data.file["pheno"] <- pheno.names
     return(data.file)
 }
 
+chrTicks <- function(chr1.whole, chr2.whole, chr3.whole, chr4.whole, chr5.whole, chr6.whole, chr7.whole) {
+    #   Row 1 is the scaled position of the center of the chromosome
+    #   Row 2 is the scaled position of the end of the chromosome
+    chr1.t <- c(chr1.whole/2, chr1.whole)
+    chr2.t <- c(chr2.whole/2 + chr1.whole, chr1.whole + chr2.whole)
+    chr3.t <- c(chr3.whole/2 + chr1.whole + chr2.whole, chr1.whole + chr2.whole + chr3.whole)
+    chr4.t <- c(chr4.whole/2 + chr1.whole + chr2.whole + chr3.whole, chr4.whole + chr1.whole + chr2.whole + chr3.whole)
+    chr5.t <- c(chr5.whole/2 + chr1.whole + chr2.whole + chr3.whole + chr4.whole, chr5.whole + chr1.whole + chr2.whole + chr3.whole + chr4.whole)
+    chr6.t <- c(chr6.whole/2 + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole, chr6.whole + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole)
+    chr7.t <- c(chr7.whole/2 + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole + chr6.whole, chr7.whole + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole + chr6.whole)
+    ticks <- cbind(chr1.t, chr2.t, chr3.t, chr4.t, chr5.t, chr6.t, chr7.t)
+    return(ticks)
+}
+
+scalePsuedo <- function(df, chr1.whole, chr2.whole, chr3.whole, chr4.whole, chr5.whole, chr6.whole, chr7.whole) {
+    #   Subset chromosomes
+    df.chr1 <- subset(df, subset = df$CHR == 1)
+    df.chr2 <- subset(df, subset = df$CHR == 2)
+    df.chr3 <- subset(df, subset = df$CHR == 3)
+    df.chr4 <- subset(df, subset = df$CHR == 4)
+    df.chr5 <- subset(df, subset = df$CHR == 5)
+    df.chr6 <- subset(df, subset = df$CHR == 6)
+    df.chr7 <- subset(df, subset = df$CHR == 7)
+    
+    #   Add new column of scaled positions for plotting
+    df.chr1["scaled.BP"] <- df.chr1$BP
+    df.chr2["scaled.BP"] <- df.chr2$BP + chr1.whole
+    df.chr3["scaled.BP"] <- df.chr3$BP + chr1.whole + chr2.whole
+    df.chr4["scaled.BP"] <- df.chr4$BP + chr1.whole + chr2.whole + chr3.whole
+    df.chr5["scaled.BP"] <- df.chr5$BP + chr1.whole + chr2.whole + chr3.whole + chr4.whole
+    df.chr6["scaled.BP"] <- df.chr6$BP + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole
+    df.chr7["scaled.BP"] <- df.chr7$BP + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole + chr6.whole
+    
+    #   Combine data frames
+    d.all <- rbind(
+        df.chr1[order(df.chr1$scaled.BP), ],
+        df.chr2[order(df.chr2$scaled.BP), ],
+        df.chr3[order(df.chr3$scaled.BP), ],
+        df.chr4[order(df.chr4$scaled.BP), ],
+        df.chr5[order(df.chr5$scaled.BP), ],
+        df.chr6[order(df.chr6$scaled.BP), ],
+        df.chr7[order(df.chr7$scaled.BP), ]
+    )
+    return(d.all)
+}
+
 #   Plot function
-plot.manhattan <- function(x.val, y.val, color.pheno, p.sym, plot.title) {
+plot.manhattan <- function(x.val, y.val, color.pheno, p.sym, plot.title, ticks) {
     p <- plot(
         x = x.val,
         y = y.val,
@@ -54,19 +126,18 @@ plot.manhattan <- function(x.val, y.val, color.pheno, p.sym, plot.title) {
 }
 
 main <- function() {
-    #   Set path to file
+    #   Set path to files and directories
+    #   This file contains only the significant SNPs
     gwas.filepath <- "/Users/chaochih/Dropbox/Landrace_Environmental_Association/Analyses/GWAS-GAPIT/compiled.5e_4.0.01.v2_physPos.csv"
-    gwas.data <- readCsv(filename = gwas.filepath)
-    #   In Chr_2016 column, replace "chr" with nothing and replace "H" with nothing
-    gwas.data$Chr_2016 <- sub("chr", "", gwas.data$Chr_2016)
-    gwas.data$Chr_2016 <- sub("H", "", gwas.data$Chr_2016)
-    #   Pull out columns of interest
-    gwas.df <- data.frame(
-        SNP = gwas.data$SNP,
-        PHENO = gwas.data$Phenotype,
-        CHR = gwas.data$Chr_2016,
-        BP = gwas.data$PhysPos_2016,
-        P = gwas.data$P.value
+    #   These files contain the full dataset including the significant SNPs for each bioclim variable
+    full.d.fp <- list.files(path = "/Users/chaochih/Downloads/GWAS.Results 2", pattern = ".csv", full.names = TRUE)
+
+    #   Read in GWAS significant SNPs data
+    gwas.df <- readCsv(filename = gwas.filepath)
+    #   Read in list of all GWAS data files
+    full.d <- lapply(
+        X = full.d.fp,
+        FUN = readCsv
     )
 
     #   Ignore the following, need to shorten chunks of hardcoded code
@@ -86,59 +157,26 @@ main <- function() {
     chr7H_part1 <- 325797516
     chr7H_part2 <- 331426484
     #   Whole chromosome size
-    chr1.whole <- chr1H_part1 + chr1H_part2
-    chr2.whole <- chr2H_part1 + chr2H_part2
-    chr3.whole <- chr3H_part1 + chr3H_part2
-    chr4.whole <- chr4H_part1 + chr4H_part2
-    chr5.whole <- chr5H_part1 + chr5H_part2
-    chr6.whole <- chr6H_part1 + chr6H_part2
-    chr7.whole <- chr7H_part1 + chr7H_part2
-    #   Define ticks
-    #   Row 1 is the scaled position of the center of the chromosome
-    #   Row 2 is the scaled position of the end of the chromosome
-    chr1.t <- c(chr1.whole/2, chr1.whole)
-    chr2.t <- c(chr2.whole/2 + chr1.whole, chr1.whole + chr2.whole)
-    chr3.t <- c(chr3.whole/2 + chr1.whole + chr2.whole, chr1.whole + chr2.whole + chr3.whole)
-    chr4.t <- c(chr4.whole/2 + chr1.whole + chr2.whole + chr3.whole, chr4.whole + chr1.whole + chr2.whole + chr3.whole)
-    chr5.t <- c(chr5.whole/2 + chr1.whole + chr2.whole + chr3.whole + chr4.whole, chr5.whole + chr1.whole + chr2.whole + chr3.whole + chr4.whole)
-    chr6.t <- c(chr6.whole/2 + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole, chr6.whole + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole)
-    chr7.t <- c(chr7.whole/2 + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole + chr6.whole, chr7.whole + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole + chr6.whole)
-    ticks <- cbind(chr1.t, chr2.t, chr3.t, chr4.t, chr5.t, chr6.t, chr7.t)
+    chr1.w <- chr1H_part1 + chr1H_part2
+    chr2.w <- chr2H_part1 + chr2H_part2
+    chr3.w <- chr3H_part1 + chr3H_part2
+    chr4.w <- chr4H_part1 + chr4H_part2
+    chr5.w <- chr5H_part1 + chr5H_part2
+    chr6.w <- chr6H_part1 + chr6H_part2
+    chr7.w <- chr7H_part1 + chr7H_part2
 
-    #   Subset chromosomes
-    gwas.df.chr1 <- subset(gwas.df, subset = gwas.df$CHR == 1)
-    gwas.df.chr2 <- subset(gwas.df, subset = gwas.df$CHR == 2)
-    gwas.df.chr3 <- subset(gwas.df, subset = gwas.df$CHR == 3)
-    gwas.df.chr4 <- subset(gwas.df, subset = gwas.df$CHR == 4)
-    gwas.df.chr5 <- subset(gwas.df, subset = gwas.df$CHR == 5)
-    gwas.df.chr6 <- subset(gwas.df, subset = gwas.df$CHR == 6)
-    gwas.df.chr7 <- subset(gwas.df, subset = gwas.df$CHR == 7)
-    #   Add new column of scaled positions for plotting
-    gwas.df.chr1["scaled.BP"] <- gwas.df.chr1$BP
-    gwas.df.chr2["scaled.BP"] <- gwas.df.chr2$BP + chr1.whole
-    gwas.df.chr3["scaled.BP"] <- gwas.df.chr3$BP + chr1.whole + chr2.whole
-    gwas.df.chr4["scaled.BP"] <- gwas.df.chr4$BP + chr1.whole + chr2.whole + chr3.whole
-    gwas.df.chr5["scaled.BP"] <- gwas.df.chr5$BP + chr1.whole + chr2.whole + chr3.whole + chr4.whole
-    gwas.df.chr6["scaled.BP"] <- gwas.df.chr6$BP + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole
-    gwas.df.chr7["scaled.BP"] <- gwas.df.chr7$BP + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole + chr6.whole
-    #   Combine data frames
-    d.all <- rbind(
-        gwas.df.chr1[order(gwas.df.chr1$scaled.BP), ],
-        gwas.df.chr2[order(gwas.df.chr2$scaled.BP), ],
-        gwas.df.chr3[order(gwas.df.chr3$scaled.BP), ],
-        gwas.df.chr4[order(gwas.df.chr4$scaled.BP), ],
-        gwas.df.chr5[order(gwas.df.chr5$scaled.BP), ],
-        gwas.df.chr6[order(gwas.df.chr6$scaled.BP), ],
-        gwas.df.chr7[order(gwas.df.chr7$scaled.BP), ]
-    )
-
-    #   Define chr5 inverted region 1
-    c5.inv1.start <- 126746171 + chr1.whole + chr2.whole + chr3.whole + chr4.whole
-    c5.inv1.end <- 305528375 + chr1.whole + chr2.whole + chr3.whole + chr4.whole
-    c5.inv2.start <- 598975647 + chr1.whole + chr2.whole + chr3.whole + chr4.whole
-    c5.inv2.end <- 609073831 + chr1.whole + chr2.whole + chr3.whole + chr4.whole
-    c2.inv.start <- 267303750 + chr1.whole
-    c2.inv.end <- 508786535 + chr1.whole
+    #   Define chr2 and chr5 inverted regions
+    c2.inv.start <- 267303750 + chr1.w
+    c2.inv.end <- 508786535 + chr1.w
+    c5.inv1.start <- 126746171 + chr1.w + chr2.w + chr3.w + chr4.w
+    c5.inv1.end <- 305528375 + chr1.w + chr2.w + chr3.w + chr4.w
+    c5.inv2.start <- 598975647 + chr1.w + chr2.w + chr3.w + chr4.w
+    c5.inv2.end <- 609073831 + chr1.w + chr2.w + chr3.w + chr4.w
+    
+    #   Generate ticks used for plots
+    ticks <- chrTicks(chr1.whole = chr1.w, chr2.whole = chr2.w, chr3.whole = chr3.w, chr4.whole = chr4.w, chr5.whole = chr5.w, chr6.whole = chr6.w, chr7.whole = chr7.w)
+    
+    #   Scale physical positions in data for accurate representation in plots
 
     #   Generate Plots
     #   Bio1, 6, and 11
@@ -164,7 +202,7 @@ main <- function() {
         p.sym = 17,
         plot.title = "GWAS BIO11 - Mean Temperature of Coldest Quarter"
     )
-    
+
     par(mfrow = c(4,1))
     #   Bio2, 3, 4, and 5
     plot.manhattan(
@@ -195,7 +233,7 @@ main <- function() {
         p.sym = 20,
         plot.title = "GWAS BIO5 - Max Temperature of Warmest Month"
     )
-    
+
     #   Bio7, 8, 9, and 10
     plot.manhattan(
         x.val = d.all$scaled.BP[d.all$PHENO == "bio7"],
@@ -225,7 +263,7 @@ main <- function() {
         p.sym = 20,
         plot.title = "GWAS BIO10 - Mean Temperature of Warmest Quarter"
     )
-    
+
     #   Bio12, 13, 14, and 15
     plot.manhattan(
         x.val = d.all$scaled.BP[d.all$PHENO == "bio12"],
@@ -266,8 +304,8 @@ main <- function() {
         p.sym = 20,
         plot.title = "GWAS BIO15 - Precipitation Seasonality (Coefficient of Variation)"
     )
-    
-    
+
+
     #   Bio16, 17, 18, and 19
     plot.manhattan(
         x.val = d.all$scaled.BP[d.all$PHENO == "bio16"],
@@ -308,7 +346,7 @@ main <- function() {
         p.sym = 20,
         plot.title = "GWAS BIO19 - Precipitation of Coldest Quarter"
     )
-    
+
     #   Latitude, longitude, and altitude
     par(mfrow = c(3, 1))
     plot.manhattan(
@@ -332,7 +370,7 @@ main <- function() {
         p.sym = 20,
         plot.title = "GWAS - Altitude"
     )
-    
+
     #   IC1, 2, and 3
     plot.manhattan(
         x.val = d.all$scaled.BP[d.all$PHENO == "IC1"],
