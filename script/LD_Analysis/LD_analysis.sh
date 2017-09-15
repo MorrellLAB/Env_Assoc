@@ -193,9 +193,7 @@ echo "Number of GWAS Significant SNPs in array:"
 echo ${GSS_LEN}
 
 #   Check if out directory exists, if not make it
-if [ ! -d "${OUT_DIR}" ]; then
-    mkdir "${OUT_DIR}"
-fi
+mkdir -p "${OUT_DIR}" "${OUT_DIR}"
 
 #   Run program for each significant SNP in parallel
 echo "Extracting significant SNPs from 9k_masked_90idt.vcf file..."
