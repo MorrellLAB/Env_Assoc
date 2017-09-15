@@ -195,12 +195,15 @@ echo ${GSS_LEN}
 #   Check if out directory exists, if not make it
 mkdir -p "${OUT_DIR}" "${OUT_DIR}"
 
-#   Run program for each significant SNP in parallel
 echo "Extracting significant SNPs from 9k_masked_90idt.vcf file..."
 #   Check if out directory exists, if not make directory
 mkdir -p "${OUT_DIR}/extracted_sig_snps_vcf" "${OUT_DIR}/extracted_sig_snps_vcf"
 #   Running extractSNPs will output the following file:
-#       1) 9k_masked_90idt.vcf file(s) contains significant SNPs from GWAS analysis
+#       1) prefix_9k_masked_90idt.vcf file(s) contains significant SNPs from GWAS analysis
+#       2) sig_snp_not_in9k.txt file contains significant SNPs that don't exist in the sorted_all_9k_masked_90idt.vcf file
+#   We start with a list of GWAS significant SNP names,
+#   pull those SNPs from the sorted_all_9k_masked_90idt.vcf file
+#   to create VCF files containing 1 significant SNP/VCF file
 touch "${OUT_DIR}"/extracted_sig_snps_vcf/sig_snp_not_in_9k.txt
 parallel extractSNPs {} "${VCF_9K}" "${PREFIX}" "${OUT_DIR}"/extracted_sig_snps_vcf ::: "${SNP_LIST[@]}"
 echo "Done extracting significant SNPs."
@@ -225,11 +228,16 @@ mkdir -p "${OUT_DIR}/extracted_window" "${OUT_DIR}/extracted_window"
 #   Running extractWin will output the following files:
 #       1) BED file(s) of n Kb upstream/downstream of SNP (should have 1 line within file)
 #       2) intersect.vcf file(s) that contains all SNPs that fall within BED file interval
+#   We start with our prefix_9k_masked_90idt.vcf files
+#   and create a BED file interval n bp upstream/downstream of significant SNP.
+#   Then we use vcfintersect for BED file we created and our VCF file of
+#   interest (i.e. OnlyLandrace_biallelic_Barley_NAM_Parents_Final_renamed.vcf)
+#   to pull down all SNPs that fall within our BED file interval.
 parallel extractWin {} "${EXTRACT_BED}" "${BP}" "${OUT_DIR}"/extracted_sig_snps_vcf/"${PREFIX}"_{}_9k_masked_90idt.vcf "${MAIN_VCF}" "${PREFIX}" "${OUT_DIR}"/extracted_window ::: "${SNP_LIST_FILT[@]}"
 echo "Done extracting SNPs within window."
 
 
-#   Filter out intersect.vcf files that are empty
+#   Filter out intersect.vcf files that are empty by removing SNP name from bash array
 LINE_COUNT=($(find "${OUT_DIR}"/extracted_window/*.vcf))
 DEL_ARRAY=()
 for i in "${LINE_COUNT[@]}"
