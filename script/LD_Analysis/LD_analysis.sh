@@ -238,9 +238,9 @@ echo "Done extracting SNPs within window."
 
 
 #   Filter out intersect.vcf files that are empty by removing SNP name from bash array
-LINE_COUNT=($(find "${OUT_DIR}"/extracted_window/*.vcf))
-DEL_ARRAY=()
-for i in "${LINE_COUNT[@]}"
+INTERSECT_VCF=($(find "${OUT_DIR}"/extracted_window/*.vcf))
+SNP_INT_VCF=()
+for i in "${INTERSECT_VCF[@]}"
 do
     #   redirect filename into wc to get integer only
     num_lines=$(wc -l < ${i})
@@ -248,8 +248,16 @@ do
     #   save the full filepath to file
     if [ "${num_lines}" -eq "1" ]
     then
-        echo ${i} >> "${OUT_DIR}"/extracted_window/empty_intersect_vcf.txt
-        #   still need to add line to remove SNP from SNP_LIST_FILT array
+        basename ${i} >> "${OUT_DIR}"/extracted_window/empty_intersect_vcf.txt
+    else
+        #   Extract only the SNP name from filename using sed substitution
+        #   to remove prefix and suffix.
+        #   This works because ${PREFIX} is defined as variable at top of script
+        #   and extractWin function uses ${PREFIX} in output file names.
+        #   The suffix of extractWin output files is always "_intersect.vcf"
+        SNP=$(basename ${i} | sed -e s/^${PREFIX}_// -e s/_intersect.vcf//)
+        #   Add SNPs we want to use in downstream functions to new array
+        SNP_INT_VCF+=(${SNP})
     fi
 done
 
@@ -261,7 +269,10 @@ mkdir -p "${OUT_DIR}/Htable" "${OUT_DIR}/Htable"
 #       1) Htable_sorted.txt file(s) which is the VCF converted to fake Hudson table format
 #       2) Htable_sorted_transposed.txt file(s) which outputs SNPs as rows and individuals as columns
 #       3) Htable_sorted_transposed_noX.txt which removes "X" in marker names
-parallel vcfToHtable {} "${VCF_TO_HTABLE}" "${MAF}" "${TRANSPOSE_DATA}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST_FILT[@]}"
+#   We start with our intersect.vcf file(s) and convert them to a fake Hudson table format
+#   and filter based on MAF (specified above under user provided argument).
+#   The output will have marker names (i.e. 11_20909) as columns and sample naems (i.e. WBDC-025) as row names.
+parallel vcfToHtable {} "${VCF_TO_HTABLE}" "${MAF}" "${TRANSPOSE_DATA}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_INT_VCF[@]}"
 echo "Done converting VCF to fake Hudson table."
 
 
@@ -272,7 +283,8 @@ mkdir -p "${OUT_DIR}/snp_bac" "${OUT_DIR}/snp_bac"
 #       1) Query_SNP which is the SNP name
 #       2) PhysPos which is the physical position
 #       3) Chr which is the chromosome
-parallel makeSnpBac {} "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST_FILT[@]}"
+#   Output files are sorted by physical position (column 2)
+parallel makeSnpBac {} "${PREFIX}" "${OUT_DIR}" ::: "${SNP_INT_VCF[@]}"
 echo "Done creating SNP_BAC.txt."
 
 
@@ -283,7 +295,7 @@ mkdir -p "${OUT_DIR}/ld_data_prep" "${OUT_DIR}/ld_data_prep"
 #       1) sorted_EXISTS.txt which contains SNPs that exist in our genotyping data
 #       2) NOT_EXISTS.txt is a list of SNPs that do not exist in our genotyping data but exist in our SNP_BAC.txt file
 #       3) SNP_BAC_filtered.txt has all non-existent SNPs removed so it doesn't cause errors when using LDheatmap command in R
-parallel ldDataPrep {} "${LD_DATA_PREP}" "${EXTRACTION_SNPS}" "${OUT_DIR}"/Htable/"${PREFIX}"_{}_intersect_Htable_sorted_transposed_noX.txt "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST_FILT[@]}"
+parallel ldDataPrep {} "${LD_DATA_PREP}" "${EXTRACTION_SNPS}" "${OUT_DIR}"/Htable/"${PREFIX}"_{}_intersect_Htable_sorted_transposed_noX.txt "${PREFIX}" "${OUT_DIR}" ::: "${SNP_INT_VCF[@]}"
 echo "Done preparing data."
 
 
@@ -299,5 +311,5 @@ mkdir -p "${OUT_DIR}/ld_results" "${OUT_DIR}/ld_results"
 #       6) HM_Dprime.pdf is a heatmap for D' calculation
 #       7) HM_r2.txt is a matrix of r2 values used in heatmap
 #       8) HM_Dprime.txt is a matrix of D' values used in heatmap
-parallel ldHeatMap {} "${LD_HEATMAP}" "${N_INDIVIDUALS}" "${P_MISSING}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_LIST_FILT[@]}"
+parallel ldHeatMap {} "${LD_HEATMAP}" "${N_INDIVIDUALS}" "${P_MISSING}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_INT_VCF[@]}"
 echo "Done."
