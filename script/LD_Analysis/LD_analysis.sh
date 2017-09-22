@@ -249,6 +249,7 @@ do
     if [ "${num_lines}" -eq "1" ]
     then
         basename ${i} >> "${OUT_DIR}"/extracted_window/empty_intersect_vcf.txt
+        basename ${i} | sed -e s/^${PREFIX}_// -e s/_intersect.vcf// >> "${OUT_DIR}"/extracted_window/empty_intersect_vcf_SNPnamesOnly.txt
     else
         #   Extract only the SNP name from filename using sed substitution
         #   to remove prefix and suffix.
