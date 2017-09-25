@@ -14,10 +14,10 @@ module load vcflib_ML/1.0.0
 module load parallel
 
 #   Usage message:
-#   This script performs LD analysis on 100Kb windows around significant SNPs from Environmental
-#   Associations project GWAS analysis. This script pulls together all parts of the analysis
-#   performed by multiple scripts.
-#   Please fill out user provided argument fields and submit script as job.
+#       This script performs LD analysis on 100Kb windows around significant SNPs from Environmental
+#       Associations project GWAS analysis. This script pulls together all parts of the analysis
+#       performed by multiple scripts.
+#       Please fill out user provided argument fields and submit script as job.
 
 
 #   User provided arguments
@@ -33,15 +33,15 @@ VCF_9K=/home/morrellp/liux1299/GitHub/9k_BOPA_SNP/BOPA_9k_vcf_Morex_refv1/sorted
 #   VCF file from dataset we are interested in (i.e. OnlyLandrace_Barley_NAM_Parents_Final_renamed.vcf)
 MAIN_VCF=/panfs/roc/groups/9/morrellp/shared/Projects/Barley_NAM_Parents/SNP_calling/Variants/New_Filtering/OnlyLandrace_biallelic_Barley_NAM_Parents_Final_renamed.vcf
 #   window size (bp) upstream/downstream of SNP for extract_BED.R
-BP=50000
+BP=100000
 #   Minor Allele Frequency threshold to use for VCF to Htable conversion (i.e. 0.01 for 1% MAF)
 MAF=0.01
-#   Missing data threshold to use for filtering (i.e. 0.15 for 15% MAF)
+#   Missing data threshold to use for filtering (i.e. 0.15 for 15% missing data)
 P_MISSING=0.15
 #   What prefix do we want to use for our output files?
-PREFIX=ld_Barley_NAM
+PREFIX=ld_Barley_NAM_200Kb
 #   Where is our output directory?
-OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/gwas_sig_snps
+OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/gwas_sig_snps_200Kb
 
 #   Extract GWAS significant SNPs from 9k_masked_90idt.vcf
 function extractSNPs() {
