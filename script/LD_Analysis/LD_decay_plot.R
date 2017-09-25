@@ -66,7 +66,7 @@ r2.reformat <- function(df, snp.name) {
             x = colnames(target.row),
             replacement = ""
         ),
-        r2 = as.numeric(target.row[1, ]) # r2 values
+        r2 = as.numeric(target.row[1, ], fill = TRUE) # r2 values
     )
     return(df)
 }
@@ -88,35 +88,58 @@ calcInterDist <- function(ldData, t.snp) {
     #   Extract physical position for target SNP from LD data
     tsnpPos <- ldData[ldData$SNPname == t.snp, 4]
     #   Calculate distances between target SNP and all other SNPs
-    #   Add new column of distances
-    merged.df["InterDist"] <- -(tsnpPos - merged.df$PhysPos)
+    #   Add new column of distances in bp
+    ldData["InterDist"] <- -(tsnpPos - ldData$PhysPos)
+    return(ldData)
 }
 
-plotLDdecay <- function(ldData, t.snp) {
-    # superscript 
+plotLDdecay <- function(ldData, t.snp, windowSize, outputDir) {
+    #   Set our x axis limits
+    winStart <- -(windowSize/2)
+    winEnd <- windowSize/2
+    #   Make our LD decay plot
+    pdf(file = paste0(outputDir, "/", ".pdf"))
     plot(
-        x = merged.df$InterDist,
-        y = merged.df$r2,
-        cex = 0.75,
-        xlab = "Distance (bp)",
-        ylab = expression(paste("LD estimate (", "r"^"2", ")"))
+        #   Skip first row because it is self comparison and is filled with NA value
+        x = tail(ldData$InterDist, -1),
+        y = tail(ldData$r2, -1),
+        xlim = c(winStart, winEnd),
+        ylim = c(0, 1.0),
+        xaxt = "n",
+        cex = 0.8,
+        xlab = "Physical Distance (bp)",
+        ylab = expression(paste("LD estimate (", "r"^"2", ")")),
+        main = paste("LD decay - ", targetSNP)
     )
-    abline(v = 0)
+    axis(side = 1, at = seq(from = winStart, to = winEnd, by = 10000), tick = TRUE)
+    abline(v = 0, lty = 3, lwd = 1.5)
+    #   Turn off graphics
+    dev.off()
 }
 
 main <- function() {
     #   Take command line arguments
     args <- commandArgs(trailingOnly = TRUE)
+    #   User provided command line arguments
+    prefix <- args[1] # what is the prefix of our existing HM_r2.txt and HM_Dprime.txt files?
+    r2matrix <- args[2]
+    snpbac <- args[3]
+    winSize <- as.numeric(args[4]) # what is the total size of our window? (i.e input 100000 for 50Kb upstream and 50Kb downstream)
+    outDir <- args[5]
+    #   arguments used for testing
     prefix <- "Chr1-7_" # what is the prefix of our existing HM_r2.txt and HM_Dprime.txt files?
-    r2matrix <- "/Users/chaochih/Downloads/r2_decay_test/ld_results/Chr1-7_11_10380_HM_r2.txt"
-    snpbac <- "/Users/chaochih/Downloads/r2_decay_test/ld_data_prep/SNP_BAC_Chr1-7_11_10380_filtered.txt"
+    r2matrix <- "/Users/chaochih/Downloads/r2_decay_test/ld_results/Chr1-7_11_10085_HM_r2.txt"
+    snpbac <- "/Users/chaochih/Downloads/r2_decay_test/ld_data_prep/SNP_BAC_Chr1-7_11_10085_filtered.txt"
+    winSize <- 100000
+    outDir <- "/Users/chaochih/Downloads/r2_decay_test/test_plots"
     
     tmp <- readMatrix(filename = r2matrix)
     physPos <- readPhysPos(filename = snpbac)
     targetSNP <- extractTargetSNP(filename = r2matrix, p = prefix)
     r2.df <- r2.reformat(df = tmp, snp.name = targetSNP)
     merged.df <- mergeFile(ldData = r2.df, physPosData = physPos)
-    calcInterDist(ldData = r2.df, t.snp = targetSNP)
+    intDist.df <- calcInterDist(ldData = merged.df, t.snp = targetSNP)
+    plotLDdecay(ldData = intDist.df, t.snp = targetSNP, windowSize = winSize)
     
     #   Following is all test code, will remove once script is working
     # f <- basename(r2matrix)
@@ -127,5 +150,5 @@ main <- function() {
     # test <- data.frame(targetSNP = rownames(query.row), SNPname = colnames(query.row), r2 = as.numeric(query.row[1, ]))
     #   Extract physical position for target SNP from LD data
     # tsnpPos <- merged.df[merged.df$SNPname == targetSNP, 4]
-    merged.df["InterDist"] <- -(tsnpPos - merged.df$PhysPos)
+    #merged.df["InterDist"] <- -(tsnpPos - merged.df$PhysPos)
 }
