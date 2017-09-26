@@ -6,7 +6,11 @@
 #   Required arguments:
 
 #   Usage:
+#       ./LD_decay_plot.R [arg1] [arg2]
 
+
+#   Function to read matrix outputted from LDheatmap R package
+#   The first row and first column contains SNP names used in LD calculation
 readMatrix <- function(filename) {
     df <- read.delim(
         file = filename,
@@ -128,8 +132,10 @@ main <- function() {
     outDir <- args[5]
     #   arguments used for testing
     prefix <- "Chr1-7_" # what is the prefix of our existing HM_r2.txt and HM_Dprime.txt files?
-    r2matrix <- "/Users/chaochih/Downloads/r2_decay_test/ld_results/Chr1-7_11_10085_HM_r2.txt"
-    snpbac <- "/Users/chaochih/Downloads/r2_decay_test/ld_data_prep/SNP_BAC_Chr1-7_11_10085_filtered.txt"
+    r2.dir <- "/Users/chaochih/Downloads/r2_decay_test/test_ld_results"
+    physPos.dir <- "/Users/chaochih/Downloads/r2_decay_test/test_snp_bac"
+    # r2matrix <- "/Users/chaochih/Downloads/r2_decay_test/ld_results/Chr1-7_11_10085_HM_r2.txt"
+    # snpbac <- "/Users/chaochih/Downloads/r2_decay_test/ld_data_prep/SNP_BAC_Chr1-7_11_10085_filtered.txt"
     winSize <- 100000
     outDir <- "/Users/chaochih/Downloads/r2_decay_test/test_plots"
     
@@ -140,6 +146,17 @@ main <- function() {
     merged.df <- mergeFile(ldData = r2.df, physPosData = physPos)
     intDist.df <- calcInterDist(ldData = merged.df, t.snp = targetSNP)
     plotLDdecay(ldData = intDist.df, t.snp = targetSNP, windowSize = winSize)
+    
+    r2.fp <- list.files(path = r2.dir, pattern = "HM_r2.txt", full.names = TRUE)
+    tmp.r2.df <- lapply(X = r2.fp, FUN = readMatrix)
+    physPos.fp <- list.files(path = physPos.dir, pattern = "filtered.txt", full.names = TRUE)
+    physPos.df <- lapply(X = physPos.fp, FUN = readPhysPos)
+    
+    #   Function that runs all functions for every sample in list
+    runAll <- function() {
+        #   Read in LD matrix
+        
+    }
     
     #   Following is all test code, will remove once script is working
     # f <- basename(r2matrix)
