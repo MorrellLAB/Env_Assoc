@@ -61,15 +61,30 @@ extractTargetSNP <- function(filename, p) {
 
 r2.reformat <- function(df, snp.name) {
     #   Extract row with query SNP compared to all other SNPs
-    target.row <- df[rownames(df) == snp.name, ]
+    #   If any of the SNP names match our target SNP
+    if(rownames(df) == snp.name) {
+        #   Extract row with target SNP
+        target.row <- df[rownames(df) == snp.name, ]
+    } else {
+        #   Extract 1st row with SNP used for LD calculation
+        target.row <- df[1, ]
+    }
     
+    #   BOPA SNPs (i.e. 11_10085), these will have "X" in front of name
+    #   We want to remove the "X" because it messes up our file merge later on
+    #   If an "X" is found in the column names
+    if(grepl(pattern = "X", x = colnames(tmp))) {
+        #   Substitute all "X" with nothing
+        s <- gsub(pattern = "X", x = colnames(target.row), replacement = "")
+    } else {
+        #   Otherwise, store column names of the target row
+        s <- colnames(target.row)    
+    }
+    
+    #   Create reformatted data frame
     df <- data.frame(
         targetSNP = rownames(target.row),
-        SNPname = gsub(
-            pattern = "X", # replace X in SNP name, R headers have "X" added to beginning if they start with a number
-            x = colnames(target.row),
-            replacement = ""
-        ),
+        SNPname = s,
         r2 = as.numeric(target.row[1, ], fill = TRUE) # r2 values
     )
     return(df)
@@ -97,12 +112,13 @@ calcInterDist <- function(ldData, t.snp) {
     return(ldData)
 }
 
-plotLDdecay <- function(ldData, t.snp, windowSize, outputDir) {
+#   ld.type is either r2 or Dprime depending on which measure you are plotting
+plotLDdecay <- function(ldData, t.snp, ld.type, ylabel, windowSize, outputDir) {
     #   Set our x axis limits
     winStart <- -(windowSize/2)
     winEnd <- windowSize/2
     #   Make our LD decay plot
-    pdf(file = paste0(outputDir, "/", ".pdf"))
+    pdf(file = paste0(outputDir, "/", t.snp, "_", ld.type, "_LD_decay.pdf"))
     plot(
         #   Skip first row because it is self comparison and is filled with NA value
         x = tail(ldData$InterDist, -1),
@@ -112,8 +128,8 @@ plotLDdecay <- function(ldData, t.snp, windowSize, outputDir) {
         xaxt = "n",
         cex = 0.8,
         xlab = "Physical Distance (bp)",
-        ylab = expression(paste("LD estimate (", "r"^"2", ")")),
-        main = paste("LD decay - ", targetSNP)
+        ylab = ylabel,
+        main = paste("LD decay\n", t.snp, "(", ldData[ldData$SNPname == t.snp, 4], " bp)")
     )
     axis(side = 1, at = seq(from = winStart, to = winEnd, by = 10000), tick = TRUE)
     abline(v = 0, lty = 3, lwd = 1.5)
@@ -126,46 +142,45 @@ main <- function() {
     args <- commandArgs(trailingOnly = TRUE)
     #   User provided command line arguments
     prefix <- args[1] # what is the prefix of our existing HM_r2.txt and HM_Dprime.txt files?
-    r2matrix <- args[2]
-    snpbac <- args[3]
+    r2.dir <- args[2]
+    physPos.dir <- args[3]
     winSize <- as.numeric(args[4]) # what is the total size of our window? (i.e input 100000 for 50Kb upstream and 50Kb downstream)
     outDir <- args[5]
-    #   arguments used for testing
-    prefix <- "Chr1-7_" # what is the prefix of our existing HM_r2.txt and HM_Dprime.txt files?
-    r2.dir <- "/Users/chaochih/Downloads/r2_decay_test/test_ld_results"
-    physPos.dir <- "/Users/chaochih/Downloads/r2_decay_test/test_snp_bac"
-    # r2matrix <- "/Users/chaochih/Downloads/r2_decay_test/ld_results/Chr1-7_11_10085_HM_r2.txt"
-    # snpbac <- "/Users/chaochih/Downloads/r2_decay_test/ld_data_prep/SNP_BAC_Chr1-7_11_10085_filtered.txt"
-    winSize <- 100000
-    outDir <- "/Users/chaochih/Downloads/r2_decay_test/test_plots"
-    
-    tmp <- readMatrix(filename = r2matrix)
-    physPos <- readPhysPos(filename = snpbac)
-    targetSNP <- extractTargetSNP(filename = r2matrix, p = prefix)
-    r2.df <- r2.reformat(df = tmp, snp.name = targetSNP)
-    merged.df <- mergeFile(ldData = r2.df, physPosData = physPos)
-    intDist.df <- calcInterDist(ldData = merged.df, t.snp = targetSNP)
-    plotLDdecay(ldData = intDist.df, t.snp = targetSNP, windowSize = winSize)
     
     r2.fp <- list.files(path = r2.dir, pattern = "HM_r2.txt", full.names = TRUE)
-    tmp.r2.df <- lapply(X = r2.fp, FUN = readMatrix)
-    physPos.fp <- list.files(path = physPos.dir, pattern = "filtered.txt", full.names = TRUE)
-    physPos.df <- lapply(X = physPos.fp, FUN = readPhysPos)
+    phys.fp <- list.files(path = physPos.dir, pattern = "filtered.txt", full.names = TRUE)
     
     #   Function that runs all functions for every sample in list
-    runAll <- function() {
-        #   Read in LD matrix
+    runAll <- function(ldmatrix.fp, physPos.fp, file.prefix, window, out.directory) {
+        #   Read in LD matrix and physical positions
+        tmp.r2.df <- readMatrix(filename = ldmatrix.fp)
+        physPos.df <- readPhysPos(filename = physPos.fp)
         
+        #   Extract target SNP from filepath of SNP
+        #   This works with output files from the LD_analysis.sh script written specifically
+        #       for the environmental associations project.
+        targetSNP <- extractTargetSNP(filename = ldmatrix.fp, p = file.prefix)
+        
+        #   Reformat LD matrix for compatibility with downstream functions
+        r2.df <- r2.reformat(df = tmp.r2.df, snp.name = targetSNP)
+        
+        #   Merge LD matrix and physical positions based on matching SNP names
+        merged.df <- mergeFile(ldData = r2.df, physPosData = physPos.fp)
+        
+        #   Calculate distances between SNPs
+        interDist.df <- calcInterDist(ldData = merged.df, t.snp = targetSNP)
+        
+        #   Plot LD decay and save to out directory
+        plotLDdecay(
+            ldData = interDist.df,
+            t.snp = targetSNP,
+            ld.type = "r2",
+            ylabel = expression(paste("LD estimate (", "r"^"2", ")")),
+            windowSize = window,
+            outputDir = out.directory
+        )
     }
     
-    #   Following is all test code, will remove once script is working
-    # f <- basename(r2matrix)
-    # no.prefix <- sub(pattern = prefix, x = f, replacement = "", ignore.case = TRUE)
-    # snp.name <- sub(pattern = "_HM_r2.txt", x = no.prefix, replacement = "", ignore.case = TRUE)
-    #   Extract row that is the query SNP compared to all other SNPs
-    #query.row <- tmp[rownames(tmp) == snp.name, ]
-    # test <- data.frame(targetSNP = rownames(query.row), SNPname = colnames(query.row), r2 = as.numeric(query.row[1, ]))
-    #   Extract physical position for target SNP from LD data
-    # tsnpPos <- merged.df[merged.df$SNPname == targetSNP, 4]
-    #merged.df["InterDist"] <- -(tsnpPos - merged.df$PhysPos)
+    #   Run all functions on list of files
+    lapply(X = r2.fp, FUN = runAll, physPos.fp = phys.fp, file.prefix = prefix, window = winSize, out.directory = outDir)
 }
