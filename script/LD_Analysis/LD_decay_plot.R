@@ -184,3 +184,5 @@ main <- function() {
     #   Run all functions on list of files
     lapply(X = r2.fp, FUN = runAll, physPos.fp = phys.fp, file.prefix = prefix, window = winSize, out.directory = outDir)
 }
+
+main() # run program
