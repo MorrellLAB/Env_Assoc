@@ -73,7 +73,7 @@ r2.reformat <- function(df, snp.name) {
     #   BOPA SNPs (i.e. 11_10085), these will have "X" in front of name
     #   We want to remove the "X" because it messes up our file merge later on
     #   If an "X" is found in the column names
-    if(grepl(pattern = "X", x = colnames(tmp))) {
+    if(grepl(pattern = "X", x = colnames(target.row))) {
         #   Substitute all "X" with nothing
         s <- gsub(pattern = "X", x = colnames(target.row), replacement = "")
     } else {
@@ -149,6 +149,8 @@ main <- function() {
     
     r2.fp <- list.files(path = r2.dir, pattern = "HM_r2.txt", full.names = TRUE)
     phys.fp <- list.files(path = physPos.dir, pattern = "filtered.txt", full.names = TRUE)
+    #   Combine filepaths into single data frame
+    fp <- data.frame(r2 = r2.fp, physPos = phys.fp)
     
     #   Function that runs all functions for every sample in list
     runAll <- function(ldmatrix.fp, physPos.fp, file.prefix, window, out.directory) {
@@ -165,7 +167,7 @@ main <- function() {
         r2.df <- r2.reformat(df = tmp.r2.df, snp.name = targetSNP)
         
         #   Merge LD matrix and physical positions based on matching SNP names
-        merged.df <- mergeFile(ldData = r2.df, physPosData = physPos.fp)
+        merged.df <- mergeFile(ldData = r2.df, physPosData = physPos.df)
         
         #   Calculate distances between SNPs
         interDist.df <- calcInterDist(ldData = merged.df, t.snp = targetSNP)
@@ -182,7 +184,13 @@ main <- function() {
     }
     
     #   Run all functions on list of files
-    lapply(X = r2.fp, FUN = runAll, physPos.fp = phys.fp, file.prefix = prefix, window = winSize, out.directory = outDir)
+    #   mapply allows me to iterate over two lists of filepaths: r2.fp and phys.fp
+    mapply(
+        FUN = runAll,
+        r2.fp,
+        phys.fp,
+        MoreArgs = list(file.prefix = prefix, window = winSize, out.directory = outDir)
+    )
 }
 
 main() # run program
