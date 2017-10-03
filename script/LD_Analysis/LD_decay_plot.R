@@ -133,13 +133,13 @@ plotLDdecay <- function(ldData, t.snp, ld.type, ylabel, windowSize, outputDir) {
     pdf(file = paste0(outputDir, "/", t.snp, "_", ld.type, "_LD_decay.pdf"))
     plot(
         #   Skip first row because it is self comparison and is filled with NA value
-        x = tail(ldData$InterDist, -1),
+        x = tail(ldData$InterDist/1000, -1),
         y = tail(ldData$r2, -1),
         xlim = c(winStart, winEnd),
         ylim = c(0, 1.0),
         xaxt = "n",
         cex = 0.8,
-        xlab = "Physical Distance (bp)",
+        xlab = "Physical Distance (Kb)",
         ylab = ylabel,
         main = paste(
             "LD decay for SNPs around SNP: ",
