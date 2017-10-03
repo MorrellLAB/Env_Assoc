@@ -6,7 +6,15 @@
 #   Required arguments:
 
 #   Usage:
-#       ./LD_decay_plot.R [arg1] [arg2]
+#       ./LD_decay_plot.R [prefix] [r2_matrix_dir] [phys_pos_dir] [window_size] [output_directory]
+#   Where:
+#       1) [prefix] is the prefix of our existing HM_r2.txt file (including underscores or hyphens)
+#           i.e. filename Chr1-7_SCRI_RS_152696_HM_r2.txt would have prefix Chr1-7_ and SNP name SCRI_RS_152696
+#       2) [r2_matrix_dir] is the full filepath to the directory containing r2 matrix output files from LD_Analysis.sh
+#       3) [phys_pos_dir] is the full filepath to the directory containing snp_bac.txt files from LD_Analysis.sh
+#       4) [window_size] is the total size of our window (i.e. input 100000 for 50Kb upstream and 50Kb downstream)
+#       5) [output_directory] is the full filepath to where we want our plots to go
+#           NOTE: filepath to directory should not have last "/" as this will mess up building the filepath
 
 
 #   Function to read matrix outputted from LDheatmap R package
@@ -105,10 +113,14 @@ mergeFile <- function(ldData, physPosData) {
 
 calcInterDist <- function(ldData, t.snp) {
     #   Extract physical position for target SNP from LD data
-    tsnpPos <- ldData[ldData$SNPname == t.snp, 4]
+    #   This is the SNP that existed in VCF file and was used for LD calculation
+    #   NOT the actual Query SNP (as included in the filename of the LD matrix)
+    tsnpPos <- ldData[ldData$SNPname == as.character(unique(ldData$targetSNP)), 4]
     #   Calculate distances between target SNP and all other SNPs
     #   Add new column of distances in bp
     ldData["InterDist"] <- -(tsnpPos - ldData$PhysPos)
+    #   Include column of original Query SNP (included in filename of LD matrix)
+    ldData["OriginalSNP"] <- t.snp
     return(ldData)
 }
 
@@ -129,7 +141,14 @@ plotLDdecay <- function(ldData, t.snp, ld.type, ylabel, windowSize, outputDir) {
         cex = 0.8,
         xlab = "Physical Distance (bp)",
         ylab = ylabel,
-        main = paste("LD decay\n", t.snp, "(", ldData[ldData$SNPname == t.snp, 4], " bp)")
+        main = paste(
+            "LD decay for SNPs around SNP: ",
+            t.snp,
+            "\nExisting SNP in VCF used for calculation: ",
+            as.character(unique(ldData$targetSNP)),
+            "\nWindow Center (",
+            ldData[ldData$SNPname == as.character(unique(ldData$targetSNP)), 4],
+            "bp)")
     )
     axis(side = 1, at = seq(from = winStart, to = winEnd, by = 10000), tick = TRUE)
     abline(v = 0, lty = 3, lwd = 1.5)
@@ -147,10 +166,9 @@ main <- function() {
     winSize <- as.numeric(args[4]) # what is the total size of our window? (i.e input 100000 for 50Kb upstream and 50Kb downstream)
     outDir <- args[5]
     
+    #   Store a list of filepaths
     r2.fp <- list.files(path = r2.dir, pattern = "HM_r2.txt", full.names = TRUE)
     phys.fp <- list.files(path = physPos.dir, pattern = "filtered.txt", full.names = TRUE)
-    #   Combine filepaths into single data frame
-    fp <- data.frame(r2 = r2.fp, physPos = phys.fp)
     
     #   Function that runs all functions for every sample in list
     runAll <- function(ldmatrix.fp, physPos.fp, file.prefix, window, out.directory) {
