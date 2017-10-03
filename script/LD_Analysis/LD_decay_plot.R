@@ -127,8 +127,8 @@ calcInterDist <- function(ldData, t.snp) {
 #   ld.type is either r2 or Dprime depending on which measure you are plotting
 plotLDdecay <- function(ldData, t.snp, ld.type, ylabel, windowSize, outputDir) {
     #   Set our x axis limits
-    winStart <- -(windowSize/2)
-    winEnd <- windowSize/2
+    winStart <- -(windowSize/2)/1000
+    winEnd <- (windowSize/2)/1000
     #   Make our LD decay plot
     pdf(file = paste0(outputDir, "/", t.snp, "_", ld.type, "_LD_decay.pdf"))
     plot(
@@ -150,7 +150,7 @@ plotLDdecay <- function(ldData, t.snp, ld.type, ylabel, windowSize, outputDir) {
             ldData[ldData$SNPname == as.character(unique(ldData$targetSNP)), 4],
             "bp)")
     )
-    axis(side = 1, at = seq(from = winStart, to = winEnd, by = 10000), tick = TRUE)
+    axis(side = 1, at = seq(from = winStart, to = winEnd, by = 10), tick = TRUE)
     abline(v = 0, lty = 3, lwd = 1.5)
     #   Turn off graphics
     dev.off()
