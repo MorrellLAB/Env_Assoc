@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 
-#   [INSERT brief description of script purpose]
+#   This script takes LD matrix output and filtered physical position data (snp_bac.txt) output from LD_Analysis.sh script
+#   and creates r2 decay plots.
 #   Chaochih Liu - September 22, 2017
 
 #   Required arguments:
