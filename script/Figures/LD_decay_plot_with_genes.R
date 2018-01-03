@@ -254,8 +254,8 @@ main <- function() {
     mapply(
         FUN = runAll,
         r2.fp,
-        phys.fp,
         geneInt.fp,
+        phys.fp,
         MoreArgs = list(file.prefix = prefix, window = winSize, out.directory = outDir)
     )
 }
