@@ -94,7 +94,7 @@ r2.reformat <- function(df, snp.name) {
         #   Extract 1st row with SNP used for LD calculation
         target.row <- df[1, ]
     }
-    
+
     #   BOPA SNPs (i.e. 11_10085), these will have "X" in front of name
     #   We want to remove the "X" because it messes up our file merge later on
     #   If an "X" is found in the column names
@@ -103,9 +103,9 @@ r2.reformat <- function(df, snp.name) {
         s <- gsub(pattern = "X", x = colnames(target.row), replacement = "")
     } else {
         #   Otherwise, store column names of the target row
-        s <- colnames(target.row)    
+        s <- colnames(target.row)
     }
-    
+
     #   Create reformatted data frame
     df <- data.frame(
         targetSNP = rownames(target.row),
@@ -144,7 +144,7 @@ calcInterDist <- function(ldData, t.snp) {
 calcGeneInterDist <- function(ldData, geneInt.df, t.snp) {
     #   Extract physical position of target SNP
     t.snp.phys <- ldData[ldData$SNPname == t.snp, ]$PhysPos
-    
+
     #   Add new column of interdist start and end positions
     geneInt.df["InterDist.start"] <- -(t.snp.phys - geneInt.df$gene_start)
     geneInt.df["InterDist.end"] <- -(t.snp.phys - geneInt.df$gene_end)
@@ -190,7 +190,7 @@ plotLDdecay <- function(ldData, geneInt.df, t.snp, ld.type, ylabel, windowSize, 
             ybottom = -0.18,
             ytop = -0.1,
             density = NA, # NA is to suppress shading so we can fill rectangle with color
-            col = adjustcolor("red", alpha.f = 0.5),
+            col = adjustcolor("dodgerblue", alpha.f = 0.5),
             border = NA)
     }
     #   Turn off graphics
@@ -207,36 +207,36 @@ main <- function() {
     geneInt.dir <- args[4]
     winSize <- as.numeric(args[5]) # what is the total size of our window? (i.e input 100000 for 50Kb upstream and 50Kb downstream)
     outDir <- args[6]
-    
+
     #   Store a list of filepaths
     r2.fp <- list.files(path = r2.dir, pattern = "HM_r2.txt", full.names = TRUE)
     phys.fp <- list.files(path = physPos.dir, pattern = "filtered.txt", full.names = TRUE)
     geneInt.fp <- list.files(path = geneInt.dir, pattern = "gene_intervals.txt", full.names = TRUE)
-    
+
     #   Function that runs all functions for every sample in list
     runAll <- function(ldmatrix.fp, geneIntervals.fp, physPos.fp, file.prefix, window, out.directory) {
         #   Read in LD matrix and physical positions
         tmp.r2.df <- readMatrix(filename = ldmatrix.fp)
         physPos.df <- readPhysPos(filename = physPos.fp)
         geneInterval.df <- readGeneInt(filename = geneIntervals.fp)
-        
+
         #   Extract target SNP from filepath of SNP
         #   This works with output files from the LD_analysis.sh script written specifically
         #       for the environmental associations project.
         targetSNP <- extractTargetSNP(filename = ldmatrix.fp, p = file.prefix)
-        
+
         #   Reformat LD matrix for compatibility with downstream functions
         r2.df <- r2.reformat(df = tmp.r2.df, snp.name = targetSNP)
-        
+
         #   Merge LD matrix and physical positions based on matching SNP names
         merged.df <- mergeFile(ldData = r2.df, physPosData = physPos.df)
-        
+
         #   Calculate distances between SNPs
         interDist.df <- calcInterDist(ldData = merged.df, t.snp = targetSNP)
         #   Calculate distances between gene interval and target SNP
         #   This ensures we have the correct positions when plotting genes
         geneInterDist.df <- calcGeneInterDist(ldData = merged.df, geneInt.df = geneInterval.df, t.snp = targetSNP)
-        
+
         #   Plot LD decay and save to out directory
         plotLDdecay(
             ldData = interDist.df,
@@ -248,7 +248,7 @@ main <- function() {
             outputDir = out.directory
         )
     }
-    
+
     #   Run all functions on list of files
     #   mapply allows me to iterate over two lists of filepaths: r2.fp and phys.fp
     mapply(
