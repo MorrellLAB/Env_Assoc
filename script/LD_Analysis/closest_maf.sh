@@ -15,23 +15,23 @@ set -e
 set -o pipefail
 
 #   For testing only, delete after done
-VCF_MAF_SCRIPT=/Users/chaochih/GitHub/Env_Assoc/script/LD_Analysis/vcf_maf_snp_id.py
-COMP_SNPS_DIR=/Users/chaochih/Dropbox/test_files/test_maf_ld/ld_results
-INT_VCF_DIR=/Users/chaochih/Dropbox/test_files/test_maf_ld/extracted_window
-OUT_DIR=/Users/chaochih/Dropbox/test_files/test_maf_ld/test
-PREFIX=Chr1-7_
+# VCF_MAF_SCRIPT=/Users/chaochih/GitHub/Env_Assoc/script/LD_Analysis/vcf_maf_snp_id.py
+# COMP_SNPS_DIR=/Users/chaochih/Dropbox/test_files/test_maf_ld/ld_results
+# INT_VCF_DIR=/Users/chaochih/Dropbox/test_files/test_maf_ld/extracted_window
+# PREFIX=Chr1-7_
+# OUT_DIR=/Users/chaochih/Dropbox/test_files/test_maf_ld/test
 
 #   User provided arguments
 VCF_MAF_SCRIPT=$1 # Full path to vcf_maf_snp_id.py script
 COMP_SNPS_DIR=$2 # Directory called ld_results containing *_compatibleSnps.txt
 INT_VCF_DIR=$3 # Directory called extracted_window containing *_intersect.vcf
-PREFIX= # This is the part that comes before the SNP ID
-OUT_DIR=
+PREFIX=$4 # This is the part that comes before the SNP ID
+OUT_DIR=$5 # Full path to our output directory
 
 
 #   Check if out directory exists, if not make it
 mkdir -p "${OUT_DIR}"
-#   Created sample list of compatible SNPs and store in array
+#   Create sample list of compatible SNPs and store in array
 COMP_SNP_ARRAY=($(find "${COMP_SNPS_DIR}"/*_compatibleSnps.txt | sort))
 
 #   Make directory for compatible snps that are the fake target SNPs
@@ -44,13 +44,13 @@ do
     #   which leaves just the SNP name
     snp=$(basename ${i} _compatibleSnps.txt | sed -e s/^${PREFIX}//)
     head -n 1 ${i} | tr '\t' '\n' > "${OUT_DIR}"/fake_target_compatible/"${snp}"_comp_snp_names_only.txt
-    #   If snp exists in array, print message
-    #   This method is quick and dirty and can get false positives
+    #   If SNP is found in sample names file, remove file
+    #   This means the target SNP is the same as the significant SNP
     if grep -q "${snp}" "${OUT_DIR}"/fake_target_compatible/"${snp}"_comp_snp_names_only.txt
     then
         echo "${snp}" >> "${OUT_DIR}"/fake_target_compatible/exists_snps.txt
         rm "${OUT_DIR}"/fake_target_compatible/"${snp}"_comp_snp_names_only.txt
-    #   else, save array to file with new line delimiter
+    #   else, save SNP name to not_exists_snps.txt
     else
         echo "${snp}" >> "${OUT_DIR}"/fake_target_compatible/not_exists_snps.txt
     fi
@@ -58,13 +58,26 @@ done
 
 #   Calculate MAF for all SNPs in each window
 function calcMAF() {
-    local comp_snps_vcf_dir=$1
-    local out_dir
+    local vcf_maf_script=$1
+    local comp_snps_file=$2
+    local int_vcf_dir=$3
+    local out_dir=$4
+    #   Extract SNP from filename first
+    snp=$(basename ${comp_snps_file} _comp_snp_names_only.txt)
+    #   Extract compatible SNPs from intersect.vcf files
+    #   since intersect.vcf files have not been filtered yet
+    grep -f "${out_dir}"/fake_target_compatible/"${snp}"_comp_snp_names_only.txt "${int_vcf_dir}"/*"${snp}"_intersect.vcf > "${out_dir}"/fake_target_vcf/"${snp}"_comp_intersect.vcf
+
+    #   Calculate MAF for SNPs
+    python3 "${vcf_maf_script}" "${out_dir}"/fake_target_vcf/"${snp}"_comp_intersect.vcf > "${out_dir}"/fake_target_maf/"${snp}"_comp_intersect_vcf.maf
 }
 
 export -f calcMAF
 
 
 #   Run functions
-
-
+#   Make output directory first
+mkdir -p "${OUT_DIR}"/fake_target_vcf
+mkdir -p "${OUT_DIR}"/fake_target_maf
+#   Calculate MAF for all SNPs in each window
+parallel calcMAF "${VCF_MAF_SCRIPT}" {} "${INT_VCF_DIR}" "${OUT_DIR}" ::: "${OUT_DIR}"/fake_target_compatible/*comp_snp_names_only.txt
