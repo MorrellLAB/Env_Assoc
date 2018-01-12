@@ -157,7 +157,12 @@ plotLDdecay <- function(ldData, geneInt.df, t.snp, ld.type, ylabel, windowSize, 
     winStart <- -(windowSize/2)/1000
     winEnd <- (windowSize/2)/1000
     #   Make our LD decay plot
-    pdf(file = paste0(outputDir, "/", t.snp, "_", ld.type, "_LD_decay_with_genes.pdf"))
+    pdf(
+        file = paste0(outputDir, "/", t.snp, "_", ld.type, "_LD_decay_with_genes.pdf"),
+        width = 8
+    )
+    #   Margin of form: c(bottom, left, top, right)
+    par(mar = c(5, 5, 5, 2)) # default is c(5, 4, 4, 2)
     plot(
         #   Skip first row because it is self comparison and is filled with NA value
         x = tail(ldData$InterDist/1000, -1),
@@ -167,20 +172,19 @@ plotLDdecay <- function(ldData, geneInt.df, t.snp, ld.type, ylabel, windowSize, 
         xaxt = "n",
         yaxt = "n",
         bty = "n",
-        cex = 0.8,
+        cex.main = 1.7,
+        cex.lab = 1.6,
         xlab = "Physical Distance (Kb)",
         ylab = ylabel,
         main = paste(
             "LD decay for SNPs around SNP: ",
             t.snp,
-            "\nExisting SNP in VCF used for calculation: ",
-            as.character(unique(ldData$targetSNP)),
-            "\nWindow Center (",
+            "\n(", unique(geneInt.df$chr), ":",
             ldData[ldData$SNPname == as.character(unique(ldData$targetSNP)), 4],
-            "bp)")
+            "bp )")
     )
-    axis(side = 1, at = seq(from = winStart, to = winEnd, by = 10), tick = TRUE, pos = 0)
-    axis(side = 2, at = seq(from = 0, to = 1.0, by = 0.2), tick = TRUE)
+    axis(side = 1, at = seq(from = winStart, to = winEnd, by = 20), tick = TRUE, pos = 0, cex.axis = 1.2)
+    axis(side = 2, at = seq(from = 0, to = 1.0, by = 0.2), tick = TRUE, cex.axis = 1.2)
     segments(x0 = 0, y0 = 0, x1 = 0, y1 = 1, lty = 3, lwd = 1.5)
     #   Add rectangle for every gene in data frame
     for (i in 1:length(geneInt.df$InterDist.start)) {
@@ -243,7 +247,7 @@ main <- function() {
             geneInt.df = geneInterDist.df,
             t.snp = targetSNP,
             ld.type = "r2",
-            ylabel = expression(paste("LD estimate (", "r"^"2", ")")),
+            ylabel = expression(paste("LD estimate (", italic("r"^"2"), ")")),
             windowSize = window,
             outputDir = out.directory
         )
