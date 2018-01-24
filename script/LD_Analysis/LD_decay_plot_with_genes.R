@@ -84,35 +84,20 @@ extractTargetSNP <- function(filename, p) {
     return(targetSNP)
 }
 
-r2.reformat <- function(df, snp.name) {
-    #   Extract row with query SNP compared to all other SNPs
-    #   If any of the SNP names match our target SNP
-    if(rownames(df) == snp.name) {
-        #   Extract row with target SNP
-        target.row <- df[rownames(df) == snp.name, ]
-    } else {
-        #   Extract 1st row with SNP used for LD calculation
-        target.row <- df[1, ]
-    }
-
-    #   BOPA SNPs (i.e. 11_10085), these will have "X" in front of name
-    #   We want to remove the "X" because it messes up our file merge later on
-    #   If an "X" is found in the column names
-    if(grepl(pattern = "X", x = colnames(target.row))) {
-        #   Substitute all "X" with nothing
-        s <- gsub(pattern = "X", x = colnames(target.row), replacement = "")
-    } else {
-        #   Otherwise, store column names of the target row
-        s <- colnames(target.row)
-    }
-
-    #   Create reformatted data frame
-    df <- data.frame(
-        targetSNP = rownames(target.row),
-        SNPname = s,
-        r2 = as.numeric(target.row[1, ], fill = TRUE) # r2 values
+r2.reformat <- function(r2.df, index) {
+    #   Extract row of index we are currently working with
+    current.row <- r2.df[index, ]
+    
+    #   Create reformmated data frame
+    current.df <- data.frame(
+        m_row_snps = rownames(current.row),
+        #   BOPA SNPs (i.e. 11_10085), these will have "X" in front of name
+        #   We want to remove the "X" because it messes up our file merge later on
+        #   If an "X" is found in the column names, substitute all "X" with nothing
+        m_col_snps = gsub(pattern = "X", x = colnames(current.row), replacement = ""),
+        r2 = as.numeric(current.row[1, ], fill = TRUE)
     )
-    return(df)
+    return(current.df)
 }
 
 mergeFile <- function(ldData, physPosData) {
@@ -120,30 +105,41 @@ mergeFile <- function(ldData, physPosData) {
     m <- merge(
         x = ldData,
         y = physPosData,
-        by.x = "SNPname", # data with LD r2 or D' values
+        by.x = "comparisonSnp", # data with LD r2 or D' values
         by.y = "SNP", # physical position data,
         all.x = TRUE, # Rows that do not have a match will remain in dataframe
         all.y = FALSE # Rows that do not have a match with x will not be added to x
     )
-    return(m)
-}
-
-calcInterDist <- function(ldData, t.snp) {
+    colnames(m)[4] <- "cSnpPhysPos"
+    
     #   Extract physical position for target SNP from LD data
     #   This is the SNP that existed in VCF file and was used for LD calculation
     #   NOT the actual Query SNP (as included in the filename of the LD matrix)
-    tsnpPos <- ldData[ldData$SNPname == as.character(unique(ldData$targetSNP)), 4]
+    tsnpName <- as.character(unique(ldData$targetSnp))
+    tsnpPos <- physPosData[physPosData$SNP == tsnpName, 2]
+    #   Add column of target SNP physical positions
+    m["tSnpPhysPos"] <- tsnpPos
+    return(m)
+}
+
+calcInterDist <- function(ldData, t.snp, physPosData) {
+    #   Extract physical position for target SNP from LD data
+    #   This is the SNP that existed in VCF file and was used for LD calculation
+    #   NOT the actual Query SNP (as included in the filename of the LD matrix)
+    # tsnpName <- as.character(unique(ldData$targetSnp))
+    # tsnpPos <- physPosData[physPosData$SNP == tsnpName, 2]
+    tsnpPos <- as.numeric(unique(ldData$tSnpPhysPos))
     #   Calculate distances between target SNP and all other SNPs
     #   Add new column of distances in bp
-    ldData["InterDist"] <- -(tsnpPos - ldData$PhysPos)
+    ldData["InterDist"] <- -(tsnpPos - ldData$cSnpPhysPos)
     #   Include column of original Query SNP (included in filename of LD matrix)
     ldData["OriginalSNP"] <- t.snp
     return(ldData)
 }
 
-calcGeneInterDist <- function(ldData, geneInt.df, t.snp) {
-    #   Extract physical position of target SNP
-    t.snp.phys <- ldData[ldData$SNPname == t.snp, ]$PhysPos
+calcGeneInterDist <- function(physPosData, geneInt.df, t.snp) {
+    #   Extract physical position of target SNP from physical positions data
+    t.snp.phys <- physPosData[physPosData$SNP == t.snp, 2]
 
     #   Add new column of interdist start and end positions
     geneInt.df["InterDist.start"] <- -(t.snp.phys - geneInt.df$gene_start)
@@ -228,18 +224,49 @@ main <- function() {
         #   This works with output files from the LD_analysis.sh script written specifically
         #       for the environmental associations project.
         targetSNP <- extractTargetSNP(filename = ldmatrix.fp, p = file.prefix)
-
+        
+        #   Identify index of row that contains targetSNP
+        target.index <- which(
+            x = rownames(tmp.r2.df) == targetSNP, # extract row containing target SNP
+            arr.ind = TRUE # return array index
+        )
+        
         #   Reformat LD matrix for compatibility with downstream functions
-        r2.df <- r2.reformat(df = tmp.r2.df, snp.name = targetSNP)
-
+        r2.df <- r2.reformat(r2.df = tmp.r2.df, index = target.index)
+        
+        #   Create empty list to store data frames that get reformatted
+        d.list <- list()
+        #   Loop over every row up until row containing pairwise comparison between
+        #       target SNP and all other SNPs
+        for (i in 1:target.index) {
+            tmp.df <- r2.reformat(r2.df = tmp.r2.df, index = i)
+            d.list[[i]] <- tmp.df
+        }
+        #   Combine data frames stored as lists into one data frame
+        comb.data <- do.call(what = rbind, args = d.list) # Combined data up until target index number
+        #   Extract all rows where row.snp column contains target SNP
+        rs.tsnp <- comb.data[comb.data$m_row_snps == targetSNP, ]
+        #   Rename columns of rs.tsnp
+        colnames(rs.tsnp) <- c("targetSnp", "comparisonSnp", "r2")
+        cs.tsnp <- comb.data[comb.data$m_col_snps == targetSNP, ]
+        #   Swap m_row_snps and m_col_snps in cs.tsnp data frame to make it possible
+        #   to merge by physical position in later steps
+        cs.swap.tsnp <- data.frame(targetSnp = cs.tsnp$m_col_snps, comparisonSnp = cs.tsnp$m_row_snps, r2 = cs.tsnp$r2)
+        #   Add check/print statement to make sure targetSNP matches targetSNP in cs.swap.tsnp
+        
+        #   Combeine these two subsets
+        int.df <- rbind(cs.swap.tsnp, rs.tsnp)
+        #   Remove rows with NA in r2 column
+        clean.data <- int.df[!is.na(int.df$r2), ]
+        
         #   Merge LD matrix and physical positions based on matching SNP names
-        merged.df <- mergeFile(ldData = r2.df, physPosData = physPos.df)
+        merged.df <- mergeFile(ldData = clean.data, physPosData = physPos.df)
 
         #   Calculate distances between SNPs
-        interDist.df <- calcInterDist(ldData = merged.df, t.snp = targetSNP)
+        interDist.df <- calcInterDist(ldData = merged.df, t.snp = targetSNP, physPosData = physPos.df)
         #   Calculate distances between gene interval and target SNP
         #   This ensures we have the correct positions when plotting genes
-        geneInterDist.df <- calcGeneInterDist(ldData = merged.df, geneInt.df = geneInterval.df, t.snp = targetSNP)
+        geneInterDist.df <- calcGeneInterDist(physPosData = physPos.df, geneInt.df = geneInterval.df, t.snp = targetSNP)
 
         #   Plot LD decay and save to out directory
         plotLDdecay(
