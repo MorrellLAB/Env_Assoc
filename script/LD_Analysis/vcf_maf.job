@@ -1,0 +1,28 @@
+#!/bin/bash
+
+#PBS -l mem=22gb,nodes=1:ppn=16,walltime=24:00:00
+#PBS -m abe
+#PBS -M liux1299@umn.edu
+#PBS -q lab
+
+set -e
+set -u
+set -o pipefail
+
+#   This script is intended to be submitted as a job on MSI
+#   It runs a modified version of Li's VCF_MAF.py script. The modified
+#   version is called vcf_maf_snp_id.py and is in this GitHub repository
+
+
+#   Dependencies
+module load python3_ML/3.6.1
+
+#   User provided arguments
+VCF_MAF_SNP_ID_SCRIPT=/panfs/roc/groups/9/morrellp/liux1299/GitHub/Env_Assoc/script/LD_Analysis/vcf_maf_snp_id.py
+VCF_FILE=/panfs/roc/groups/9/morrellp/shared/Projects/Barley_NAM_Parents/old_SNP_calling/New_Filtering/OnlyLandrace_biallelic_Barley_NAM_Parents_Final_renamed.vcf
+OUT_DIR=/panfs/roc/groups/9/morrellp/shared/Projects/Barley_NAM_Parents/old_SNP_calling/New_Filtering
+
+#   Create output file prefix
+OUT_PREFIX=$(basename "${VCF_FILE}" .vcf)
+#   Run program
+python3 "${VCF_MAF_SNP_ID_SCRIPT}" "${VCF_FILE}" > "${OUT_DIR}"/"${OUT_PREFIX}".maf
