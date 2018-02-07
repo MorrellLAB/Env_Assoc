@@ -108,15 +108,57 @@ scalePsuedo <- function(df, maf.data, chr1.whole, chr2.whole, chr3.whole, chr4.w
 }
 
 #   Plot function
-plot.manhattan <- function(x.val, y.val, color.pheno, p.sym, sym.size, plot.title, ticks) {
+plot.manhattan <- function(df, maf.threshold, plot.title, ticks) {
+    #   Subset all chromosomes greater than maf.threshold
+    all.x.gth <- df$scaled.BP[df$correct_maf > maf.threshold]
+    all.y.gth <- -log10(df$P[df$correct_maf > maf.threshold])
+    #   Extract all rows where Chromosome is an odd number
+    df.odd <- df[!as.numeric(as.character(df$CHR)) %% 2 == 0, ]
+    all.x.gth.odd <- df.odd$scaled.BP[df.odd$correct_maf > maf.threshold]
+    all.y.gth.odd <- -log10(df.odd$P[df.odd$correct_maf > maf.threshold])
+    #   Subset all chromosomes less than maf.threshold
+    all.x.lth <- df$scaled.BP[df$correct_maf < maf.threshold]
+    all.y.lth <- -log10(df$P[df$correct_maf < maf.threshold])
+    
+    #   Plot all SNPs greater than threshold
     p <- plot(
-        x = x.val,
-        y = y.val,
-        col = color.pheno,
+        x = all.x.gth,
+        y = all.y.gth,
+        col = adjustcolor(col = "gray70", alpha.f = 0.9),
         xlim = c(0, 4569031868),
         ylim = c(0, 12),
-        pch = p.sym,
-        cex = sym.size,
+        pch = 20,
+        cex = 1,
+        xlab = "Chromosome",
+        ylab = expression(-log[10](italic(p))),
+        xaxt = "n",
+        main = plot.title
+    )
+    par(new = TRUE)
+    #   Make all SNPs greater than threshold that are odd chromosomes black
+    plot(
+        x = all.x.gth.odd,
+        y = all.y.gth.odd,
+        col = adjustcolor(col = "gray10", alpha.f = 0.6),
+        xlim = c(0, 4569031868),
+        ylim = c(0, 12),
+        pch = 20,
+        cex = 1,
+        xlab = "Chromosome",
+        ylab = expression(-log[10](italic(p))),
+        xaxt = "n",
+        main = plot.title
+    )
+    par(new = TRUE)
+    #   Plot all SNPs less than threshold
+    plot(
+        x = all.x.lth,
+        y = all.y.lth,
+        col = adjustcolor(col = "red", alpha.f = 0.9),
+        xlim = c(0, 4569031868),
+        ylim = c(0, 12),
+        pch = 20,
+        cex = 1,
         xlab = "Chromosome",
         ylab = expression(-log[10](italic(p))),
         xaxt = "n",
@@ -240,26 +282,12 @@ main <- function() {
     #   MAF 0.01 filter was used by Fumi to get list of significant SNPs from GWAS analysis
     #   See: ReadMe.GWAS.landraces in ~/Dropbox/Landrace_Environmental_Association/GWAS-GAPIT
     
-    ########## Bio1, 6, and 11 in one panel ##########
+    ########## Bio1, 6, and 11 in one panel - Cold Tolerance ##########
     par(mfrow = c(3, 1))
-    #   All SNPs MAF > 0.01 Bio1
+    #   Bio1
     plot.manhattan(
-        x.val = d.all.bio1$scaled.BP[d.all.bio1$correct_maf > 0.01],
-        y.val = -log10(d.all.bio1$P[d.all.bio1$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS BIO1 - Annual Mean Temperature",
-        ticks = t.chr
-    )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 Bio1
-    plot.manhattan(
-        x.val = d.all.bio1$scaled.BP[d.all.bio1$correct_maf < 0.01],
-        y.val = -log10(d.all.bio1$P[d.all.bio1$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
+        df = d.all.bio1,
+        maf.threshold = 0.01,
         plot.title = "GWAS BIO1 - Annual Mean Temperature",
         ticks = t.chr
     )
@@ -267,308 +295,43 @@ main <- function() {
     #   Commented out because there already exists a screenshot of the legend
     #   The concern was legend would be covering some of the significant SNPs
     #   This makes it easier to control how the final publication figure looks and where to put the legend
-    # legend("topright", legend = c("Sig SNPs Threshold", "MAF > 0.01", "MAF < 0.01"), lty = c(3, 0, 0), pch = c(NA, 1, 20), col = c("black", adjustcolor(col = "gray20", alpha.f = 0.5), "red"), bty = "n", y.intersp = 0.25)
+    #legend("topright", legend = c("Sig SNPs Threshold", "MAF < 0.01"), lty = c(3, 0), pch = c(NA, 20), col = c("black", adjustcolor(col = "red", alpha.f = 0.9)), bty = "n", y.intersp = 0.5)
     
-    #   All SNPs MAF > 0.01 Bio6
+    #   Bio6
     plot.manhattan(
-        x.val = d.all.bio6$scaled.BP[d.all.bio6$correct_maf > 0.01],
-        y.val = -log10(d.all.bio6$P[d.all.bio6$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS BIO6 - Min Temperature of Coldest Month",
-        ticks = t.chr
-    )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 Bio6
-    plot.manhattan(
-        x.val = d.all.bio6$scaled.BP[d.all.bio6$correct_maf < 0.01],
-        y.val = -log10(d.all.bio6$P[d.all.bio6$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
+        df = d.all.bio6,
+        maf.threshold = 0.01,
         plot.title = "GWAS BIO6 - Min Temperature of Coldest Month",
         ticks = t.chr
     )
     
-    #   All SNPs MAF > 0.01 Bio11
+    #   Bio11
     plot.manhattan(
-        x.val = d.all.bio11$scaled.BP[d.all.bio11$correct_maf > 0.01],
-        y.val = -log10(d.all.bio11$P[d.all.bio11$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS BIO11 - Mean Temperature of Coldest Quarter",
-        ticks = t.chr
-    )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 Bio11
-    plot.manhattan(
-        x.val = d.all.bio11$scaled.BP[d.all.bio11$correct_maf < 0.01],
-        y.val = -log10(d.all.bio11$P[d.all.bio11$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
+        df = d.all.bio11,
+        maf.threshold = 0.01,
         plot.title = "GWAS BIO11 - Mean Temperature of Coldest Quarter",
         ticks = t.chr
     )
     
     
-    ########## Bio2, 3, 4, and 5 in one panel ##########
-    par(mfrow = c(4,1))
-    #   All SNPs MAF > 0.01 Bio2
+    ########## Bio9, 14, and 17 in one panel - Drought Tolerance ##########
+    par(mfrow = c(3, 1))
+    #   Bio9
     plot.manhattan(
-        x.val = d.all.bio2$scaled.BP[d.all.bio2$correct_maf > 0.01],
-        y.val = -log10(d.all.bio2$P[d.all.bio2$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS BIO2 - Mean Diurnal Range (Mean of monthly (max temp - min temp))",
-        ticks = t.chr
-    )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 Bio2
-    plot.manhattan(
-        x.val = d.all.bio2$scaled.BP[d.all.bio2$correct_maf < 0.01],
-        y.val = -log10(d.all.bio2$P[d.all.bio2$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
-        plot.title = "GWAS BIO2 - Mean Diurnal Range (Mean of monthly (max temp - min temp))",
-        ticks = t.chr
-    )
-    #   Legend only in first plot panel of 4
-    #   Commented out because there already exists a screenshot of the legend
-    #   The concern was legend would be covering some of the significant SNPs
-    #   This makes it easier to control how the final publication figure looks and where to put the legend
-    # legend("topright", legend = c("Sig SNPs Threshold", "MAF > 0.01", "MAF < 0.01"), lty = c(3, 0, 0), pch = c(NA, 1, 20), col = c("black", adjustcolor(col = "gray20", alpha.f = 0.5), "red"), bty = "n", y.intersp = 0.10)
-    
-    #   All SNPs MAF > 0.01 Bio3
-    plot.manhattan(
-        x.val = d.all.bio3$scaled.BP[d.all.bio3$correct_maf > 0.01],
-        y.val = -log10(d.all.bio3$P[d.all.bio3$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS BIO3 - Isothermality (BIO2/BIO7) (* 100)",
-        ticks = t.chr
-    )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 Bio3
-    plot.manhattan(
-        x.val = d.all.bio3$scaled.BP[d.all.bio3$correct_maf < 0.01],
-        y.val = -log10(d.all.bio3$P[d.all.bio3$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
-        plot.title = "GWAS BIO3 - Isothermality (BIO2/BIO7) (* 100)",
-        ticks = t.chr
-    )
-    
-    #   All SNPs MAF > 0.01 Bio4
-    plot.manhattan(
-        x.val = d.all.bio4$scaled.BP[d.all.bio4$correct_maf > 0.01],
-        y.val = -log10(d.all.bio4$P[d.all.bio4$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS BIO4 - Temperature Seasonality (standard deviation *100)",
-        ticks = t.chr
-    )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 Bio4
-    plot.manhattan(
-        x.val = d.all.bio4$scaled.BP[d.all.bio4$correct_maf < 0.01],
-        y.val = -log10(d.all.bio4$P[d.all.bio4$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
-        plot.title = "GWAS BIO4 - Temperature Seasonality (standard deviation *100)",
-        ticks = t.chr
-    )
-    
-    #   All SNPs MAF > 0.01 Bio5
-    plot.manhattan(
-        x.val = d.all.bio5$scaled.BP[d.all.bio5$correct_maf > 0.01],
-        y.val = -log10(d.all.bio5$P[d.all.bio5$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS BIO5 - Max Temperature of Warmest Month",
-        ticks = t.chr
-    )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 Bio5
-    plot.manhattan(
-        x.val = d.all.bio5$scaled.BP[d.all.bio5$correct_maf < 0.01],
-        y.val = -log10(d.all.bio5$P[d.all.bio5$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
-        plot.title = "GWAS BIO5 - Max Temperature of Warmest Month",
-        ticks = t.chr
-    )
-
-    
-    ########## Bio7, 8, 9, and 10 in one panel ##########
-    par(mfrow = c(4,1))
-    #   All SNPs MAF > 0.01 Bio7
-    plot.manhattan(
-        x.val = d.all.bio7$scaled.BP[d.all.bio7$correct_maf > 0.01],
-        y.val = -log10(d.all.bio7$P[d.all.bio7$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS BIO7 - Temperature Annual Range (BIO5-BIO6)",
-        ticks = t.chr
-    )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 Bio7
-    plot.manhattan(
-        x.val = d.all.bio7$scaled.BP[d.all.bio7$correct_maf < 0.01],
-        y.val = -log10(d.all.bio7$P[d.all.bio7$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
-        plot.title = "GWAS BIO7 - Temperature Annual Range (BIO5-BIO6)",
-        ticks = t.chr
-    )
-    
-    #   All SNPs MAF > 0.01 Bio8
-    plot.manhattan(
-        x.val = d.all.bio8$scaled.BP[d.all.bio8$correct_maf > 0.01],
-        y.val = -log10(d.all.bio8$P[d.all.bio8$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS BIO8 - Mean Temperature of Wettest Quarter",
-        ticks = t.chr
-    )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 Bio8
-    plot.manhattan(
-        x.val = d.all.bio8$scaled.BP[d.all.bio8$correct_maf < 0.01],
-        y.val = -log10(d.all.bio8$P[d.all.bio8$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
-        plot.title = "GWAS BIO8 - Mean Temperature of Wettest Quarter",
-        ticks = t.chr
-    )
-    
-    #   All SNPs MAF > 0.01 Bio9
-    plot.manhattan(
-        x.val = d.all.bio9$scaled.BP[d.all.bio9$correct_maf > 0.01],
-        y.val = -log10(d.all.bio9$P[d.all.bio9$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS BIO9 - Mean Temperature of Driest Quarter",
-        ticks = t.chr
-    )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 Bio9
-    plot.manhattan(
-        x.val = d.all.bio9$scaled.BP[d.all.bio9$correct_maf < 0.01],
-        y.val = -log10(d.all.bio9$P[d.all.bio9$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
+        df = d.all.bio9,
+        maf.threshold = 0.01,
         plot.title = "GWAS BIO9 - Mean Temperature of Driest Quarter",
         ticks = t.chr
     )
     
-    #   All SNPs MAF > 0.01 Bio10
+    #   Bio14
     plot.manhattan(
-        x.val = d.all.bio10$scaled.BP[d.all.bio10$correct_maf > 0.01],
-        y.val = -log10(d.all.bio10$P[d.all.bio10$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS BIO10 - Mean Temperature of Warmest Quarter",
-        ticks = t.chr
-    )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 Bio10
-    plot.manhattan(
-        x.val = d.all.bio10$scaled.BP[d.all.bio10$correct_maf < 0.01],
-        y.val = -log10(d.all.bio10$P[d.all.bio10$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
-        plot.title = "GWAS BIO10 - Mean Temperature of Warmest Quarter",
-        ticks = t.chr
-    )
-
-    
-    ########## Bio12, 13, 14, and 15 in one panel ##########
-    par(mfrow = c(4, 1))
-    #   All SNPs MAF > 0.01 Bio12
-    plot.manhattan(
-        x.val = d.all.bio12$scaled.BP[d.all.bio12$correct_maf > 0.01],
-        y.val = -log10(d.all.bio12$P[d.all.bio12$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS BIO12 - Annual Precipitation",
-        ticks = t.chr
-    )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 Bio12
-    plot.manhattan(
-        x.val = d.all.bio12$scaled.BP[d.all.bio12$correct_maf < 0.01],
-        y.val = -log10(d.all.bio12$P[d.all.bio12$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
-        plot.title = "GWAS BIO12 - Annual Precipitation",
-        ticks = t.chr
-    )
-    
-    #   All SNPs MAF > 0.01 Bio13
-    plot.manhattan(
-        x.val = d.all.bio13$scaled.BP[d.all.bio13$correct_maf > 0.01],
-        y.val = -log10(d.all.bio13$P[d.all.bio13$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS BIO13 - Precipitation of Wettest Month",
-        ticks = t.chr
-    )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 Bio13
-    plot.manhattan(
-        x.val = d.all.bio13$scaled.BP[d.all.bio13$correct_maf < 0.01],
-        y.val = -log10(d.all.bio13$P[d.all.bio13$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
-        plot.title = "GWAS BIO13 - Precipitation of Wettest Month",
-        ticks = t.chr
-    )
-    
-    #   All SNPs MAF > 0.01 Bio14
-    plot.manhattan(
-        x.val = d.all.bio14$scaled.BP[d.all.bio14$correct_maf > 0.01],
-        y.val = -log10(d.all.bio14$P[d.all.bio14$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
+        df = d.all.bio14,
+        maf.threshold = 0.01,
         plot.title = "GWAS BIO14 - Precipitation of Driest Month",
         ticks = t.chr
     )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 Bio14
-    plot.manhattan(
-        x.val = d.all.bio14$scaled.BP[d.all.bio14$correct_maf < 0.01],
-        y.val = -log10(d.all.bio14$P[d.all.bio14$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
-        plot.title = "GWAS BIO14 - Precipitation of Driest Month",
-        ticks = t.chr
-    )
-    #   Need the following code when including inverted region intervals
+    #   Need the following code when adding SNP names
     # arrows(
     #     x0 = d.ss$scaled.BP[d.ss$SNP == "11_20784" & d.ss$PHENO == "bio14"],
     #     y1 = -log10(d.ss$P[d.ss$SNP == "11_20784" & d.ss$PHENO == "bio14"]),
@@ -581,126 +344,139 @@ main <- function() {
     #     labels = "11_20784\n(BIO14, BIO17)"
     # )
     
-    #   All SNPs MAF > 0.01 Bio15
+    #   Bio17
     plot.manhattan(
-        x.val = d.all.bio15$scaled.BP[d.all.bio15$correct_maf > 0.01],
-        y.val = -log10(d.all.bio15$P[d.all.bio15$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS BIO15 - Precipitation Seasonality (Coefficient of Variation)",
-        ticks = t.chr
-    )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 Bio15
-    plot.manhattan(
-        x.val = d.all.bio15$scaled.BP[d.all.bio15$correct_maf < 0.01],
-        y.val = -log10(d.all.bio15$P[d.all.bio15$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
-        plot.title = "GWAS BIO15 - Precipitation Seasonality (Coefficient of Variation)",
-        ticks = t.chr
-    )
-
-
-    ########## Bio16, 17, 18, and 19 in one panel ##########
-    par(mfrow = c(4, 1))
-    #   All SNPs MAF > 0.01 Bio16
-    plot.manhattan(
-        x.val = d.all.bio16$scaled.BP[d.all.bio16$correct_maf > 0.01],
-        y.val = -log10(d.all.bio16$P[d.all.bio16$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS BIO16 - Precipitation of Wettest Quarter",
-        ticks = t.chr
-    )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 Bio16
-    plot.manhattan(
-        x.val = d.all.bio16$scaled.BP[d.all.bio16$correct_maf < 0.01],
-        y.val = -log10(d.all.bio16$P[d.all.bio16$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
-        plot.title = "GWAS BIO16 - Precipitation of Wettest Quarter",
-        ticks = t.chr
-    )
-    
-    #   All SNPs MAF > 0.01 Bio17
-    plot.manhattan(
-        x.val = d.all.bio17$scaled.BP[d.all.bio17$correct_maf > 0.01],
-        y.val = -log10(d.all.bio17$P[d.all.bio17$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
+        df = d.all.bio17,
+        maf.threshold = 0.01,
         plot.title = "GWAS BIO17 - Precipitation of Driest Quarter",
         ticks = t.chr
     )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 Bio17
-    plot.manhattan(
-        x.val = d.all.bio17$scaled.BP[d.all.bio17$correct_maf < 0.01],
-        y.val = -log10(d.all.bio17$P[d.all.bio17$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
-        plot.title = "GWAS BIO17 - Precipitation of Driest Quarter",
-        ticks = t.chr
-    )
-    #   Need the following code when including inverted region intervals
+    #   Need the following code when adding SNP names
     # arrows(
     #     x0 = d.ss$scaled.BP[d.ss$SNP == "11_20784" & d.ss$PHENO == "bio17"],
     #     y1 = -log10(d.ss$P[d.ss$SNP == "11_20784" & d.ss$PHENO == "bio17"]),
     #     y0 = -log10(d.ss$P[d.ss$SNP == "11_20784" & d.ss$PHENO == "bio17"] + (10 * 0.0001636497)),
     #     length = 0.1, lwd = 2
     # )
+    # text(
     #     x = d.ss$scaled.BP[d.ss$SNP == "11_20784" & d.ss$PHENO == "bio17"],
     #     y = -log10(d.ss$P[d.ss$SNP == "11_20784" & d.ss$PHENO == "bio17"] + (10 * 0.0001636497) + 0.05),
     #     labels = "11_20784\n(BIO14, BIO17)"
     # )
     
-    #   All SNPs MAF > 0.01 Bio18
+    ########## Bio2, 3, and 4 in one panel ##########
+    par(mfrow = c(3,1))
+    #   Bio2
     plot.manhattan(
-        x.val = d.all.bio18$scaled.BP[d.all.bio18$correct_maf > 0.01],
-        y.val = -log10(d.all.bio18$P[d.all.bio18$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS BIO18 - Precipitation of Warmest Quarter",
-        ticks = t.chr
-    )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 Bio18
-    plot.manhattan(
-        x.val = d.all.bio18$scaled.BP[d.all.bio18$correct_maf < 0.01],
-        y.val = -log10(d.all.bio18$P[d.all.bio18$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
-        plot.title = "GWAS BIO18 - Precipitation of Warmest Quarter",
+        df = d.all.bio2,
+        maf.threshold = 0.01,
+        plot.title = "GWAS BIO2 - Mean Diurnal Range (Mean of monthly (max temp - min temp))",
         ticks = t.chr
     )
     
-    #   All SNPs MAF > 0.01 Bio19
+    #   Bio3
     plot.manhattan(
-        x.val = d.all.bio19$scaled.BP[d.all.bio19$correct_maf > 0.01],
-        y.val = -log10(d.all.bio19$P[d.all.bio19$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS BIO19 - Precipitation of Coldest Quarter",
+        df = d.all.bio3,
+        maf.threshold = 0.01,
+        plot.title = "GWAS BIO3 - Isothermality (BIO2/BIO7) (* 100)",
         ticks = t.chr
     )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 Bio19
+    
+    #   Bio4
     plot.manhattan(
-        x.val = d.all.bio19$scaled.BP[d.all.bio19$correct_maf < 0.01],
-        y.val = -log10(d.all.bio19$P[d.all.bio19$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
+        df = d.all.bio4,
+        maf.threshold = 0.01,
+        plot.title = "GWAS BIO4 - Temperature Seasonality (standard deviation *100)",
+        ticks = t.chr
+    )
+    
+    ########## Bio5, 7, and 8 in one panel ##########
+    par(mfrow = c(3, 1))
+    #   Bio5
+    plot.manhattan(
+        df = d.all.bio5,
+        maf.threshold = 0.01,
+        plot.title = "GWAS BIO5 - Max Temperature of Warmest Month",
+        ticks = t.chr
+    )
+    
+    #   Bio7
+    plot.manhattan(
+        df = d.all.bio7,
+        maf.threshold = 0.01,
+        plot.title = "GWAS BIO7 - Temperature Annual Range (BIO5-BIO6)",
+        ticks = t.chr
+    )
+    
+    #   Bio8
+    plot.manhattan(
+        df = d.all.bio8,
+        maf.threshold = 0.01,
+        plot.title = "GWAS BIO8 - Mean Temperature of Wettest Quarter",
+        ticks = t.chr
+    )
+
+    
+    ########## Bio 10, 12, and 13 in one panel ##########
+    par(mfrow = c(3,1))
+    #   Bio10
+    plot.manhattan(
+        df = d.all.bio10,
+        maf.threshold = 0.01,
+        plot.title = "GWAS BIO10 - Mean Temperature of Warmest Quarter",
+        ticks = t.chr
+    )
+    
+    #   Bio12
+    plot.manhattan(
+        df = d.all.bio12,
+        maf.threshold = 0.01,
+        plot.title = "GWAS BIO12 - Annual Precipitation",
+        ticks = t.chr
+    )
+    
+    #   Bio13
+    plot.manhattan(
+        df = d.all.bio13,
+        maf.threshold = 0.01,
+        plot.title = "GWAS BIO13 - Precipitation of Wettest Month",
+        ticks = t.chr
+    )
+
+    
+    ########## Bio15, 16, and 18 in one panel ##########
+    par(mfrow = c(3, 1))
+    #   Bio15
+    plot.manhattan(
+        df = d.all.bio15,
+        maf.threshold = 0.01,
+        plot.title = "GWAS BIO15 - Precipitation Seasonality (Coefficient of Variation)",
+        ticks = t.chr
+    )
+    
+    #   Bio16
+    plot.manhattan(
+        df = d.all.bio16,
+        maf.threshold = 0.01,
+        plot.title = "GWAS BIO16 - Precipitation of Wettest Quarter",
+        ticks = t.chr
+    )
+    
+    #   Bio18
+    plot.manhattan(
+        df = d.all.bio18,
+        maf.threshold = 0.01,
+        plot.title = "GWAS BIO18 - Precipitation of Warmest Quarter",
+        ticks = t.chr
+    )
+
+
+    ########## Bio19 in one panel ##########
+    par(mfrow = c(3, 1))
+    #   Bio19
+    plot.manhattan(
+        df = d.all.bio19,
+        maf.threshold = 0.01,
         plot.title = "GWAS BIO19 - Precipitation of Coldest Quarter",
         ticks = t.chr
     )
@@ -708,68 +484,26 @@ main <- function() {
     
     ########## Latitude, longitude, and altitude in one panel ##########
     par(mfrow = c(3, 1))
-    #   All SNPs MAF > 0.01 Latitude
+    #   Latitude
     plot.manhattan(
-        x.val = d.all.Latitude$scaled.BP[d.all.Latitude$correct_maf > 0.01],
-        y.val = -log10(d.all.Latitude$P[d.all.Latitude$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS - Latitude",
-        ticks = t.chr
-    )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 Latitude
-    plot.manhattan(
-        x.val = d.all.Latitude$scaled.BP[d.all.Latitude$correct_maf < 0.01],
-        y.val = -log10(d.all.Latitude$P[d.all.Latitude$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
+        df = d.all.Latitude,
+        maf.threshold = 0.01,
         plot.title = "GWAS - Latitude",
         ticks = t.chr
     )
     
-    #   All SNPs MAF > 0.01 Longitude
+    #   Longitude
     plot.manhattan(
-        x.val = d.all.Longitude$scaled.BP[d.all.Longitude$correct_maf > 0.01],
-        y.val = -log10(d.all.Longitude$P[d.all.Longitude$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS - Longitude",
-        ticks = t.chr
-    )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 Longitude
-    plot.manhattan(
-        x.val = d.all.Longitude$scaled.BP[d.all.Longitude$correct_maf < 0.01],
-        y.val = -log10(d.all.Longitude$P[d.all.Longitude$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
+        df = d.all.Longitude,
+        maf.threshold = 0.01,
         plot.title = "GWAS - Longitude",
         ticks = t.chr
     )
     
-    #   All SNPs MAF > 0.01 Altitude
+    #   Altitude
     plot.manhattan(
-        x.val = d.all.altitude$scaled.BP[d.all.altitude$correct_maf > 0.01],
-        y.val = -log10(d.all.altitude$P[d.all.altitude$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS - Altitude",
-        ticks = t.chr
-    )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 Altitude
-    plot.manhattan(
-        x.val = d.all.altitude$scaled.BP[d.all.altitude$correct_maf < 0.01],
-        y.val = -log10(d.all.altitude$P[d.all.altitude$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
+        df = d.all.altitude,
+        maf.threshold = 0.01,
         plot.title = "GWAS - Altitude",
         ticks = t.chr
     )
@@ -777,68 +511,26 @@ main <- function() {
     
     ########## IC1, 2, and 3 in one panel ##########
     par(mfrow = c(3, 1))
-    #   All SNPs MAF > 0.01 IC1
+    #   IC1
     plot.manhattan(
-        x.val = d.all.IC1$scaled.BP[d.all.IC1$correct_maf > 0.01],
-        y.val = -log10(d.all.IC1$P[d.all.IC1$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS IC1 - Independent components applied to BIO1-19",
-        ticks = t.chr
-    )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 IC1
-    plot.manhattan(
-        x.val = d.all.IC1$scaled.BP[d.all.IC1$correct_maf < 0.01],
-        y.val = -log10(d.all.IC1$P[d.all.IC1$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
+        df = d.all.IC1,
+        maf.threshold = 0.01,
         plot.title = "GWAS IC1 - Independent components applied to BIO1-19",
         ticks = t.chr
     )
     
-    #   All SNPs MAF > 0.01 IC2
+    #   IC2
     plot.manhattan(
-        x.val = d.all.IC2$scaled.BP[d.all.IC2$correct_maf > 0.01],
-        y.val = -log10(d.all.IC2$P[d.all.IC2$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS IC2 - Independent components applied to BIO1-19",
-        ticks = t.chr
-    )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 IC2
-    plot.manhattan(
-        x.val = d.all.IC2$scaled.BP[d.all.IC2$correct_maf < 0.01],
-        y.val = -log10(d.all.IC2$P[d.all.IC2$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
+        d.all.IC2,
+        maf.threshold = 0.01,
         plot.title = "GWAS IC2 - Independent components applied to BIO1-19",
         ticks = t.chr
     )
     
-    #   All SNPs MAF > 0.01 IC3
+    #   IC3
     plot.manhattan(
-        x.val = d.all.IC3$scaled.BP[d.all.IC3$correct_maf > 0.01],
-        y.val = -log10(d.all.IC3$P[d.all.IC3$correct_maf > 0.01]),
-        color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
-        p.sym = 1,
-        sym.size = 0.75,
-        plot.title = "GWAS IC3 - Independent components applied to BIO1-19",
-        ticks = t.chr
-    )
-    par(new = TRUE)
-    #   All SNPs MAF < 0.01 IC3
-    plot.manhattan(
-        x.val = d.all.IC3$scaled.BP[d.all.IC3$correct_maf < 0.01],
-        y.val = -log10(d.all.IC3$P[d.all.IC3$correct_maf < 0.01]),
-        color.pheno = "red",
-        p.sym = 20,
-        sym.size = 1,
+        df = d.all.IC3,
+        maf.threshold = 0.01,
         plot.title = "GWAS IC3 - Independent components applied to BIO1-19",
         ticks = t.chr
     )
