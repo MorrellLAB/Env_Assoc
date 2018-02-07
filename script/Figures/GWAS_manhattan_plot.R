@@ -1,28 +1,6 @@
 #!/usr/bin/env Rscript
 
-#   Function to read in Csv file used for plotting
-#   Might remove in future, this function is only for compiled.5e_4.0.01.v2_physPos.csv file
-readCsv <- function(filename) {
-    data.file <- read.csv(
-        file = filename,
-        header = TRUE,
-        na.strings = "NA"
-    )
 
-    #   In Chr_2016 column, replace "chr" with nothing and replace "H" with nothing
-    data.file$Chr_2016 <- sub("chr", "", data.file$Chr_2016)
-    data.file$Chr_2016 <- sub("H", "", data.file$Chr_2016)
-
-    #   Pull out columns of interest
-    gwas.data <- data.frame(
-        SNP = data.file$SNP,
-        PHENO = data.file$Phenotype,
-        CHR = data.file$Chr_2016,
-        BP = data.file$PhysPos_2016,
-        P = data.file$P.value
-    )
-    return(gwas.data)
-}
 
 readGAPIT <- function(filename) {
     data.file <- read.csv(
