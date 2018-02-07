@@ -1,6 +1,16 @@
 #!/usr/bin/env Rscript
 
+library(data.table)
 
+#   Function to read in MAF file with two columns: SNP and Maf
+readMaf <- function(filename) {
+    data.file <- fread(
+        input = filename,
+        sep = "\t",
+        header = TRUE
+    )
+    return(data.file)
+}
 
 readGAPIT <- function(filename) {
     data.file <- read.csv(
@@ -49,15 +59,31 @@ chrTicks <- function(chr1.whole, chr2.whole, chr3.whole, chr4.whole, chr5.whole,
     return(ticks)
 }
 
-scalePsuedo <- function(df, chr1.whole, chr2.whole, chr3.whole, chr4.whole, chr5.whole, chr6.whole, chr7.whole) {
+fixMaf <- function(full.df, new_maf.df) {
+    merged.df <- merge(
+        x = full.df,
+        y = new_maf.df,
+        by.x = "SNP",
+        by.y = "maf_snp",
+        all.x = TRUE, # Rows that do not have a match will remain in dataframe
+        all.y = TRUE # Rows that do not have a match with x will not be added to x
+    )
+    return(merged.df)
+}
+
+scalePsuedo <- function(df, maf.data, chr1.whole, chr2.whole, chr3.whole, chr4.whole, chr5.whole, chr6.whole, chr7.whole) {
+    #   Add column of correct MAF values before scaling
+    #   Calls on function defined above
+    df.merged <- fixMaf(full.df = df, new_maf.df = maf.data)
+    
     #   Subset chromosomes
-    df.chr1 <- subset(df, subset = df$CHR == 1)
-    df.chr2 <- subset(df, subset = df$CHR == 2)
-    df.chr3 <- subset(df, subset = df$CHR == 3)
-    df.chr4 <- subset(df, subset = df$CHR == 4)
-    df.chr5 <- subset(df, subset = df$CHR == 5)
-    df.chr6 <- subset(df, subset = df$CHR == 6)
-    df.chr7 <- subset(df, subset = df$CHR == 7)
+    df.chr1 <- subset(df.merged, subset = df.merged$CHR == 1)
+    df.chr2 <- subset(df.merged, subset = df.merged$CHR == 2)
+    df.chr3 <- subset(df.merged, subset = df.merged$CHR == 3)
+    df.chr4 <- subset(df.merged, subset = df.merged$CHR == 4)
+    df.chr5 <- subset(df.merged, subset = df.merged$CHR == 5)
+    df.chr6 <- subset(df.merged, subset = df.merged$CHR == 6)
+    df.chr7 <- subset(df.merged, subset = df.merged$CHR == 7)
 
     #   Add new column of scaled positions for plotting
     df.chr1["scaled.BP"] <- df.chr1$BP
@@ -125,18 +151,18 @@ plot.manhattan <- function(x.val, y.val, color.pheno, p.sym, sym.size, plot.titl
     # )
 }
 
+
 main <- function() {
-    #   User provided arguments
-    #   This file contains only the significant SNPs
-    #   Commented out section that only contained the significant SNPs data
-    # gwas.filepath <- "/Users/chaochih/Dropbox/Landrace_Environmental_Association/Analyses/GWAS-GAPIT/compiled.5e_4.0.01.v2_physPos.csv"
+    ##################################################
+    ##########   User provided arguments    ##########
+    ##################################################
+    
+    #   Full filepath to updated (correct) MAF values for each SNP
+    #   Updated Jan 2018
+    maf.fp <- "/Users/chaochih/Dropbox/Projects/Landrace_Environmental_Association/Contributors/Fumi/Fumi_Env_GWAS/GWAS.landraces/trans_myGD.v2.sorted.maf"
     #   Directory path to full dataset csv files
-    gwas.all.dir <- "/Users/chaochih/Dropbox/Landrace_Environmental_Association/Analyses/GWAS-GAPIT/GWAS_Results_Full_with_PhysPos"
-
-    #   Read in GWAS significant SNPs data
-    #   Commented out section that only contained the significant SNPs data
-    # gwas.df <- readCsv(filename = gwas.filepath)
-
+    gwas.all.dir <- "/Users/chaochih/Dropbox/Projects/Landrace_Environmental_Association/Analyses/GWAS-GAPIT/GWAS_Results_Full_with_PhysPos"
+    
     #   Read in list of all GWAS data files
     #   These files contain the full dataset including the significant SNPs for each bioclim variable
     full.d.fp <- list.files(path = gwas.all.dir, pattern = ".csv", full.names = TRUE)
@@ -145,6 +171,11 @@ main <- function() {
         X = full.d.fp,
         FUN = readGAPIT
     )
+    
+    #   Read in updated maf values
+    maf.df <- readMaf(filename = maf.fp)
+    #   Rename columns
+    colnames(maf.df) <- c("maf_snp", "correct_maf")
 
     #   Key for pseudomolecular parts positions
     chr1H_part1 <- 312837513
@@ -181,26 +212,16 @@ main <- function() {
     #   Generate ticks used for plots
     t.chr <- chrTicks(chr1.whole = chr1.w, chr2.whole = chr2.w, chr3.whole = chr3.w, chr4.whole = chr4.w, chr5.whole = chr5.w, chr6.whole = chr6.w, chr7.whole = chr7.w)
 
-    #   Scale physical positions in data for accurate representation in plots
-    #   Commented out section that only contained the significant SNPs data
-    # d.ss <- scalePsuedo(
-    #     df = gwas.df,
-    #     chr1.whole = chr1.w,
-    #     chr2.whole = chr2.w,
-    #     chr3.whole = chr3.w,
-    #     chr4.whole = chr4.w,
-    #     chr5.whole = chr5.w,
-    #     chr6.whole = chr6.w,
-    #     chr7.whole = chr7.w
-    # )
     #   Scale physical positions for each list for each phenotype value
     #   Output variable naming scheme: d.all.pheno
     #   i.e. d.all.altitude, d.all.bio1
     for (i in 1:25) {
+        
         assign(
             paste0("d.all.", as.character(unique(full.d[[i]]$PHENO))),
             scalePsuedo(
                 df = full.d[[i]],
+                maf.data = maf.df,
                 chr1.whole = chr1.w,
                 chr2.whole = chr2.w,
                 chr3.whole = chr3.w,
@@ -212,17 +233,19 @@ main <- function() {
         )
     }
 
-    #   Generate Plots
+    ##########################################
+    ##########   Generate Plots     ##########
+    ##########################################
+    
     #   MAF 0.01 filter was used by Fumi to get list of significant SNPs from GWAS analysis
     #   See: ReadMe.GWAS.landraces in ~/Dropbox/Landrace_Environmental_Association/GWAS-GAPIT
-    
     
     ########## Bio1, 6, and 11 in one panel ##########
     par(mfrow = c(3, 1))
     #   All SNPs MAF > 0.01 Bio1
     plot.manhattan(
-        x.val = d.all.bio1$scaled.BP[d.all.bio1$MAF > 0.01],
-        y.val = -log10(d.all.bio1$P[d.all.bio1$MAF > 0.01]),
+        x.val = d.all.bio1$scaled.BP[d.all.bio1$correct_maf > 0.01],
+        y.val = -log10(d.all.bio1$P[d.all.bio1$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -232,8 +255,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 Bio1
     plot.manhattan(
-        x.val = d.all.bio1$scaled.BP[d.all.bio1$MAF < 0.01],
-        y.val = -log10(d.all.bio1$P[d.all.bio1$MAF < 0.01]),
+        x.val = d.all.bio1$scaled.BP[d.all.bio1$correct_maf < 0.01],
+        y.val = -log10(d.all.bio1$P[d.all.bio1$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -248,8 +271,8 @@ main <- function() {
     
     #   All SNPs MAF > 0.01 Bio6
     plot.manhattan(
-        x.val = d.all.bio6$scaled.BP[d.all.bio6$MAF > 0.01],
-        y.val = -log10(d.all.bio6$P[d.all.bio6$MAF > 0.01]),
+        x.val = d.all.bio6$scaled.BP[d.all.bio6$correct_maf > 0.01],
+        y.val = -log10(d.all.bio6$P[d.all.bio6$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -259,8 +282,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 Bio6
     plot.manhattan(
-        x.val = d.all.bio6$scaled.BP[d.all.bio6$MAF < 0.01],
-        y.val = -log10(d.all.bio6$P[d.all.bio6$MAF < 0.01]),
+        x.val = d.all.bio6$scaled.BP[d.all.bio6$correct_maf < 0.01],
+        y.val = -log10(d.all.bio6$P[d.all.bio6$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -270,8 +293,8 @@ main <- function() {
     
     #   All SNPs MAF > 0.01 Bio11
     plot.manhattan(
-        x.val = d.all.bio11$scaled.BP[d.all.bio11$MAF > 0.01],
-        y.val = -log10(d.all.bio11$P[d.all.bio11$MAF > 0.01]),
+        x.val = d.all.bio11$scaled.BP[d.all.bio11$correct_maf > 0.01],
+        y.val = -log10(d.all.bio11$P[d.all.bio11$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -281,8 +304,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 Bio11
     plot.manhattan(
-        x.val = d.all.bio11$scaled.BP[d.all.bio11$MAF < 0.01],
-        y.val = -log10(d.all.bio11$P[d.all.bio11$MAF < 0.01]),
+        x.val = d.all.bio11$scaled.BP[d.all.bio11$correct_maf < 0.01],
+        y.val = -log10(d.all.bio11$P[d.all.bio11$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -295,8 +318,8 @@ main <- function() {
     par(mfrow = c(4,1))
     #   All SNPs MAF > 0.01 Bio2
     plot.manhattan(
-        x.val = d.all.bio2$scaled.BP[d.all.bio2$MAF > 0.01],
-        y.val = -log10(d.all.bio2$P[d.all.bio2$MAF > 0.01]),
+        x.val = d.all.bio2$scaled.BP[d.all.bio2$correct_maf > 0.01],
+        y.val = -log10(d.all.bio2$P[d.all.bio2$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -306,8 +329,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 Bio2
     plot.manhattan(
-        x.val = d.all.bio2$scaled.BP[d.all.bio2$MAF < 0.01],
-        y.val = -log10(d.all.bio2$P[d.all.bio2$MAF < 0.01]),
+        x.val = d.all.bio2$scaled.BP[d.all.bio2$correct_maf < 0.01],
+        y.val = -log10(d.all.bio2$P[d.all.bio2$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -322,8 +345,8 @@ main <- function() {
     
     #   All SNPs MAF > 0.01 Bio3
     plot.manhattan(
-        x.val = d.all.bio3$scaled.BP[d.all.bio3$MAF > 0.01],
-        y.val = -log10(d.all.bio3$P[d.all.bio3$MAF > 0.01]),
+        x.val = d.all.bio3$scaled.BP[d.all.bio3$correct_maf > 0.01],
+        y.val = -log10(d.all.bio3$P[d.all.bio3$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -333,8 +356,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 Bio3
     plot.manhattan(
-        x.val = d.all.bio3$scaled.BP[d.all.bio3$MAF < 0.01],
-        y.val = -log10(d.all.bio3$P[d.all.bio3$MAF < 0.01]),
+        x.val = d.all.bio3$scaled.BP[d.all.bio3$correct_maf < 0.01],
+        y.val = -log10(d.all.bio3$P[d.all.bio3$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -344,8 +367,8 @@ main <- function() {
     
     #   All SNPs MAF > 0.01 Bio4
     plot.manhattan(
-        x.val = d.all.bio4$scaled.BP[d.all.bio4$MAF > 0.01],
-        y.val = -log10(d.all.bio4$P[d.all.bio4$MAF > 0.01]),
+        x.val = d.all.bio4$scaled.BP[d.all.bio4$correct_maf > 0.01],
+        y.val = -log10(d.all.bio4$P[d.all.bio4$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -355,8 +378,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 Bio4
     plot.manhattan(
-        x.val = d.all.bio4$scaled.BP[d.all.bio4$MAF < 0.01],
-        y.val = -log10(d.all.bio4$P[d.all.bio4$MAF < 0.01]),
+        x.val = d.all.bio4$scaled.BP[d.all.bio4$correct_maf < 0.01],
+        y.val = -log10(d.all.bio4$P[d.all.bio4$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -366,8 +389,8 @@ main <- function() {
     
     #   All SNPs MAF > 0.01 Bio5
     plot.manhattan(
-        x.val = d.all.bio5$scaled.BP[d.all.bio5$MAF > 0.01],
-        y.val = -log10(d.all.bio5$P[d.all.bio5$MAF > 0.01]),
+        x.val = d.all.bio5$scaled.BP[d.all.bio5$correct_maf > 0.01],
+        y.val = -log10(d.all.bio5$P[d.all.bio5$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -377,8 +400,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 Bio5
     plot.manhattan(
-        x.val = d.all.bio5$scaled.BP[d.all.bio5$MAF < 0.01],
-        y.val = -log10(d.all.bio5$P[d.all.bio5$MAF < 0.01]),
+        x.val = d.all.bio5$scaled.BP[d.all.bio5$correct_maf < 0.01],
+        y.val = -log10(d.all.bio5$P[d.all.bio5$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -391,8 +414,8 @@ main <- function() {
     par(mfrow = c(4,1))
     #   All SNPs MAF > 0.01 Bio7
     plot.manhattan(
-        x.val = d.all.bio7$scaled.BP[d.all.bio7$MAF > 0.01],
-        y.val = -log10(d.all.bio7$P[d.all.bio7$MAF > 0.01]),
+        x.val = d.all.bio7$scaled.BP[d.all.bio7$correct_maf > 0.01],
+        y.val = -log10(d.all.bio7$P[d.all.bio7$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -402,8 +425,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 Bio7
     plot.manhattan(
-        x.val = d.all.bio7$scaled.BP[d.all.bio7$MAF < 0.01],
-        y.val = -log10(d.all.bio7$P[d.all.bio7$MAF < 0.01]),
+        x.val = d.all.bio7$scaled.BP[d.all.bio7$correct_maf < 0.01],
+        y.val = -log10(d.all.bio7$P[d.all.bio7$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -413,8 +436,8 @@ main <- function() {
     
     #   All SNPs MAF > 0.01 Bio8
     plot.manhattan(
-        x.val = d.all.bio8$scaled.BP[d.all.bio8$MAF > 0.01],
-        y.val = -log10(d.all.bio8$P[d.all.bio8$MAF > 0.01]),
+        x.val = d.all.bio8$scaled.BP[d.all.bio8$correct_maf > 0.01],
+        y.val = -log10(d.all.bio8$P[d.all.bio8$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -424,8 +447,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 Bio8
     plot.manhattan(
-        x.val = d.all.bio8$scaled.BP[d.all.bio8$MAF < 0.01],
-        y.val = -log10(d.all.bio8$P[d.all.bio8$MAF < 0.01]),
+        x.val = d.all.bio8$scaled.BP[d.all.bio8$correct_maf < 0.01],
+        y.val = -log10(d.all.bio8$P[d.all.bio8$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -435,8 +458,8 @@ main <- function() {
     
     #   All SNPs MAF > 0.01 Bio9
     plot.manhattan(
-        x.val = d.all.bio9$scaled.BP[d.all.bio9$MAF > 0.01],
-        y.val = -log10(d.all.bio9$P[d.all.bio9$MAF > 0.01]),
+        x.val = d.all.bio9$scaled.BP[d.all.bio9$correct_maf > 0.01],
+        y.val = -log10(d.all.bio9$P[d.all.bio9$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -446,8 +469,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 Bio9
     plot.manhattan(
-        x.val = d.all.bio9$scaled.BP[d.all.bio9$MAF < 0.01],
-        y.val = -log10(d.all.bio9$P[d.all.bio9$MAF < 0.01]),
+        x.val = d.all.bio9$scaled.BP[d.all.bio9$correct_maf < 0.01],
+        y.val = -log10(d.all.bio9$P[d.all.bio9$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -457,8 +480,8 @@ main <- function() {
     
     #   All SNPs MAF > 0.01 Bio10
     plot.manhattan(
-        x.val = d.all.bio10$scaled.BP[d.all.bio10$MAF > 0.01],
-        y.val = -log10(d.all.bio10$P[d.all.bio10$MAF > 0.01]),
+        x.val = d.all.bio10$scaled.BP[d.all.bio10$correct_maf > 0.01],
+        y.val = -log10(d.all.bio10$P[d.all.bio10$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -468,8 +491,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 Bio10
     plot.manhattan(
-        x.val = d.all.bio10$scaled.BP[d.all.bio10$MAF < 0.01],
-        y.val = -log10(d.all.bio10$P[d.all.bio10$MAF < 0.01]),
+        x.val = d.all.bio10$scaled.BP[d.all.bio10$correct_maf < 0.01],
+        y.val = -log10(d.all.bio10$P[d.all.bio10$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -482,8 +505,8 @@ main <- function() {
     par(mfrow = c(4, 1))
     #   All SNPs MAF > 0.01 Bio12
     plot.manhattan(
-        x.val = d.all.bio12$scaled.BP[d.all.bio12$MAF > 0.01],
-        y.val = -log10(d.all.bio12$P[d.all.bio12$MAF > 0.01]),
+        x.val = d.all.bio12$scaled.BP[d.all.bio12$correct_maf > 0.01],
+        y.val = -log10(d.all.bio12$P[d.all.bio12$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -493,8 +516,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 Bio12
     plot.manhattan(
-        x.val = d.all.bio12$scaled.BP[d.all.bio12$MAF < 0.01],
-        y.val = -log10(d.all.bio12$P[d.all.bio12$MAF < 0.01]),
+        x.val = d.all.bio12$scaled.BP[d.all.bio12$correct_maf < 0.01],
+        y.val = -log10(d.all.bio12$P[d.all.bio12$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -504,8 +527,8 @@ main <- function() {
     
     #   All SNPs MAF > 0.01 Bio13
     plot.manhattan(
-        x.val = d.all.bio13$scaled.BP[d.all.bio13$MAF > 0.01],
-        y.val = -log10(d.all.bio13$P[d.all.bio13$MAF > 0.01]),
+        x.val = d.all.bio13$scaled.BP[d.all.bio13$correct_maf > 0.01],
+        y.val = -log10(d.all.bio13$P[d.all.bio13$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -515,8 +538,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 Bio13
     plot.manhattan(
-        x.val = d.all.bio13$scaled.BP[d.all.bio13$MAF < 0.01],
-        y.val = -log10(d.all.bio13$P[d.all.bio13$MAF < 0.01]),
+        x.val = d.all.bio13$scaled.BP[d.all.bio13$correct_maf < 0.01],
+        y.val = -log10(d.all.bio13$P[d.all.bio13$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -526,8 +549,8 @@ main <- function() {
     
     #   All SNPs MAF > 0.01 Bio14
     plot.manhattan(
-        x.val = d.all.bio14$scaled.BP[d.all.bio14$MAF > 0.01],
-        y.val = -log10(d.all.bio14$P[d.all.bio14$MAF > 0.01]),
+        x.val = d.all.bio14$scaled.BP[d.all.bio14$correct_maf > 0.01],
+        y.val = -log10(d.all.bio14$P[d.all.bio14$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -537,8 +560,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 Bio14
     plot.manhattan(
-        x.val = d.all.bio14$scaled.BP[d.all.bio14$MAF < 0.01],
-        y.val = -log10(d.all.bio14$P[d.all.bio14$MAF < 0.01]),
+        x.val = d.all.bio14$scaled.BP[d.all.bio14$correct_maf < 0.01],
+        y.val = -log10(d.all.bio14$P[d.all.bio14$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -560,8 +583,8 @@ main <- function() {
     
     #   All SNPs MAF > 0.01 Bio15
     plot.manhattan(
-        x.val = d.all.bio15$scaled.BP[d.all.bio15$MAF > 0.01],
-        y.val = -log10(d.all.bio15$P[d.all.bio15$MAF > 0.01]),
+        x.val = d.all.bio15$scaled.BP[d.all.bio15$correct_maf > 0.01],
+        y.val = -log10(d.all.bio15$P[d.all.bio15$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -571,8 +594,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 Bio15
     plot.manhattan(
-        x.val = d.all.bio15$scaled.BP[d.all.bio15$MAF < 0.01],
-        y.val = -log10(d.all.bio15$P[d.all.bio15$MAF < 0.01]),
+        x.val = d.all.bio15$scaled.BP[d.all.bio15$correct_maf < 0.01],
+        y.val = -log10(d.all.bio15$P[d.all.bio15$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -585,8 +608,8 @@ main <- function() {
     par(mfrow = c(4, 1))
     #   All SNPs MAF > 0.01 Bio16
     plot.manhattan(
-        x.val = d.all.bio16$scaled.BP[d.all.bio16$MAF > 0.01],
-        y.val = -log10(d.all.bio16$P[d.all.bio16$MAF > 0.01]),
+        x.val = d.all.bio16$scaled.BP[d.all.bio16$correct_maf > 0.01],
+        y.val = -log10(d.all.bio16$P[d.all.bio16$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -596,8 +619,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 Bio16
     plot.manhattan(
-        x.val = d.all.bio16$scaled.BP[d.all.bio16$MAF < 0.01],
-        y.val = -log10(d.all.bio16$P[d.all.bio16$MAF < 0.01]),
+        x.val = d.all.bio16$scaled.BP[d.all.bio16$correct_maf < 0.01],
+        y.val = -log10(d.all.bio16$P[d.all.bio16$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -607,8 +630,8 @@ main <- function() {
     
     #   All SNPs MAF > 0.01 Bio17
     plot.manhattan(
-        x.val = d.all.bio17$scaled.BP[d.all.bio17$MAF > 0.01],
-        y.val = -log10(d.all.bio17$P[d.all.bio17$MAF > 0.01]),
+        x.val = d.all.bio17$scaled.BP[d.all.bio17$correct_maf > 0.01],
+        y.val = -log10(d.all.bio17$P[d.all.bio17$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -618,8 +641,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 Bio17
     plot.manhattan(
-        x.val = d.all.bio17$scaled.BP[d.all.bio17$MAF < 0.01],
-        y.val = -log10(d.all.bio17$P[d.all.bio17$MAF < 0.01]),
+        x.val = d.all.bio17$scaled.BP[d.all.bio17$correct_maf < 0.01],
+        y.val = -log10(d.all.bio17$P[d.all.bio17$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -640,8 +663,8 @@ main <- function() {
     
     #   All SNPs MAF > 0.01 Bio18
     plot.manhattan(
-        x.val = d.all.bio18$scaled.BP[d.all.bio18$MAF > 0.01],
-        y.val = -log10(d.all.bio18$P[d.all.bio18$MAF > 0.01]),
+        x.val = d.all.bio18$scaled.BP[d.all.bio18$correct_maf > 0.01],
+        y.val = -log10(d.all.bio18$P[d.all.bio18$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -651,8 +674,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 Bio18
     plot.manhattan(
-        x.val = d.all.bio18$scaled.BP[d.all.bio18$MAF < 0.01],
-        y.val = -log10(d.all.bio18$P[d.all.bio18$MAF < 0.01]),
+        x.val = d.all.bio18$scaled.BP[d.all.bio18$correct_maf < 0.01],
+        y.val = -log10(d.all.bio18$P[d.all.bio18$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -662,8 +685,8 @@ main <- function() {
     
     #   All SNPs MAF > 0.01 Bio19
     plot.manhattan(
-        x.val = d.all.bio19$scaled.BP[d.all.bio19$MAF > 0.01],
-        y.val = -log10(d.all.bio19$P[d.all.bio19$MAF > 0.01]),
+        x.val = d.all.bio19$scaled.BP[d.all.bio19$correct_maf > 0.01],
+        y.val = -log10(d.all.bio19$P[d.all.bio19$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -673,8 +696,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 Bio19
     plot.manhattan(
-        x.val = d.all.bio19$scaled.BP[d.all.bio19$MAF < 0.01],
-        y.val = -log10(d.all.bio19$P[d.all.bio19$MAF < 0.01]),
+        x.val = d.all.bio19$scaled.BP[d.all.bio19$correct_maf < 0.01],
+        y.val = -log10(d.all.bio19$P[d.all.bio19$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -687,8 +710,8 @@ main <- function() {
     par(mfrow = c(3, 1))
     #   All SNPs MAF > 0.01 Latitude
     plot.manhattan(
-        x.val = d.all.Latitude$scaled.BP[d.all.Latitude$MAF > 0.01],
-        y.val = -log10(d.all.Latitude$P[d.all.Latitude$MAF > 0.01]),
+        x.val = d.all.Latitude$scaled.BP[d.all.Latitude$correct_maf > 0.01],
+        y.val = -log10(d.all.Latitude$P[d.all.Latitude$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -698,8 +721,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 Latitude
     plot.manhattan(
-        x.val = d.all.Latitude$scaled.BP[d.all.Latitude$MAF < 0.01],
-        y.val = -log10(d.all.Latitude$P[d.all.Latitude$MAF < 0.01]),
+        x.val = d.all.Latitude$scaled.BP[d.all.Latitude$correct_maf < 0.01],
+        y.val = -log10(d.all.Latitude$P[d.all.Latitude$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -709,8 +732,8 @@ main <- function() {
     
     #   All SNPs MAF > 0.01 Longitude
     plot.manhattan(
-        x.val = d.all.Longitude$scaled.BP[d.all.Longitude$MAF > 0.01],
-        y.val = -log10(d.all.Longitude$P[d.all.Longitude$MAF > 0.01]),
+        x.val = d.all.Longitude$scaled.BP[d.all.Longitude$correct_maf > 0.01],
+        y.val = -log10(d.all.Longitude$P[d.all.Longitude$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -720,8 +743,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 Longitude
     plot.manhattan(
-        x.val = d.all.Longitude$scaled.BP[d.all.Longitude$MAF < 0.01],
-        y.val = -log10(d.all.Longitude$P[d.all.Longitude$MAF < 0.01]),
+        x.val = d.all.Longitude$scaled.BP[d.all.Longitude$correct_maf < 0.01],
+        y.val = -log10(d.all.Longitude$P[d.all.Longitude$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -731,8 +754,8 @@ main <- function() {
     
     #   All SNPs MAF > 0.01 Altitude
     plot.manhattan(
-        x.val = d.all.altitude$scaled.BP[d.all.altitude$MAF > 0.01],
-        y.val = -log10(d.all.altitude$P[d.all.altitude$MAF > 0.01]),
+        x.val = d.all.altitude$scaled.BP[d.all.altitude$correct_maf > 0.01],
+        y.val = -log10(d.all.altitude$P[d.all.altitude$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -742,8 +765,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 Altitude
     plot.manhattan(
-        x.val = d.all.altitude$scaled.BP[d.all.altitude$MAF < 0.01],
-        y.val = -log10(d.all.altitude$P[d.all.altitude$MAF < 0.01]),
+        x.val = d.all.altitude$scaled.BP[d.all.altitude$correct_maf < 0.01],
+        y.val = -log10(d.all.altitude$P[d.all.altitude$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -756,8 +779,8 @@ main <- function() {
     par(mfrow = c(3, 1))
     #   All SNPs MAF > 0.01 IC1
     plot.manhattan(
-        x.val = d.all.IC1$scaled.BP[d.all.IC1$MAF > 0.01],
-        y.val = -log10(d.all.IC1$P[d.all.IC1$MAF > 0.01]),
+        x.val = d.all.IC1$scaled.BP[d.all.IC1$correct_maf > 0.01],
+        y.val = -log10(d.all.IC1$P[d.all.IC1$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -767,8 +790,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 IC1
     plot.manhattan(
-        x.val = d.all.IC1$scaled.BP[d.all.IC1$MAF < 0.01],
-        y.val = -log10(d.all.IC1$P[d.all.IC1$MAF < 0.01]),
+        x.val = d.all.IC1$scaled.BP[d.all.IC1$correct_maf < 0.01],
+        y.val = -log10(d.all.IC1$P[d.all.IC1$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -778,8 +801,8 @@ main <- function() {
     
     #   All SNPs MAF > 0.01 IC2
     plot.manhattan(
-        x.val = d.all.IC2$scaled.BP[d.all.IC2$MAF > 0.01],
-        y.val = -log10(d.all.IC2$P[d.all.IC2$MAF > 0.01]),
+        x.val = d.all.IC2$scaled.BP[d.all.IC2$correct_maf > 0.01],
+        y.val = -log10(d.all.IC2$P[d.all.IC2$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -789,8 +812,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 IC2
     plot.manhattan(
-        x.val = d.all.IC2$scaled.BP[d.all.IC2$MAF < 0.01],
-        y.val = -log10(d.all.IC2$P[d.all.IC2$MAF < 0.01]),
+        x.val = d.all.IC2$scaled.BP[d.all.IC2$correct_maf < 0.01],
+        y.val = -log10(d.all.IC2$P[d.all.IC2$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
@@ -800,8 +823,8 @@ main <- function() {
     
     #   All SNPs MAF > 0.01 IC3
     plot.manhattan(
-        x.val = d.all.IC3$scaled.BP[d.all.IC3$MAF > 0.01],
-        y.val = -log10(d.all.IC3$P[d.all.IC3$MAF > 0.01]),
+        x.val = d.all.IC3$scaled.BP[d.all.IC3$correct_maf > 0.01],
+        y.val = -log10(d.all.IC3$P[d.all.IC3$correct_maf > 0.01]),
         color.pheno = adjustcolor(col = "gray20", alpha.f = 0.5),
         p.sym = 1,
         sym.size = 0.75,
@@ -811,8 +834,8 @@ main <- function() {
     par(new = TRUE)
     #   All SNPs MAF < 0.01 IC3
     plot.manhattan(
-        x.val = d.all.IC3$scaled.BP[d.all.IC3$MAF < 0.01],
-        y.val = -log10(d.all.IC3$P[d.all.IC3$MAF < 0.01]),
+        x.val = d.all.IC3$scaled.BP[d.all.IC3$correct_maf < 0.01],
+        y.val = -log10(d.all.IC3$P[d.all.IC3$correct_maf < 0.01]),
         color.pheno = "red",
         p.sym = 20,
         sym.size = 1,
