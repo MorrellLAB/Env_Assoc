@@ -22,6 +22,8 @@
 #       6) [output_directory] is the full filepath to where we want our plots to go
 #           NOTE: filepath to directory should not have last "/" as this will mess up building the filepath
 
+#   Required packages
+library(data.table)
 
 #   Function to read matrix outputted from LDheatmap R package
 #   The first row and first column contains SNP names used in LD calculation
