@@ -109,30 +109,34 @@ scalePsuedo <- function(df, maf.data, chr1.whole, chr2.whole, chr3.whole, chr4.w
 
 #   Plot function
 plot.manhattan <- function(df, maf.threshold, plot.title, ticks) {
-    #   Subset all chromosomes greater than maf.threshold
-    all.x.gth <- df$scaled.BP[df$correct_maf > maf.threshold]
-    all.y.gth <- -log10(df$P[df$correct_maf > maf.threshold])
     #   Extract all rows where Chromosome is an odd number
     df.odd <- df[!as.numeric(as.character(df$CHR)) %% 2 == 0, ]
-    all.x.gth.odd <- df.odd$scaled.BP[df.odd$correct_maf > maf.threshold]
-    all.y.gth.odd <- -log10(df.odd$P[df.odd$correct_maf > maf.threshold])
+    all.x.gth.odd <- df.odd$scaled.BP[df.odd$correct_maf >= maf.threshold]
+    all.y.gth.odd <- -log10(df.odd$P[df.odd$correct_maf >= maf.threshold])
+    df.even <- df[as.numeric(as.character(df$CHR)) %% 2 == 0, ]
+    all.x.gth.even <- df.even$scaled.BP[df.even$correct_maf >= maf.threshold]
+    all.y.gth.even <- -log10(df.even$P[df.even$correct_maf >= maf.threshold])
     #   Subset all chromosomes less than maf.threshold
     all.x.lth <- df$scaled.BP[df$correct_maf < maf.threshold]
     all.y.lth <- -log10(df$P[df$correct_maf < maf.threshold])
     
     #   Plot all SNPs greater than threshold
     p <- plot(
-        x = all.x.gth,
-        y = all.y.gth,
+        x = all.x.gth.even,
+        y = all.y.gth.even,
         col = adjustcolor(col = "gray70", alpha.f = 0.9),
         xlim = c(0, 4569031868),
         ylim = c(0, 12),
-        pch = 20,
-        cex = 1,
+        pch = 1,
+        cex = 0.7,
+        cex.lab = 1.4,
+        cex.main = 1.6,
+        cex.axis = 1.2,
         xlab = "Chromosome",
         ylab = expression(-log[10](italic(p))),
         xaxt = "n",
-        main = plot.title
+        main = plot.title,
+        las = 1
     )
     par(new = TRUE)
     #   Make all SNPs greater than threshold that are odd chromosomes black
@@ -142,30 +146,38 @@ plot.manhattan <- function(df, maf.threshold, plot.title, ticks) {
         col = adjustcolor(col = "gray10", alpha.f = 0.6),
         xlim = c(0, 4569031868),
         ylim = c(0, 12),
-        pch = 20,
-        cex = 1,
+        pch = 1,
+        cex = 0.7,
+        cex.lab = 1.4,
+        cex.main = 1.6,
+        cex.axis = 1.2,
         xlab = "Chromosome",
         ylab = expression(-log[10](italic(p))),
         xaxt = "n",
-        main = plot.title
+        main = plot.title,
+        las = 1
     )
     par(new = TRUE)
     #   Plot all SNPs less than threshold
     plot(
         x = all.x.lth,
         y = all.y.lth,
-        col = adjustcolor(col = "red", alpha.f = 0.9),
+        col = adjustcolor(col = "dodgerblue", alpha.f = 0.9),
         xlim = c(0, 4569031868),
         ylim = c(0, 12),
         pch = 20,
         cex = 1,
+        cex.lab = 1.4,
+        cex.main = 1.6,
+        cex.axis = 1.2,
         xlab = "Chromosome",
         ylab = expression(-log[10](italic(p))),
         xaxt = "n",
-        main = plot.title
+        main = plot.title,
+        las = 1
     )
     axis(side = 1, at = c(0, ticks[2, ]), labels = FALSE, tick = TRUE)
-    axis(side = 1, at = ticks[1, ], labels = c("1", "2", "3", "4", "5", "6", "7"), tick = FALSE)
+    axis(side = 1, at = ticks[1, ], labels = c("1", "2", "3", "4", "5", "6", "7"), tick = FALSE, cex.axis = 1.2)
     abline(h = -log10(5e-4), lty = 3, lwd = 1.5, col = "black")
     # rect(
     #     xleft = c2.inv.start,
@@ -204,6 +216,7 @@ main <- function() {
     maf.fp <- "/Users/chaochih/Dropbox/Projects/Landrace_Environmental_Association/Contributors/Fumi/Fumi_Env_GWAS/GWAS.landraces/trans_myGD.v2.sorted.maf"
     #   Directory path to full dataset csv files
     gwas.all.dir <- "/Users/chaochih/Dropbox/Projects/Landrace_Environmental_Association/Analyses/GWAS-GAPIT/GWAS_Results_Full_with_PhysPos"
+    out.dir <- "/Users/chaochih/Dropbox/Projects/Landrace_Environmental_Association/Manuscript/EnvAssoc_Manuscript_2017-09-28/Figures_Tables/candiate_figs/GWAS All SNPs"
     
     #   Read in list of all GWAS data files
     #   These files contain the full dataset including the significant SNPs for each bioclim variable
@@ -283,39 +296,42 @@ main <- function() {
     #   See: ReadMe.GWAS.landraces in ~/Dropbox/Landrace_Environmental_Association/GWAS-GAPIT
     
     ########## Bio1, 6, and 11 in one panel - Cold Tolerance ##########
-    par(mfrow = c(3, 1))
+    pdf(file = paste0(out.dir, "/GWAS_bio1_bio6_bio11_Manhattan_Plots.pdf"), width = 12, height = 14)
+        par(mfrow = c(3, 1), mar = c(5, 5, 5, 2))
     #   Bio1
-    plot.manhattan(
+        plot.manhattan(
         df = d.all.bio1,
         maf.threshold = 0.01,
         plot.title = "GWAS BIO1 - Annual Mean Temperature",
         ticks = t.chr
-    )
-    #   Legend only in first plot panel of 3
-    #   Commented out because there already exists a screenshot of the legend
-    #   The concern was legend would be covering some of the significant SNPs
-    #   This makes it easier to control how the final publication figure looks and where to put the legend
-    #legend("topright", legend = c("Sig SNPs Threshold", "MAF < 0.01"), lty = c(3, 0), pch = c(NA, 20), col = c("black", adjustcolor(col = "red", alpha.f = 0.9)), bty = "n", y.intersp = 0.5)
-    
-    #   Bio6
-    plot.manhattan(
-        df = d.all.bio6,
-        maf.threshold = 0.01,
-        plot.title = "GWAS BIO6 - Min Temperature of Coldest Month",
-        ticks = t.chr
-    )
-    
-    #   Bio11
-    plot.manhattan(
-        df = d.all.bio11,
-        maf.threshold = 0.01,
-        plot.title = "GWAS BIO11 - Mean Temperature of Coldest Quarter",
-        ticks = t.chr
-    )
+        )
+        #   Legend only in first plot panel of 3
+        #   Commented out because there already exists a screenshot of the legend
+        #   The concern was legend would be covering some of the significant SNPs
+        #   This makes it easier to control how the final publication figure looks and where to put the legend
+        #legend("topright", legend = c("Sig SNPs Threshold", "MAF < 0.01"), lty = c(3, 0), pch = c(NA, 20), col = c("black", adjustcolor(col = "red", alpha.f = 0.9)), bty = "n", y.intersp = 0.5)
+        
+        #   Bio6
+        plot.manhattan(
+            df = d.all.bio6,
+            maf.threshold = 0.01,
+            plot.title = "GWAS BIO6 - Min Temperature of Coldest Month",
+            ticks = t.chr
+        )
+        
+        #   Bio11
+        plot.manhattan(
+            df = d.all.bio11,
+            maf.threshold = 0.01,
+            plot.title = "GWAS BIO11 - Mean Temperature of Coldest Quarter",
+            ticks = t.chr
+        )
+    dev.off()
     
     
     ########## Bio9, 14, and 17 in one panel - Drought Tolerance ##########
-    par(mfrow = c(3, 1))
+    pdf(file = paste0(out.dir, "/GWAS_bio9_bio14_bio17_Manhattan_Plots.pdf"), width = 12, height = 14)
+    par(mfrow = c(3, 1), mar = c(5, 5, 5, 2))
     #   Bio9
     plot.manhattan(
         df = d.all.bio9,
@@ -363,9 +379,11 @@ main <- function() {
     #     y = -log10(d.ss$P[d.ss$SNP == "11_20784" & d.ss$PHENO == "bio17"] + (10 * 0.0001636497) + 0.05),
     #     labels = "11_20784\n(BIO14, BIO17)"
     # )
+    dev.off()
     
     ########## Bio2, 3, and 4 in one panel ##########
-    par(mfrow = c(3,1))
+    pdf(file = paste0(out.dir, "/GWAS_bio2_bio3_bio4_Manhattan_Plots.pdf"), width = 12, height = 14)
+    par(mfrow = c(3, 1), mar = c(5, 5, 5, 2))
     #   Bio2
     plot.manhattan(
         df = d.all.bio2,
@@ -389,9 +407,11 @@ main <- function() {
         plot.title = "GWAS BIO4 - Temperature Seasonality (standard deviation *100)",
         ticks = t.chr
     )
+    dev.off()
     
     ########## Bio5, 7, and 8 in one panel ##########
-    par(mfrow = c(3, 1))
+    pdf(file = paste0(out.dir, "/GWAS_bio5_bio7_bio8_Manhattan_Plots.pdf"), width = 12, height = 14)
+    par(mfrow = c(3, 1), mar = c(5, 5, 5, 2))
     #   Bio5
     plot.manhattan(
         df = d.all.bio5,
@@ -415,10 +435,12 @@ main <- function() {
         plot.title = "GWAS BIO8 - Mean Temperature of Wettest Quarter",
         ticks = t.chr
     )
+    dev.off()
 
     
     ########## Bio 10, 12, and 13 in one panel ##########
-    par(mfrow = c(3,1))
+    pdf(file = paste0(out.dir, "/GWAS_bio10_bio12_bio13_Manhattan_Plots.pdf"), width = 12, height = 14)
+    par(mfrow = c(3, 1), mar = c(5, 5, 5, 2))
     #   Bio10
     plot.manhattan(
         df = d.all.bio10,
@@ -442,10 +464,12 @@ main <- function() {
         plot.title = "GWAS BIO13 - Precipitation of Wettest Month",
         ticks = t.chr
     )
+    dev.off()
 
     
     ########## Bio15, 16, and 18 in one panel ##########
-    par(mfrow = c(3, 1))
+    pdf(file = paste0(out.dir, "/GWAS_bio15_bio16_bio18_Manhattan_Plots.pdf"), width = 12, height = 14)
+    par(mfrow = c(3, 1), mar = c(5, 5, 5, 2))
     #   Bio15
     plot.manhattan(
         df = d.all.bio15,
@@ -469,10 +493,12 @@ main <- function() {
         plot.title = "GWAS BIO18 - Precipitation of Warmest Quarter",
         ticks = t.chr
     )
+    dev.off()
 
 
     ########## Bio19 in one panel ##########
-    par(mfrow = c(3, 1))
+    pdf(file = paste0(out.dir, "/GWAS_bio19_Manhattan_Plots.pdf"), width = 12, height = 14)
+    par(mfrow = c(3, 1), mar = c(5, 5, 5, 2))
     #   Bio19
     plot.manhattan(
         df = d.all.bio19,
@@ -480,10 +506,12 @@ main <- function() {
         plot.title = "GWAS BIO19 - Precipitation of Coldest Quarter",
         ticks = t.chr
     )
+    dev.off()
 
     
     ########## Latitude, longitude, and altitude in one panel ##########
-    par(mfrow = c(3, 1))
+    pdf(file = paste0(out.dir, "/GWAS_Latitude_Longitude_Altitude_Manhattan_Plots.pdf"), width = 12, height = 14)
+    par(mfrow = c(3, 1), mar = c(5, 5, 5, 2))
     #   Latitude
     plot.manhattan(
         df = d.all.Latitude,
@@ -507,10 +535,12 @@ main <- function() {
         plot.title = "GWAS - Altitude",
         ticks = t.chr
     )
+    dev.off()
 
     
     ########## IC1, 2, and 3 in one panel ##########
-    par(mfrow = c(3, 1))
+    pdf(file = paste0(out.dir, "/GWAS_IC1_IC2_IC3_Manhattan_Plots.pdf"), width = 12, height = 14)
+    par(mfrow = c(3, 1), mar = c(5, 5, 5, 2))
     #   IC1
     plot.manhattan(
         df = d.all.IC1,
@@ -534,6 +564,7 @@ main <- function() {
         plot.title = "GWAS IC3 - Independent components applied to BIO1-19",
         ticks = t.chr
     )
+    dev.off()
 }
 
 main()
