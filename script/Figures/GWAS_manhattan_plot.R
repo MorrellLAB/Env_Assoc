@@ -297,35 +297,30 @@ main <- function() {
     
     ########## Bio1, 6, and 11 in one panel - Cold Tolerance ##########
     pdf(file = paste0(out.dir, "/GWAS_bio1_bio6_bio11_Manhattan_Plots.pdf"), width = 12, height = 14)
-        par(mfrow = c(3, 1), mar = c(5, 5, 5, 2))
+    par(mfrow = c(3, 1), mar = c(5, 5, 5, 2))
     #   Bio1
-        plot.manhattan(
-        df = d.all.bio1,
+    plot.manhattan(
+    df = d.all.bio1,
+    maf.threshold = 0.01,
+    plot.title = "GWAS BIO1 - Annual Mean Temperature",
+    ticks = t.chr
+    )
+    
+    #   Bio6
+    plot.manhattan(
+        df = d.all.bio6,
         maf.threshold = 0.01,
-        plot.title = "GWAS BIO1 - Annual Mean Temperature",
+        plot.title = "GWAS BIO6 - Min Temperature of Coldest Month",
         ticks = t.chr
-        )
-        #   Legend only in first plot panel of 3
-        #   Commented out because there already exists a screenshot of the legend
-        #   The concern was legend would be covering some of the significant SNPs
-        #   This makes it easier to control how the final publication figure looks and where to put the legend
-        #legend("topright", legend = c("Sig SNPs Threshold", "MAF < 0.01"), lty = c(3, 0), pch = c(NA, 20), col = c("black", adjustcolor(col = "red", alpha.f = 0.9)), bty = "n", y.intersp = 0.5)
-        
-        #   Bio6
-        plot.manhattan(
-            df = d.all.bio6,
-            maf.threshold = 0.01,
-            plot.title = "GWAS BIO6 - Min Temperature of Coldest Month",
-            ticks = t.chr
-        )
-        
-        #   Bio11
-        plot.manhattan(
-            df = d.all.bio11,
-            maf.threshold = 0.01,
-            plot.title = "GWAS BIO11 - Mean Temperature of Coldest Quarter",
-            ticks = t.chr
-        )
+    )
+    
+    #   Bio11
+    plot.manhattan(
+        df = d.all.bio11,
+        maf.threshold = 0.01,
+        plot.title = "GWAS BIO11 - Mean Temperature of Coldest Quarter",
+        ticks = t.chr
+    )
     dev.off()
     
     
@@ -565,6 +560,22 @@ main <- function() {
         ticks = t.chr
     )
     dev.off()
+    
+    #   Below code is for purposes of cropping out legend
+    #   This makes it easier to control how the final publication figure looks and where to put the legend
+    #   Will be commented out until needed
+    #   The concern was legend would be covering some of the significant SNPs
+    # pdf(file = paste0(out.dir, "/GWAS_plot_legend.pdf"), width = 12, height = 10)
+    # par(mfrow = c(1, 1), mar = c(5, 5, 5, 2))
+    # #   IC1
+    # plot.manhattan(
+    #     df = d.all.IC1,
+    #     maf.threshold = 0.01,
+    #     plot.title = "GWAS IC1 - Independent components applied to BIO1-19",
+    #     ticks = t.chr
+    # )
+    # legend("top", legend = c("Sig SNPs Threshold", "MAF < 0.01"), lty = c(3, 0), pch = c(NA, 20), col = c("black", adjustcolor(col = "dodgerblue", alpha.f = 0.9)), bty = "n", y.intersp = 0.9)
+    # dev.off()
 }
 
 main()
