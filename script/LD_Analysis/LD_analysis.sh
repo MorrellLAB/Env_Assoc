@@ -8,7 +8,7 @@
 set -e
 set -o pipefail
 
-module load R/3.4.0
+module load R/3.4.3
 module load python2/2.7.8 # Tom's VCF_To_Htable-TK.py script runs in Python 2
 module load vcflib_ML/1.0.0
 module load parallel
@@ -31,7 +31,7 @@ GWAS_SIG_SNPS=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD
 #       OnlyLandrace_Barley_NAM_Parents_Final_renamed.vcf file
 VCF_9K=/home/morrellp/liux1299/GitHub/9k_BOPA_SNP/BOPA_9k_vcf_Morex_refv1/sorted_all_9k_masked_90idt.vcf
 #   VCF file from dataset we are interested in (i.e. OnlyLandrace_Barley_NAM_Parents_Final_renamed.vcf)
-MAIN_VCF=/panfs/roc/groups/9/morrellp/llei/Envro_ass_landrace/exon_vcf/Only_landrace_NAM_final.recode.vcf
+MAIN_VCF=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/data/Only_landrace_NAM_final_renamed_2018-02-26.vcf
 #   window size (bp) upstream/downstream of SNP for extract_BED.R
 BP=100000
 #   Minor Allele Frequency threshold to use for VCF to Htable conversion (i.e. 0.01 for 1% MAF)
