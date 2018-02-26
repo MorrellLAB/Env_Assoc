@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#PBS -l mem=22gb,nodes=1:ppn=16,walltime=2:00:00
+#PBS -l mem=22gb,nodes=1:ppn=16,walltime=10:00:00
 #PBS -m abe
 #PBS -M liux1299@umn.edu
 #PBS -q lab
@@ -31,7 +31,7 @@ GWAS_SIG_SNPS=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD
 #       OnlyLandrace_Barley_NAM_Parents_Final_renamed.vcf file
 VCF_9K=/home/morrellp/liux1299/GitHub/9k_BOPA_SNP/BOPA_9k_vcf_Morex_refv1/sorted_all_9k_masked_90idt.vcf
 #   VCF file from dataset we are interested in (i.e. OnlyLandrace_Barley_NAM_Parents_Final_renamed.vcf)
-MAIN_VCF=/panfs/roc/groups/9/morrellp/shared/Projects/Barley_NAM_Parents/SNP_calling/Variants/New_Filtering/OnlyLandrace_biallelic_Barley_NAM_Parents_Final_renamed.vcf
+MAIN_VCF=/panfs/roc/groups/9/morrellp/llei/Envro_ass_landrace/exon_vcf/Only_landrace_NAM_final.recode.vcf
 #   window size (bp) upstream/downstream of SNP for extract_BED.R
 BP=100000
 #   Minor Allele Frequency threshold to use for VCF to Htable conversion (i.e. 0.01 for 1% MAF)
