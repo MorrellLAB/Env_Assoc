@@ -31,7 +31,7 @@ GWAS_SIG_SNPS=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD
 #       OnlyLandrace_Barley_NAM_Parents_Final_renamed.vcf file
 VCF_9K=/home/morrellp/liux1299/GitHub/9k_BOPA_SNP/BOPA_9k_vcf_Morex_refv1/sorted_all_9k_masked_90idt.vcf
 #   VCF file from dataset we are interested in (i.e. OnlyLandrace_Barley_NAM_Parents_Final_renamed.vcf)
-MAIN_VCF=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/data/Only_landrace_NAM_final_renamed_2018-02-26.vcf
+MAIN_VCF=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/data/Only_landrace_biallelic_NAM_final_renamed_2018-02-26.vcf
 #   window size (bp) upstream/downstream of SNP for extract_BED.R
 BP=100000
 #   Minor Allele Frequency threshold to use for VCF to Htable conversion (i.e. 0.01 for 1% MAF)
