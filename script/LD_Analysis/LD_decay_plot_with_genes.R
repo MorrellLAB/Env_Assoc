@@ -11,12 +11,12 @@
 #   Where:
 #       1) [prefix] is the prefix of our existing HM_r2.txt file (including underscores or hyphens)
 #           i.e. filename Chr1-7_SCRI_RS_152696_HM_r2.txt would have prefix Chr1-7_ and SNP name SCRI_RS_152696
-#       2) [r2_matrix_dir] is the full filepath to the directory containing r2 matrix output files from LD_Analysis.sh
+#       2) [r2_matrix_list] is a SORTED list of full filepaths to the directory containing r2 matrix output files from LD_Analysis.sh
 #           These files should end in _HM_r2.txt
-#       3) [phys_pos_dir] is the full filepath to the directory containing snp_bac.txt files from LD_Analysis.sh
+#       3) [phys_pos_list] is a SORTED list of full filepaths to the directory containing snp_bac.txt files from LD_Analysis.sh
 #           The filtered snp_bac.txt files are located in ld_data_prep directory outputted from LD_Analysis.sh
 #           and should have a naming scheme similar to: SNP_BAC_Chr1-7_11_10143_filtered.txt
-#       4) [gene_intervals_dir] is the full filepath to the directory containing gene intervals
+#       4) [gene_intervals_list] is a SORTED list of full filepaths to the directory containing gene intervals
 #           These should be tab-delimited files.
 #       5) [window_size] is the total size of our window (i.e. input 100000 for 50Kb upstream and 50Kb downstream)
 #       6) [output_directory] is the full filepath to where we want our plots to go
@@ -204,16 +204,16 @@ main <- function() {
     args <- commandArgs(trailingOnly = TRUE)
     #   User provided command line arguments
     prefix <- args[1] # what is the prefix of our existing HM_r2.txt and HM_Dprime.txt files?
-    r2.dir <- args[2]
-    physPos.dir <- args[3]
-    geneInt.dir <- args[4]
+    r2.list <- args[2]
+    physPos.list <- args[3]
+    geneInt.list <- args[4]
     winSize <- as.numeric(args[5]) # what is the total size of our window? (i.e input 100000 for 50Kb upstream and 50Kb downstream)
     outDir <- args[6]
 
     #   Store a list of filepaths
-    r2.fp <- list.files(path = r2.dir, pattern = "HM_r2.txt", full.names = TRUE)
-    phys.fp <- list.files(path = physPos.dir, pattern = "filtered.txt", full.names = TRUE)
-    geneInt.fp <- list.files(path = geneInt.dir, pattern = "gene_intervals.txt", full.names = TRUE)
+    r2.fp <- scan(file = r2.list, what = "", sep = "\n")
+    phys.fp <- scan(file = physPos.list, what = "", sep = "\n")
+    geneInt.fp <-  scan(file = geneInt.list, what = "", sep = "\n")
 
     #   Function that runs all functions for every sample in list
     runAll <- function(ldmatrix.fp, geneIntervals.fp, physPos.fp, file.prefix, window, out.directory) {
