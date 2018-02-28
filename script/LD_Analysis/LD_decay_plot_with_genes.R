@@ -65,6 +65,16 @@ readGeneInt <- function(filename) {
     return(df)
 }
 
+#   Read in MAF file containing all MAF values for VCF file used in LD analyses
+readMAF <- function(filename) {
+    df <- fread(
+        input = filename,
+        header = TRUE,
+        sep = "\t"
+    )
+    return(df)
+}
+
 #   Extract target SNP name from full filepath
 extractTargetSNP <- function(filename, p) {
     #   Given full filepath to matrix, strip path and extract only filename
@@ -150,13 +160,13 @@ calcGeneInterDist <- function(physPosData, geneInt.df, t.snp) {
 }
 
 #   ld.type is either r2 or Dprime depending on which measure you are plotting
-plotLDdecay <- function(ldData, geneInt.df, t.snp, ld.type, ylabel, windowSize, outputDir) {
+plotLDdecay <- function(ldData, geneInt.df, t.snp, original.t.snp, ld.type, ylabel, windowSize, outputDir) {
     #   Set our x axis limits
     winStart <- -(windowSize/2)/1000
     winEnd <- (windowSize/2)/1000
     #   Make our LD decay plot
     pdf(
-        file = paste0(outputDir, "/", t.snp, "_", ld.type, "_LD_decay_with_genes.pdf"),
+        file = paste0(outputDir, "/", original.t.snp, "_", ld.type, "_LD_decay_with_genes.pdf"),
         width = 8
     )
     #   Margin of form: c(bottom, left, top, right)
@@ -170,30 +180,41 @@ plotLDdecay <- function(ldData, geneInt.df, t.snp, ld.type, ylabel, windowSize, 
         xaxt = "n",
         yaxt = "n",
         bty = "n",
+        cex = 0.9,
+        lwd = 1.5,
+        col = "gray25",
         cex.main = 1.7,
         cex.lab = 1.6,
         xlab = "Physical Distance (Kb)",
         ylab = ylabel,
         main = paste(
-            "LD decay for SNPs around SNP: ",
+            "Original significant SNP:",
+            original.t.snp,
+            "\nLD decay for SNPs around SNP: ",
             t.snp,
-            "\n(", unique(geneInt.df$chr), ":",
-            ldData[ldData$SNPname == as.character(unique(ldData$targetSNP)), 4],
+            "\n(", unique(geneInt.df$chr_gene), ":",
+            as.character(unique(ldData$tSnpPhysPos)),
             "bp )")
     )
     axis(side = 1, at = seq(from = winStart, to = winEnd, by = 20), tick = TRUE, pos = 0, cex.axis = 1.2)
     axis(side = 2, at = seq(from = 0, to = 1.0, by = 0.2), tick = TRUE, cex.axis = 1.2)
     segments(x0 = 0, y0 = 0, x1 = 0, y1 = 1, lty = 3, lwd = 1.5)
-    #   Add rectangle for every gene in data frame
-    for (i in 1:length(geneInt.df$InterDist.start)) {
-        rect(
-            xleft = geneInt.df$InterDist.start[i]/1000,
-            xright = geneInt.df$InterDist.end[i]/1000,
-            ybottom = -0.18,
-            ytop = -0.1,
-            density = NA, # NA is to suppress shading so we can fill rectangle with color
-            col = adjustcolor("dodgerblue", alpha.f = 0.5),
-            border = NA)
+    if (length(geneInt.df$InterDist.start) >= 1) {
+        #   Add rectangle for every gene in data frame
+        for (i in 1:length(geneInt.df$InterDist.start)) {
+            rect(
+                xleft = as.numeric(geneInt.df$InterDist.start[i])/1000,
+                xright = as.numeric(geneInt.df$InterDist.end[i])/1000,
+                ybottom = -0.18,
+                ytop = -0.1,
+                density = NA, # NA is to suppress shading so we can fill rectangle with color
+                col = adjustcolor("dodgerblue", alpha.f = 0.5),
+                border = NA)
+        }
+    } else {
+        cat("No genes found for SNP ")
+        cat(t.snp)
+        cat("\nNo genes added to plot.")
     }
     #   Turn off graphics
     dev.off()
@@ -207,16 +228,23 @@ main <- function() {
     r2.list <- args[2]
     physPos.list <- args[3]
     geneInt.list <- args[4]
-    winSize <- as.numeric(args[5]) # what is the total size of our window? (i.e input 100000 for 50Kb upstream and 50Kb downstream)
-    outDir <- args[6]
+    maf.fp <- args[5]
+    trans.maf.fp <- args[6]
+    winSize <- as.numeric(args[7]) # what is the total size of our window? (i.e input 100000 for 50Kb upstream and 50Kb downstream)
+    outDir <- args[8]
 
     #   Store a list of filepaths
     r2.fp <- scan(file = r2.list, what = "", sep = "\n")
     phys.fp <- scan(file = physPos.list, what = "", sep = "\n")
     geneInt.fp <-  scan(file = geneInt.list, what = "", sep = "\n")
-
+    
+    #   Read in data, this is place outside of runAll function to reduce number of times
+    #   files need to be read in
+    maf <- readMAF(filename = maf.fp)
+    trans.maf <- readMAF(filename = trans.maf.fp)
+    
     #   Function that runs all functions for every sample in list
-    runAll <- function(ldmatrix.fp, geneIntervals.fp, physPos.fp, file.prefix, window, out.directory) {
+    runAll <- function(ldmatrix.fp, geneIntervals.fp, physPos.fp, maf.df, trans.maf.df, file.prefix, window, out.directory) {
         #   Read in LD matrix and physical positions
         tmp.r2.df <- readMatrix(filename = ldmatrix.fp)
         physPos.df <- readPhysPos(filename = physPos.fp)
@@ -226,12 +254,51 @@ main <- function() {
         #   This works with output files from the LD_analysis.sh script written specifically
         #       for the environmental associations project.
         targetSNP <- extractTargetSNP(filename = ldmatrix.fp, p = file.prefix)
+        original.targetSNP <- targetSNP # Save for use in plot title later
         
-        #   Identify index of row that contains targetSNP
-        target.index <- which(
-            x = rownames(tmp.r2.df) == targetSNP, # extract row containing target SNP
-            arr.ind = TRUE # return array index
-        )
+        #   Create subset maf.df containing only SNPs in matrix we are currently working with
+        sub.maf.df <- maf.df[maf.df$ID %in% rownames(x = tmp.r2.df), ]
+        
+        if (targetSNP %in% rownames(tmp.r2.df)) {
+            #   Identify index of row that contains targetSNP
+            target.index <- which(
+                x = rownames(tmp.r2.df) == targetSNP, # extract row containing target SNP
+                arr.ind = TRUE # return array index
+            )
+        } else if (is.na(as.numeric(maf.df[maf.df$ID == targetSNP, 7]))) {
+            cat("Target SNP: ")
+            cat(targetSNP)
+            cat(" doesn't exist in VCF file, can't pick closest MAF SNP from 62 NAM Parents VCF.\n
+                Will pick closest MAF SNP based on significant SNP MAF in 9k genotyping data for 
+                803 landrace accessions.\n")
+            #   Extract MAF for significant SNP from 803 landrace significant SNPs data frame 
+            #   containing all MAF values for all SNPs. This is because, some edge cases the target 
+            #   SNP doesn't exist in the r2 data frame that's the whole reason this section is needed
+            tsnp.maf <- as.numeric(trans.maf.df[trans.maf.df$SNP == targetSNP, 2])
+            closest.MAF.index <- which.min(abs(as.numeric(sub.maf.df$MAF) - tsnp.maf)) # Find index of closest MAF SNP
+            targetSNP <- sub.maf.df[closest.MAF.index]$ID # Extract SNP name of closest MAF SNP
+            #   Find our "fake" target SNP
+            target.index <- which(
+                x = rownames(tmp.r2.df) == targetSNP, # extract row containing fake target SNP
+                arr.ind = TRUE # return array index
+            )
+        } else {
+            cat("Target SNP: ")
+            cat(targetSNP)
+            cat(" isn't in LD analysis matrix, will pick closest MAF SNP from 62 NAM Parents VCF to use 
+                as fake target SNP.\n")
+            #   Extract MAF for significant SNP from master data frame containing all MAF values for all SNPs
+            #   This is because, some edge cases the target SNP doesn't exist in the r2 data frame
+            #   that's the whole reason this section is needed
+            tsnp.maf <- as.numeric(maf.df[maf.df$ID == targetSNP, 7])
+            closest.MAF.index <- which.min(abs(as.numeric(sub.maf.df$MAF) - tsnp.maf)) # Find index of closest MAF SNP
+            targetSNP <- sub.maf.df[closest.MAF.index]$ID # Extract SNP name of closest MAF SNP
+            #   Find our "fake" target SNP
+            target.index <- which(
+                x = rownames(tmp.r2.df) == targetSNP, # extract row containing fake target SNP
+                arr.ind = TRUE # return array index
+            )
+        }
         
         #   Reformat LD matrix for compatibility with downstream functions
         r2.df <- r2.reformat(r2.df = tmp.r2.df, index = target.index)
@@ -256,7 +323,7 @@ main <- function() {
         cs.swap.tsnp <- data.frame(targetSnp = cs.tsnp$m_col_snps, comparisonSnp = cs.tsnp$m_row_snps, r2 = cs.tsnp$r2)
         #   Add check/print statement to make sure targetSNP matches targetSNP in cs.swap.tsnp
         
-        #   Combeine these two subsets
+        #   Combine these two subsets
         int.df <- rbind(cs.swap.tsnp, rs.tsnp)
         #   Remove rows with NA in r2 column
         clean.data <- int.df[!is.na(int.df$r2), ]
@@ -265,7 +332,7 @@ main <- function() {
         merged.df <- mergeFile(ldData = clean.data, physPosData = physPos.df)
 
         #   Calculate distances between SNPs
-        interDist.df <- calcInterDist(ldData = merged.df, t.snp = targetSNP, physPosData = physPos.df)
+        interDist.df <- calcInterDist(ldData = merged.df, t.snp = original.targetSNP, physPosData = physPos.df)
         #   Calculate distances between gene interval and target SNP
         #   This ensures we have the correct positions when plotting genes
         geneInterDist.df <- calcGeneInterDist(physPosData = physPos.df, geneInt.df = geneInterval.df, t.snp = targetSNP)
@@ -275,6 +342,7 @@ main <- function() {
             ldData = interDist.df,
             geneInt.df = geneInterDist.df,
             t.snp = targetSNP,
+            original.t.snp = original.targetSNP,
             ld.type = "r2",
             ylabel = expression(paste("LD estimate (", italic("r"^"2"), ")")),
             windowSize = window,
@@ -289,7 +357,7 @@ main <- function() {
         r2.fp,
         geneInt.fp,
         phys.fp,
-        MoreArgs = list(file.prefix = prefix, window = winSize, out.directory = outDir)
+        MoreArgs = list(maf.df = maf, trans.maf.df = trans.maf, file.prefix = prefix, window = winSize, out.directory = outDir)
     )
 }
 
