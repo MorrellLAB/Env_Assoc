@@ -62,10 +62,12 @@ mergeFile <- function(physicalData, mainFile) {
 
 #   A function to write data to outfile
 writeOutFile <- function(mergedData, outFilename, delimiter) {
-    write.csv(
+    write.table(
         x = mergedData,
         file = outFilename,
         na = "",
+        quote = FALSE,
+        sep = "\t",
         row.names = FALSE
     )
 }
