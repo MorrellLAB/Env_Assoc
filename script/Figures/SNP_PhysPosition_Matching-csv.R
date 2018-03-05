@@ -29,7 +29,7 @@ readVcf <- function(filename) {
 
 #   A function to read in data file format
 readData <- function(filename) {
-    data.file <- read.csv(
+    data.file <- read.delim(
         file = filename, # passed as an argument
         header = TRUE, # First line is a header
         fill = TRUE, # Fill empty fields with NAs
@@ -79,7 +79,7 @@ main <- function() {
     vcfFile <- args[1] # vcf file
     dataFile <- args[2] # CSV file with column of SNP names
     outName <- args[3] # name given by user is third argument
-    
+
     #   Do the work
     physical <- readVcf(filename = vcfFile) # read in physical positions
     maindata <- readData(filename = dataFile) # read in main file
