@@ -3,7 +3,7 @@
 #   This script adds additional columns (physical positions and new Chr info for each SNP) to csv file based on matching SNP name.
 #   Takes three arguments:
     #   1) VCF file
-    #   2) csv file that includes SNP name column
+    #   2) txt file that includes SNP name column
     #   3) Output filename including file extension
 #   Script written by Chaochih Liu
 #   July 21, 2016
