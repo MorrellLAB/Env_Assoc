@@ -104,7 +104,7 @@ plot.manhattan <- function(df, fst.outlier.threshold, plot.title, ticks) {
         main = plot.title
     )
     axis(side = 1, at = c(0, ticks[2, ]), labels = FALSE, tick = TRUE)
-    axis(side = 1, at = ticks[1, ], labels = c("1", "2", "3", "4", "5", "6", "7"), tick = FALSE)
+    axis(side = 1, at = ticks[1, ], labels = c("1H", "2H", "3H", "4H", "5H", "6H", "7H"), tick = FALSE)
     #   Horizontal line for Fst outlier threshold
     abline(h = fst.outlier.threshold, lty = 3, lwd = 1.5, col = "black")
     legend(
