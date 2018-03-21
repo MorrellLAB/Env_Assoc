@@ -17,6 +17,20 @@ replace <- function(df) {
     return(df)
 }
 
+chrTicks <- function(chr1.whole, chr2.whole, chr3.whole, chr4.whole, chr5.whole, chr6.whole, chr7.whole) {
+    #   Row 1 is the scaled position of the center of the chromosome
+    #   Row 2 is the scaled position of the end of the chromosome
+    chr1.t <- c(chr1.whole/2, chr1.whole)
+    chr2.t <- c(chr2.whole/2 + chr1.whole, chr1.whole + chr2.whole)
+    chr3.t <- c(chr3.whole/2 + chr1.whole + chr2.whole, chr1.whole + chr2.whole + chr3.whole)
+    chr4.t <- c(chr4.whole/2 + chr1.whole + chr2.whole + chr3.whole, chr4.whole + chr1.whole + chr2.whole + chr3.whole)
+    chr5.t <- c(chr5.whole/2 + chr1.whole + chr2.whole + chr3.whole + chr4.whole, chr5.whole + chr1.whole + chr2.whole + chr3.whole + chr4.whole)
+    chr6.t <- c(chr6.whole/2 + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole, chr6.whole + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole)
+    chr7.t <- c(chr7.whole/2 + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole + chr6.whole, chr7.whole + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole + chr6.whole)
+    ticks <- cbind(chr1.t, chr2.t, chr3.t, chr4.t, chr5.t, chr6.t, chr7.t)
+    return(ticks)
+}
+
 #   Function to scale physical positions for plotting
 scaledPos <- function(df, c1.w, c2.w, c3.w, c4.w, c5.w, c6.w, c7.w) {
     #   Subset data
@@ -48,79 +62,99 @@ scaledPos <- function(df, c1.w, c2.w, c3.w, c4.w, c5.w, c6.w, c7.w) {
     return(df.all)
 }
 
-plot.manhattan <- function(x.val, y.val, color.cat, p.sym, plot.title) {
-    p <- plot(
-        x = x.val,
-        y = y.val,
-        col = color.cat,
+plot.manhattan <- function(df, fst.outlier.threshold, plot.title, ticks) {
+    #   Extract all rows where Chromosome is an odd number
+    df.odd <- df[!as.numeric(as.character(df$Chr_2016)) %% 2 == 0, ]
+    df.even <- df[as.numeric(as.character(df$Chr_2016)) %% 2 == 0, ]
+    
+    par(mar = c(5, 5, 5, 2))
+    #   All SNPs from odd chromosomes will be black
+    plot(
+        x = df.odd$scaled.BP,
+        y = df.odd$FST,
+        col = adjustcolor(col = "gray10", alpha.f = 0.9),
         xlim = c(0, 4569031868),
         ylim = c(0, 0.8),
-        pch = p.sym,
-        cex = 1,
+        pch = 1,
+        cex = 0.6,
+        cex.lab = 1.4,
+        cex.main = 1.6,
+        cex.axis = 1.2,
         xlab = "Chromosome",
         ylab = expression('F'[ST]), # subscript
         xaxt = "n",
         main = plot.title
     )
-    # legend("topright",
-    #        bty = 'n',
-    #        legend = legend.label,
-    #        pch = p.sym,
-    #        col = color.cat,
-    #        cex = 1,
-    #        ncol = 3)
+    par(new = TRUE)
+    #   All SNPs from even chromosomes will be gray
+    plot(
+        x = df.even$scaled.BP,
+        y = df.even$FST,
+        col = adjustcolor(col = "gray70", alpha.f = 0.9),
+        xlim = c(0, 4569031868),
+        ylim = c(0, 0.8),
+        pch = 1,
+        cex = 0.6,
+        cex.lab = 1.4,
+        cex.main = 1.6,
+        cex.axis = 1.2,
+        xlab = "Chromosome",
+        ylab = expression('F'[ST]), # subscript
+        xaxt = "n",
+        main = plot.title
+    )
     axis(side = 1, at = c(0, ticks[2, ]), labels = FALSE, tick = TRUE)
     axis(side = 1, at = ticks[1, ], labels = c("1", "2", "3", "4", "5", "6", "7"), tick = FALSE)
-    rect(
-        xleft = c2.inv.start,
-        xright = c2.inv.end,
-        ybottom = 0,
-        ytop = 0.8,
-        col = adjustcolor("gray50", alpha.f = 0.25),
-        border = NA
+    #   Horizontal line for Fst outlier threshold
+    abline(h = fst.outlier.threshold, lty = 3, lwd = 1.5, col = "black")
+    legend(
+        "topright",
+        bty = 'n',
+        c("Gene hits", "Fst Outlier Threshold"),
+        lty = c(0, 3), # first slot put nothing, second slot use dotted line
+        pch = c(20, NA), # first slot put filled circle, second slot put nothing
+        col = c("blue", "black"),
+        cex = 0.75,
+        pt.cex = 2
     )
-    rect(
-        xleft = c5.inv1.start,
-        xright = c5.inv1.end,
-        ybottom = 0,
-        ytop = 0.8,
-        col = adjustcolor("gray50", alpha.f = 0.25),
-        border = NA
-    )
-    rect(
-        xleft = c5.inv2.start,
-        xright = c5.inv2.end,
-        ybottom = 0,
-        ytop = 0.8,
-        col = adjustcolor("gray50", alpha.f = 0.25),
-        border = NA
+}
+
+highlight.gene.hits <- function(df, plot.title) {
+    #   Plot SNPs that hit interesting genes
+    par(mar = c(5, 5, 5, 2))
+    plot(
+        x = df$scaled.BP,
+        y = df$FST,
+        col = adjustcolor(col = "blue", alpha.f = 0.9),
+        xlim = c(0, 4569031868),
+        ylim = c(0, 0.8),
+        pch = 20,
+        cex = 1,
+        cex.lab = 1.4,
+        cex.main = 1.6,
+        cex.axis = 1.2,
+        xlab = "Chromosome",
+        ylab = expression('F'[ST]), # subscript
+        xaxt = "n",
+        main = plot.title
     )
 }
 
 main <- function() {
     #   Set path to files (user provided arguments)
-    #   Elevation outliers
-    e.1000vsAll.fp <- "/Users/chaochih/Dropbox/Landrace_Environmental_Association/Analyses/Fst/Results/Elevation/Outliers/Fst_1000vsAll_outliers_physPos.txt"
-    e.2500vs1000.fp <- "/Users/chaochih/Dropbox/Landrace_Environmental_Association/Analyses/Fst/Results/Elevation/Outliers/Fst_2500vs1000_outliers_physPos.txt"
-    e.5000vs1000.fp <- "/Users/chaochih/Dropbox/Landrace_Environmental_Association/Analyses/Fst/Results/Elevation/Outliers/Fst_5000_vs1000_outliers_physPos.txt"
-    e.5000vs2500.fp <- "/Users/chaochih/Dropbox/Landrace_Environmental_Association/Analyses/Fst/Results/Elevation/Outliers/Fst_5000_vs2500_outliers_physPos.txt"
-    #   Latitude Outliers
-    l.80samp_10iter.fp <- "/Users/chaochih/Dropbox/Landrace_Environmental_Association/Analyses/Fst/Results/Latitude/Outliers/Fst_average_80samp_10iter_outliers_physPos.txt"
-    l.topvsBotLat.fp <- "/Users/chaochih/Dropbox/Landrace_Environmental_Association/Analyses/Fst/Results/Latitude/Outliers/Fst_top_vs_bottomLat_outWildRange_outliers_physPos.txt"
-    l.wrvshighLat80.fp <- "/Users/chaochih/Dropbox/Landrace_Environmental_Association/Analyses/Fst/Results/Latitude/Outliers/Fst_wild_range_vs_higherLat_80samples_outliers_physPos.txt"
-    l.wrvshighLat.fp <- "/Users/chaochih/Dropbox/Landrace_Environmental_Association/Analyses/Fst/Results/Latitude/Outliers/Fst_wild_range_vs_higherLat_outliers_physPos.txt"
+    #   Output file directory
+    out.dir <- "/Users/chaochih/Dropbox/Projects/Landrace_Environmental_Association/Analyses/Fst/Plots"
+    #   Elevation
+    e.b3000vsa3000.fp <- "/Users/chaochih/Dropbox/Projects/Landrace_Environmental_Association/Analyses/Fst/Results/Elevation/Fst_less3000_vsmore3000_no_NA_physPos.txt"
+    #   Latitude
+    wild.range.bN30vsN30_40.fp <- "/Users/chaochih/Dropbox/Projects/Landrace_Environmental_Association/Analyses/Fst/Results/Latitude/Fst_moreoreq30to40vsless30_no_NA_physPos.txt"
+    wild.range.N30_40vsaN40.fp <- "/Users/chaochih/Dropbox/Projects/Landrace_Environmental_Association/Analyses/Fst/Results/Latitude/Fst_wild_range30_40_vs_higherLat40_no_NA_physPos.txt"
 
     #   Read in data
     #   Elevation outliers
-    e.df.1000vsAll <- readData(filename = e.1000vsAll.fp)
-    e.df.2500vs1000 <- readData(filename = e.2500vs1000.fp)
-    e.df.5000vs1000 <- readData(filename = e.5000vs1000.fp)
-    e.df.5000vs2500 <- readData(filename = e.5000vs2500.fp)
-    #   Latitdue outliers
-    l.df.80samp_10iter <- readData(filename = l.80samp_10iter.fp)
-    l.df.topvsBotLat <- readData(filename = l.topvsBotLat.fp)
-    l.df.wrvshighLat80 <- readData(filename = l.wrvshighLat80.fp)
-    l.df.wrvshighLat <- readData(filename = l.wrvshighLat.fp)
+    e.df.b3000vsa3000 <- readData(filename = e.b3000vsa3000.fp)
+    wild.range.df.bN30vsN30_40 <- readData(filename = wild.range.bN30vsN30_40.fp)
+    wild.range.df.N30_40vsaN40 <- readData(filename = wild.range.N30_40vsaN40.fp)
 
     #   Key for pseudomolecular parts positions
     chr1H_part1 <- 312837513
@@ -139,205 +173,112 @@ main <- function() {
     chr7H_part2 <- 331426484
 
     #   Whole chromosome size
-    chr1.whole <- chr1H_part1 + chr1H_part2
-    chr2.whole <- chr2H_part1 + chr2H_part2
-    chr3.whole <- chr3H_part1 + chr3H_part2
-    chr4.whole <- chr4H_part1 + chr4H_part2
-    chr5.whole <- chr5H_part1 + chr5H_part2
-    chr6.whole <- chr6H_part1 + chr6H_part2
-    chr7.whole <- chr7H_part1 + chr7H_part2
-
-    #   Define ticks (need to simplify and rewrite as function)
-    #   Row 1 is the scaled position of the center of the chromosome
-    #   Row 2 is the scaled position of the end of the chromosome
-    chr1.t <- c(chr1.whole/2, chr1.whole)
-    chr2.t <- c(chr2.whole/2 + chr1.whole, chr1.whole + chr2.whole)
-    chr3.t <- c(chr3.whole/2 + chr1.whole + chr2.whole, chr1.whole + chr2.whole + chr3.whole)
-    chr4.t <- c(chr4.whole/2 + chr1.whole + chr2.whole + chr3.whole, chr4.whole + chr1.whole + chr2.whole + chr3.whole)
-    chr5.t <- c(chr5.whole/2 + chr1.whole + chr2.whole + chr3.whole + chr4.whole, chr5.whole + chr1.whole + chr2.whole + chr3.whole + chr4.whole)
-    chr6.t <- c(chr6.whole/2 + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole, chr6.whole + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole)
-    chr7.t <- c(chr7.whole/2 + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole + chr6.whole, chr7.whole + chr1.whole + chr2.whole + chr3.whole + chr4.whole + chr5.whole + chr6.whole)
-    #   Combine
-    ticks <- cbind(chr1.t, chr2.t, chr3.t, chr4.t, chr5.t, chr6.t, chr7.t)
-
+    chr1.w <- chr1H_part1 + chr1H_part2
+    chr2.w <- chr2H_part1 + chr2H_part2
+    chr3.w <- chr3H_part1 + chr3H_part2
+    chr4.w <- chr4H_part1 + chr4H_part2
+    chr5.w <- chr5H_part1 + chr5H_part2
+    chr6.w <- chr6H_part1 + chr6H_part2
+    chr7.w <- chr7H_part1 + chr7H_part2
+    
+    #   Generate ticks used for plots
+    t.chr <- chrTicks(chr1.whole = chr1.w, chr2.whole = chr2.w, chr3.whole = chr3.w, chr4.whole = chr4.w, chr5.whole = chr5.w, chr6.whole = chr6.w, chr7.whole = chr7.w)
+    
     #   In Chr_2016 column, replace "chr" with nothing and replace "H" with nothing
-    e.df.1000vsAll <- replace(df = e.df.1000vsAll)
-    e.df.2500vs1000 <- replace(df = e.df.2500vs1000)
-    e.df.5000vs1000 <- replace(df = e.df.5000vs1000)
-    e.df.5000vs2500 <- replace(df = e.df.5000vs2500)
-    l.df.80samp_10iter <- replace(df = l.df.80samp_10iter)
-    l.df.topvsBotLat <- replace(df = l.df.topvsBotLat)
-    l.df.wrvshighLat80 <- replace(df = l.df.wrvshighLat80)
-    l.df.wrvshighLat <- replace(df = l.df.wrvshighLat)
-
+    e.dfr.b3000vsa3000 <- replace(df = e.df.b3000vsa3000)
+    wild.range.dfr.bN30vsN30_40 <- replace(df = wild.range.df.bN30vsN30_40)
+    wild.range.dfr.N30_40vsaN40 <- replace(df = wild.range.df.N30_40vsaN40)
+    
     #   Scale physical positions
-    e.dfs.1000vsAll <- scaledPos(
-        df = e.df.1000vsAll, c1.w = chr1.whole, c2.w = chr2.whole,
-        c3.w = chr3.whole, c4.w = chr4.whole, c5.w = chr5.whole,
-        c6.w = chr6.whole, c7.w = chr7.whole
+    e.dfrs.b3000vsa3000 <- scaledPos(
+        df = e.dfr.b3000vsa3000, c1.w = chr1.w, c2.w = chr2.w,
+        c3.w = chr3.w, c4.w = chr4.w, c5.w = chr5.w,
+        c6.w = chr6.w, c7.w = chr7.w
     )
-    e.dfs.2500vs1000 <- scaledPos(
-        df = e.df.2500vs1000, c1.w = chr1.whole, c2.w = chr2.whole,
-        c3.w = chr3.whole, c4.w = chr4.whole, c5.w = chr5.whole,
-        c6.w = chr6.whole, c7.w = chr7.whole
+    wild.range.dfrs.bN30vsN30_40 <- scaledPos(
+        df = wild.range.dfr.bN30vsN30_40, c1.w = chr1.w, c2.w = chr2.w,
+        c3.w = chr3.w, c4.w = chr4.w, c5.w = chr5.w,
+        c6.w = chr6.w, c7.w = chr7.w
     )
-    e.dfs.5000vs1000 <- scaledPos(
-        df = e.df.5000vs1000, c1.w = chr1.whole, c2.w = chr2.whole,
-        c3.w = chr3.whole, c4.w = chr4.whole, c5.w = chr5.whole,
-        c6.w = chr6.whole, c7.w = chr7.whole
+    wild.range.dfrs.N30_40vsaN40 <- scaledPos(
+        df = wild.range.dfr.N30_40vsaN40, c1.w = chr1.w, c2.w = chr2.w,
+        c3.w = chr3.w, c4.w = chr4.w, c5.w = chr5.w,
+        c6.w = chr6.w, c7.w = chr7.w
     )
-    e.dfs.5000vs2500 <- scaledPos(
-        df = e.df.5000vs2500, c1.w = chr1.whole, c2.w = chr2.whole,
-        c3.w = chr3.whole, c4.w = chr4.whole, c5.w = chr5.whole,
-        c6.w = chr6.whole, c7.w = chr7.whole
-    )
-    l.dfs.80samp_10iter <- scaledPos(
-        df = l.df.80samp_10iter, c1.w = chr1.whole, c2.w = chr2.whole,
-        c3.w = chr3.whole, c4.w = chr4.whole, c5.w = chr5.whole,
-        c6.w = chr6.whole, c7.w = chr7.whole
-    )
-    l.dfs.topvsBotLat <- scaledPos(
-        df = l.df.topvsBotLat, c1.w = chr1.whole, c2.w = chr2.whole,
-        c3.w = chr3.whole, c4.w = chr4.whole, c5.w = chr5.whole,
-        c6.w = chr6.whole, c7.w = chr7.whole
-    )
-    l.dfs.wrvshighLat80 <- scaledPos(
-        df = l.df.wrvshighLat80, c1.w = chr1.whole, c2.w = chr2.whole,
-        c3.w = chr3.whole, c4.w = chr4.whole, c5.w = chr5.whole,
-        c6.w = chr6.whole, c7.w = chr7.whole
-    )
-    l.dfs.wrvshighLat <- scaledPos(
-        df = l.df.wrvshighLat, c1.w = chr1.whole, c2.w = chr2.whole,
-        c3.w = chr3.whole, c4.w = chr4.whole, c5.w = chr5.whole,
-        c6.w = chr6.whole, c7.w = chr7.whole
-    )
-
-    #   Define inverted regions
-    c2.inv.start <- 267303750 + chr1.whole
-    c2.inv.end <- 508786535 + chr1.whole
-    c5.inv1.start <- 126746171 + chr1.whole + chr2.whole + chr3.whole + chr4.whole
-    c5.inv1.end <- 305528375 + chr1.whole + chr2.whole + chr3.whole + chr4.whole
-    c5.inv2.start <- 598975647 + chr1.whole + chr2.whole + chr3.whole + chr4.whole
-    c5.inv2.end <- 609073831 + chr1.whole + chr2.whole + chr3.whole + chr4.whole
 
     #   Generate Plots
-    #   To add new plots to existing plot use: par(new = TRUE)
-    par(mfrow = c(4, 1))
-    #   Latitude Outliers
-    plot.manhattan(
-        x.val = l.dfs.80samp_10iter$scaled.BP,
-        y.val = l.dfs.80samp_10iter$FST,
-        color.cat = "#BD1550",
-        p.sym = 2,
-        plot.title = "Latitude Fst Outliers - 80 samples 10 iterations"
-    )
-    #   SCRI_RS_179411 chr 5H SPP
-    arrows(x0 = l.dfs.80samp_10iter$scaled.BP[l.dfs.80samp_10iter$SNP == "SCRI_RS_179411"],
-           y1 = l.dfs.80samp_10iter$FST[l.dfs.80samp_10iter$SNP == "SCRI_RS_179411"],
-           y0 = l.dfs.80samp_10iter$FST[l.dfs.80samp_10iter$SNP == "SCRI_RS_179411"] - 0.075,
-           length = 0.1, lwd = 2
-    )
-    text(
-        x = l.dfs.80samp_10iter$scaled.BP[l.dfs.80samp_10iter$SNP == "SCRI_RS_179411"],
-        y = l.dfs.80samp_10iter$FST[l.dfs.80samp_10iter$SNP == "SCRI_RS_179411"] - 0.165,
-        labels = "SCRI_RS_179411\nSPP"
-    )
-    plot.manhattan(
-        x.val = l.dfs.topvsBotLat$scaled.BP,
-        y.val = l.dfs.topvsBotLat$FST,
-        color.cat = "#005C9E",
-        p.sym = 2,
-        plot.title = "Latitude Fst Outliers - Top vs. Bottom Outside Wild Range"
-    )
-    #   12_30848 chr 5H CBF3
-    arrows(x0 = l.dfs.topvsBotLat$scaled.BP[l.dfs.topvsBotLat$SNP == "12_30848"],
-           y1 = l.dfs.topvsBotLat$FST[l.dfs.topvsBotLat$SNP == "12_30848"],
-           y0 = l.dfs.topvsBotLat$FST[l.dfs.topvsBotLat$SNP == "12_30848"] + 0.075,
-           length = 0.1, lwd = 2
-    )
-    text(
-        x = l.dfs.topvsBotLat$scaled.BP[l.dfs.topvsBotLat$SNP == "12_30848"],
-        y = l.dfs.topvsBotLat$FST[l.dfs.topvsBotLat$SNP == "12_30848"] + 0.165,
-        labels = "12_30848\nCBF3"
-    )
-    plot.manhattan(
-        x.val = l.dfs.wrvshighLat80$scaled.BP,
-        y.val = l.dfs.wrvshighLat80$FST,
-        color.cat = "orange",
-        p.sym = 2,
-        plot.title = "Latitude Fst Outliers - Wild Range vs. Higher Latitude (80 samples)"
-    )
-    #   11_20361 chr 4H AFB2
-    arrows(x0 = l.dfs.wrvshighLat80$scaled.BP[l.dfs.wrvshighLat80$SNP == "11_20361"],
-           y1 = l.dfs.wrvshighLat80$FST[l.dfs.wrvshighLat80$SNP == "11_20361"],
-           y0 = l.dfs.wrvshighLat80$FST[l.dfs.wrvshighLat80$SNP == "11_20361"] + 0.075,
-           length = 0.1, lwd = 2
-    )
-    text(
-        x = l.dfs.wrvshighLat80$scaled.BP[l.dfs.wrvshighLat80$SNP == "11_20361"],
-        y = l.dfs.wrvshighLat80$FST[l.dfs.wrvshighLat80$SNP == "11_20361"] + 0.165,
-        labels = "11_20361\nAFB2"
-    )
-    plot.manhattan(
-        x.val = l.dfs.wrvshighLat$scaled.BP,
-        y.val = l.dfs.wrvshighLat$FST,
-        color.cat = "limegreen",
-        p.sym = 2,
-        plot.title = "Latitude Fst Outliers - Wild Range vs. Higher Latitude"
-    )
+    #   Elevation - below 3000m vs above 3000m
+    #   Create subset containing SNPs that hit interesting genes
+    #   Cold genes
+    snp12_30880 <- e.dfrs.b3000vsa3000[e.dfrs.b3000vsa3000$SNP == "12_30880", ]
+    snp11_11328 <- e.dfrs.b3000vsa3000[e.dfrs.b3000vsa3000$SNP == "11_11328", ]
+    snp12_20187 <- e.dfrs.b3000vsa3000[e.dfrs.b3000vsa3000$SNP == "12_20187", ]
+    #   Flowering time genes
+    snp12_30867 <- e.dfrs.b3000vsa3000[e.dfrs.b3000vsa3000$SNP == "12_30867", ]
     
+    #   Combine genes into single df
+    e.gene.hits <- rbind(snp12_30880, snp11_11328, snp12_20187, snp12_30867)
     
-    #   Elevation Outliers
+    #   Make plot
+    pdf(file = paste0(out.dir, "/Fst_elevation_below3000_vs_above3000.pdf"), width = 12, height = 8)
     plot.manhattan(
-        x.val = e.dfs.1000vsAll$scaled.BP,
-        y.val = e.dfs.1000vsAll$FST,
-        color.cat = adjustcolor(col = "#BD1550", alpha.f = 0.5),
-        p.sym = 19,
-        plot.title = "Elevation Fst Outliers - 1000 vs. All"
+        df = e.dfrs.b3000vsa3000,
+        fst.outlier.threshold = 0.3014466887,
+        plot.title = "Fst - Elevation below 3000m vs above 3000m",
+        ticks = t.chr
     )
-    #   11_10496 chr 6H AOC
-    arrows(x0 = e.dfs.1000vsAll$scaled.BP[e.dfs.1000vsAll$SNP == "11_10496"],
-           y1 = e.dfs.1000vsAll$FST[e.dfs.1000vsAll$SNP == "11_10496"],
-           y0 = e.dfs.1000vsAll$FST[e.dfs.1000vsAll$SNP == "11_10496"] - 0.075,
-           length = 0.1, lwd = 2
+    par(new = TRUE)
+    highlight.gene.hits(
+        df = e.gene.hits,
+        plot.title = "Fst - Elevation below 3000m vs above 3000m"
     )
-    text(
-        x = e.dfs.1000vsAll$scaled.BP[e.dfs.1000vsAll$SNP == "11_10496"],
-        y = e.dfs.1000vsAll$FST[e.dfs.1000vsAll$SNP == "11_10496"] - 0.115,
-        labels = "11_10496 AOC"
-    )
+    dev.off()
+    
+    #   Latitude
+    #   Create subset containing SNPs that hit interesting genes in both wild range data frames
+    snp11_20265 <- wild.range.dfrs.bN30vsN30_40[wild.range.dfrs.bN30vsN30_40$SNP == "11_20265", ]
+    snpSCRI_RS_142618 <- wild.range.dfrs.bN30vsN30_40[wild.range.dfrs.bN30vsN30_40$SNP == "SCRI_RS_142618", ]
+    #   Flowering time genes
+    snpBK_12 <- wild.range.dfrs.bN30vsN30_40[wild.range.dfrs.bN30vsN30_40$SNP == "BK_12", ]
+    snpBK_16 <- wild.range.dfrs.bN30vsN30_40[wild.range.dfrs.bN30vsN30_40$SNP == "BK_16", ]
+    snpBK_15 <- wild.range.dfrs.bN30vsN30_40[wild.range.dfrs.bN30vsN30_40$SNP == "BK_15", ]
+    snp12_30871 <- wild.range.dfrs.bN30vsN30_40[wild.range.dfrs.bN30vsN30_40$SNP == "12_30871", ]
+    snp12_30872 <- wild.range.dfrs.bN30vsN30_40[wild.range.dfrs.bN30vsN30_40$SNP == "12_30872", ]
+    snpBK_13 <- wild.range.dfrs.bN30vsN30_40[wild.range.dfrs.bN30vsN30_40$SNP == "BK_13", ]
+    snpBK_14 <- wild.range.dfrs.bN30vsN30_40[wild.range.dfrs.bN30vsN30_40$SNP == "BK_14", ]
+    
+    #   Combine genes into single data frame
+    l.gene.hits <- rbind(snp11_20265, snpSCRI_RS_142618, snpBK_12, snpBK_16, snpBK_15, snp12_30871, snp12_30872, snpBK_13, snpBK_14)
+    
+    #   Wild range below N30 vs N30-N40
+    pdf(file = paste0(out.dir, "/Fst_latitude_belowN30_vs_N30-N40.pdf"), width = 12, height = 8)
     plot.manhattan(
-        x.val = e.dfs.2500vs1000$scaled.BP,
-        y.val = e.dfs.2500vs1000$FST,
-        color.cat = adjustcolor(col = "#005C9E", alpha.f = 0.5),
-        p.sym = 19,
-        plot.title = "Elevation Fst Outliers - 2500 vs 1000"
+        df = wild.range.dfrs.bN30vsN30_40,
+        fst.outlier.threshold = 0.3124423020,
+        plot.title = "Fst - Latitude below N30 vs N30-N40",
+        ticks = t.chr
     )
+    par(new = TRUE)
+    highlight.gene.hits(
+        df = l.gene.hits,
+        plot.title = "Fst - Latitude below N30 vs N30-N40"
+    )
+    dev.off()
+    
+    #   Wild range N30-N40 vs above N40
+    pdf(file = paste0(out.dir, "/Fst_latitude_N30-N40_vs_aboveN40.pdf"), width = 12, height = 8)
     plot.manhattan(
-        x.val = e.dfs.5000vs1000$scaled.BP,
-        y.val = e.dfs.5000vs1000$FST,
-        color.cat = adjustcolor(col = "orange", alpha.f = 0.5),
-        p.sym = 19,
-        plot.title = "Elevation Fst Outliers - 5000 vs 1000"
+        df = wild.range.dfrs.N30_40vsaN40,
+        fst.outlier.threshold = 0.2601220106,
+        plot.title = "Fst - Latitude N30-N40 vs above N40",
+        ticks = t.chr
     )
-    plot.manhattan(
-        x.val = e.dfs.5000vs2500$scaled.BP,
-        y.val = e.dfs.5000vs2500$FST,
-        color.cat = adjustcolor(col = "limegreen", alpha.f = 0.5),
-        p.sym = 19,
-        plot.title = "Elevation Fst Outliers - 5000 vs 2500"
+    par(new = TRUE)
+    highlight.gene.hits(
+        df = l.gene.hits,
+        plot.title = "Fst - Latitude N30-N40 vs above N40"
     )
-    #   12_20187 chr 1H PEAMT
-    arrows(x0 = e.dfs.5000vs2500$scaled.BP[e.dfs.5000vs2500$SNP == "12_20187"],
-           y1 = e.dfs.5000vs2500$FST[e.dfs.5000vs2500$SNP == "12_20187"],
-           y0 = e.dfs.5000vs2500$FST[e.dfs.5000vs2500$SNP == "12_20187"] - 0.075,
-           length = 0.1, lwd = 2
-    )
-    text(
-        x = e.dfs.5000vs2500$scaled.BP[e.dfs.5000vs2500$SNP == "12_20187"],
-        y = e.dfs.5000vs2500$FST[e.dfs.5000vs2500$SNP == "12_20187"] - 0.115,
-        labels = "12_20187 PEAMT"
-    )
+    dev.off()
 }
 
 main()
