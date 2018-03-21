@@ -115,7 +115,7 @@ plot.manhattan <- function(df, fst.outlier.threshold, plot.title, ticks) {
         pch = c(20, NA), # first slot put filled circle, second slot put nothing
         col = c("blue", "black"),
         cex = 0.75,
-        pt.cex = 2
+        pt.cex = 1.2
     )
 }
 
@@ -125,7 +125,7 @@ highlight.gene.hits <- function(df, plot.title) {
     plot(
         x = df$scaled.BP,
         y = df$FST,
-        col = adjustcolor(col = "blue", alpha.f = 0.9),
+        col = adjustcolor(col = "blue", alpha.f = 0.7),
         xlim = c(0, 4569031868),
         ylim = c(0, 0.8),
         pch = 20,
