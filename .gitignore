@@ -4,3 +4,5 @@
 
 # Ignore directory for job error files
 error_files
+
+*.Rhistory
