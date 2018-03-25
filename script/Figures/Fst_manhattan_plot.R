@@ -149,12 +149,22 @@ main <- function() {
     #   Latitude
     wild.range.bN30vsN30_40.fp <- "/Users/chaochih/Dropbox/Projects/Landrace_Environmental_Association/Analyses/Fst/Results/Latitude/Fst_moreoreq30to40vsless30_no_NA_physPos.txt"
     wild.range.N30_40vsaN40.fp <- "/Users/chaochih/Dropbox/Projects/Landrace_Environmental_Association/Analyses/Fst/Results/Latitude/Fst_wild_range30_40_vs_higherLat40_no_NA_physPos.txt"
+    
+    #   List of gene names
+    e.gene.hit.snps.fp <- "/Users/chaochih/Dropbox/Projects/Landrace_Environmental_Association/Data/cold_ft_genes_hit-elevation_snps.txt"
+    l.gene.hit.bN30.fp <- "/Users/chaochih/Dropbox/Projects/Landrace_Environmental_Association/Data/cold_ft_genes_hit-lat_below30_snps.txt"
+    l.gene.hit.aN40.fp <- "/Users/chaochih/Dropbox/Projects/Landrace_Environmental_Association/Data/cold_ft_genes_hit-lat_above40_snps.txt"
 
     #   Read in data
     #   Elevation outliers
     e.df.b3000vsa3000 <- readData(filename = e.b3000vsa3000.fp)
     wild.range.df.bN30vsN30_40 <- readData(filename = wild.range.bN30vsN30_40.fp)
     wild.range.df.N30_40vsaN40 <- readData(filename = wild.range.N30_40vsaN40.fp)
+    
+    #   Read in SNPs that are in gene hits
+    e.gene.hit.snps <- readData(filename = e.gene.hit.snps.fp)
+    l.gene.hit.bN30 <- readData(filename = l.gene.hit.bN30.fp)
+    l.gene.hit.aN40 <- readData(filename = l.gene.hit.aN40.fp)
 
     #   Key for pseudomolecular parts positions
     chr1H_part1 <- 312837513
@@ -209,15 +219,7 @@ main <- function() {
     #   Generate Plots
     #   Elevation - below 3000m vs above 3000m
     #   Create subset containing SNPs that hit interesting genes
-    #   Cold genes
-    snp12_30880 <- e.dfrs.b3000vsa3000[e.dfrs.b3000vsa3000$SNP == "12_30880", ]
-    snp11_11328 <- e.dfrs.b3000vsa3000[e.dfrs.b3000vsa3000$SNP == "11_11328", ]
-    snp12_20187 <- e.dfrs.b3000vsa3000[e.dfrs.b3000vsa3000$SNP == "12_20187", ]
-    #   Flowering time genes
-    snp12_30867 <- e.dfrs.b3000vsa3000[e.dfrs.b3000vsa3000$SNP == "12_30867", ]
-    
-    #   Combine genes into single df
-    e.gene.hits <- rbind(snp12_30880, snp11_11328, snp12_20187, snp12_30867)
+    e.gene.hit.df <- e.dfrs.b3000vsa3000[e.dfrs.b3000vsa3000$SNP %in% e.gene.hit.snps$X9k_SNPs, ]
     
     #   Make plot
     pdf(file = paste0(out.dir, "/Fst_elevation_below3000_vs_above3000.pdf"), width = 12, height = 8)
@@ -229,28 +231,16 @@ main <- function() {
     )
     par(new = TRUE)
     highlight.gene.hits(
-        df = e.gene.hits,
+        df = e.gene.hit.df,
         plot.title = "Fst - Elevation below 3000m vs above 3000m"
     )
     dev.off()
     
     #   Latitude
     #   Create subset containing SNPs that hit interesting genes in both wild range data frames
-    snp11_20265 <- wild.range.dfrs.bN30vsN30_40[wild.range.dfrs.bN30vsN30_40$SNP == "11_20265", ]
-    snpSCRI_RS_142618 <- wild.range.dfrs.bN30vsN30_40[wild.range.dfrs.bN30vsN30_40$SNP == "SCRI_RS_142618", ]
-    #   Flowering time genes
-    snpBK_12 <- wild.range.dfrs.bN30vsN30_40[wild.range.dfrs.bN30vsN30_40$SNP == "BK_12", ]
-    snpBK_16 <- wild.range.dfrs.bN30vsN30_40[wild.range.dfrs.bN30vsN30_40$SNP == "BK_16", ]
-    snpBK_15 <- wild.range.dfrs.bN30vsN30_40[wild.range.dfrs.bN30vsN30_40$SNP == "BK_15", ]
-    snp12_30871 <- wild.range.dfrs.bN30vsN30_40[wild.range.dfrs.bN30vsN30_40$SNP == "12_30871", ]
-    snp12_30872 <- wild.range.dfrs.bN30vsN30_40[wild.range.dfrs.bN30vsN30_40$SNP == "12_30872", ]
-    snpBK_13 <- wild.range.dfrs.bN30vsN30_40[wild.range.dfrs.bN30vsN30_40$SNP == "BK_13", ]
-    snpBK_14 <- wild.range.dfrs.bN30vsN30_40[wild.range.dfrs.bN30vsN30_40$SNP == "BK_14", ]
-    
-    #   Combine genes into single data frame
-    l.gene.hits <- rbind(snp11_20265, snpSCRI_RS_142618, snpBK_12, snpBK_16, snpBK_15, snp12_30871, snp12_30872, snpBK_13, snpBK_14)
-    
     #   Wild range below N30 vs N30-N40
+    l.gene.hit.bN30.df <- wild.range.dfrs.bN30vsN30_40[wild.range.dfrs.bN30vsN30_40$SNP %in% l.gene.hit.bN30$X9k_SNPs, ]
+    
     pdf(file = paste0(out.dir, "/Fst_latitude_belowN30_vs_N30-N40.pdf"), width = 12, height = 8)
     plot.manhattan(
         df = wild.range.dfrs.bN30vsN30_40,
@@ -260,12 +250,15 @@ main <- function() {
     )
     par(new = TRUE)
     highlight.gene.hits(
-        df = l.gene.hits,
+        df = l.gene.hit.bN30.df,
         plot.title = "Fst - Latitude below N30 vs N30-N40"
     )
     dev.off()
     
     #   Wild range N30-N40 vs above N40
+    #   Create subset containing SNPs that hit interesting genes in both wild range data frames
+    l.gene.hit.aN40.df <- wild.range.dfrs.N30_40vsaN40[wild.range.dfrs.N30_40vsaN40$SNP %in% l.gene.hit.aN40$X9k_SNPs, ]
+    
     pdf(file = paste0(out.dir, "/Fst_latitude_N30-N40_vs_aboveN40.pdf"), width = 12, height = 8)
     plot.manhattan(
         df = wild.range.dfrs.N30_40vsaN40,
@@ -275,7 +268,7 @@ main <- function() {
     )
     par(new = TRUE)
     highlight.gene.hits(
-        df = l.gene.hits,
+        df = l.gene.hit.aN40.df,
         plot.title = "Fst - Latitude N30-N40 vs above N40"
     )
     dev.off()
