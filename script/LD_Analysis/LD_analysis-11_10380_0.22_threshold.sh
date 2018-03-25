@@ -37,11 +37,11 @@ BP=100000
 #   Minor Allele Frequency threshold to use for VCF to Htable conversion (i.e. 0.01 for 1% MAF)
 MAF=0.01
 #   Missing data threshold to use for filtering (i.e. 0.15 for 15% missing data)
-P_MISSING=0.15
+P_MISSING=0.22
 #   What prefix do we want to use for our output files?
 PREFIX=ld_Barley_NAM_200Kb
 #   Where is our output directory?
-OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/gwas_sig_snps_200Kb/11_10380_only
+OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/gwas_sig_snps_200Kb/11_10380_only/0.22_missing
 
 #   Extract GWAS significant SNPs from 9k_masked_90idt.vcf
 function extractSNPs() {
