@@ -26,7 +26,7 @@ where: \n\
 exit 1
 }
 
-if [[ $# -lt 3 ]]; then usage; fi
+if [[ $# -eq 0 ]]; then usage; fi
 
 #   User provided arguments
 MISS_LIST=$1 # list of *_SNP_info-missing_data_cols.csv files
