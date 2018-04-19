@@ -1,0 +1,768 @@
+rm(list=ls())#
+#
+library(hierfstat)#
+#
+# === IMPORT INPUT FILES ===========================================================================#
+#Load the genetic assignment for k=4 landraces #
+assig<-read.table("/Users/Mia/Dropbox/Landrace_Environmental_Assocation/Data/Poets_etal2015/Landraces_geneticAssingment.txt",header=T)#
+# Import genotypes. Downloaded from Github companion of Poets et al 2015.#
+genotypes<-read.table("~/Dropbox/Landrace_Environmental_Assocation/Data/Poets_etal2015/Land_6152_SNPs_AB.txt",row.names=1, header=T)#
+# Select new geographic location, after Fumi inspected every data point. These are the phenotypes #
+# Fumi used for GAPIT#
+Latlong<-read.csv("~/Dropbox/Landrace_Environmental_Assocation/Analyses/GWAS-GAPIT/Input/myY1.v2.csv",row.names=1)#
+#
+# Import genetic map from Munñoz et al 2011#
+genMap<-read.table("/Users/Mia/Dropbox/Landrace_Environmental_Assocation/Data/Muñoz_etal2011/Consensus_iSelect.txt",header=T)
+assig<-read.table("~/Dropbox/Landrace_Environmental_Assocation/Data/Poets_etal2015/Landraces_geneticAssingment.txt",header=T)#
+# Import genotypes. Downloaded from Github companion of Poets et al 2015.#
+genotypes<-read.table("~/Dropbox/Landrace_Environmental_Assocation/Data/Poets_etal2015/Land_6152_SNPs_AB.txt",row.names=1, header=T)#
+# Select new geographic location, after Fumi inspected every data point. These are the phenotypes #
+# Fumi used for GAPIT#
+Latlong<-read.csv("~/Dropbox/Landrace_Environmental_Assocation/Analyses/GWAS-GAPIT/Input/myY1.v2.csv",row.names=1)#
+#
+# Import genetic map from Munñoz et al 2011#
+genMap<-read.table("~/Dropbox/Landrace_Environmental_Assocation/Data/Muñoz_etal2011/Consensus_iSelect.txt",header=T)
+dim(Latlong)
+head(Latlong)
+CHANGE<-function(dat){#
+	dat[which(dat == "AA")]<-2#
+	dat[which(dat == "BB")]<-0#
+	dat[which(dat == "AB")]<-1#
+	return(dat)	#
+}#
+GENOTYPE_num<-as.data.frame(apply(genotypes,2, CHANGE))
+wild_range<-row.names(Latlong)[which(Latlong$Latitude >= 30 & Latlong$Latitude <= 46)]
+dim(wild_range)
+length(wild_range)
+dim(Latlong)
+above_wild<-row.names(Latlong)[which( Latlong$Latitude > 46)]
+length(above_wild)
+c(wild_range)->all_pops#
+GENOTYPE_num[(row.names(GENOTYPE_num) %in% all_pops),]->TOTAL#
+GENOTYPE_num[(row.names(GENOTYPE_num) %in% above_wild),]->FOCAL
+loci<-rbind(as.data.frame(FOCAL),as.data.frame(TOTAL))#
+levels<-c(rep(0,dim(FOCAL)[1]),rep(1,dim(TOTAL)[1]))
+length(levels)
+534+80
+Fst<-NULL#
+		for (i in 1:dim(loci)[[2]]) {#
+         Fst[i]<-varcomp(data.frame(levels,as.numeric(loci[,i])),diploid=FALSE)$F[1,1]   #
+        }
+library(hierfstat)
+Fst<-NULL#
+		for (i in 1:dim(loci)[[2]]) {#
+         Fst[i]<-varcomp(data.frame(levels,as.numeric(loci[,i])),diploid=FALSE)$F[1,1]   #
+        }
+Fst_wild_range_vs_higherLat<-as.data.frame(Fst) # The outlier from this comparison is :SCRI_RS_154144
+row.names(Fst_wild_range_vs_higherLat)<-colnames(loci)
+head(Fst_wild_range_vs_higherLat)
+head(sort(Fst_wild_range_vs_higherLat))
+head(sort(Fst_wild_range_vs_higherLat[,1]))
+head(sort(Fst_wild_range_vs_higherLat[,1],decreasing=T))
+write.table(Fst_wild_range_vs_higherLat, "~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/Fst_wild_range_vs_higherLat.txt",quote=F,row.names=T,col.names=T,sep="\t")
+NAMES_results<-c("Fst_wild_range_vs_higherLat")
+i<-1
+DATA<-get(NAMES_results[i])#
+	RESULTS<-(cbind(row.names(DATA),as.numeric(DATA[,1])))#
+	#find outliers using the 95 percent tail#
+	Threshold<-quantile(as.numeric(as.matrix(RESULTS[,2])), 0.972, na.rm=T)#
+	abline(h=Threshold, col="red")#
+	#Find SNPs in genetic map#
+	genMap_results<-genMap[(genMap[,3] %in% (RESULTS[,1])),]#
+	#Unknown marker positions#
+	UNKNOWN<-(setdiff((RESULTS[,1]),genMap_results[,3]))#
+	#Separte the results in SNPs with known and Unknown positions. Then order the known position by cM order#
+	Results_un<-RESULTS[(RESULTS[,1] %in% UNKNOWN),]#
+	Results_known<-RESULTS[(RESULTS[,1] %in% genMap_results$SNP_name),]#
+	  Results_known_or<-Results_known[match(genMap_results$SNP_name, Results_known[,1]),]#
+	  if(identical(as.character(Results_known_or[,1]), as.character(genMap_results$SNP_name)) == FALSE)stop("SNP in results and genMap are in different order")#
+	# Add genetic position#
+	Results_known_or_genmap<-cbind(as.data.frame(genMap_results[,c(4,6)]),Results_known_or)#
+	#Add "Fake" genetic information to the unknown SNPs#
+	CHR_UN<-rep("UN",(dim(Results_un)[1]))#
+	Pos_start<-as.numeric((Results_known_or_genmap[(dim(Results_known_or_genmap)[1]),2]) +1)#
+	Pos_end<-Pos_start +50#
+	Pos_UN<- (seq(Pos_start, Pos_end, 0.02))[1:length(CHR_UN)]#
+	CHR_UN_fake<-cbind(CHR_UN,Pos_UN)#
+	Results_unknown_or_genmap<-cbind(as.data.frame(CHR_UN_fake),Results_un)#
+	colnames(Results_unknown_or_genmap)<-c("Chromosome","Accumulative_cM","1","2")#
+	# Combine all the results#
+	Results_all_genmap<-rbind(Results_known_or_genmap,Results_unknown_or_genma
+p)
+DATA<-get(NAMES_results[i])#
+	RESULTS<-(cbind(row.names(DATA),as.numeric(DATA[,1])))#
+	#find outliers using the 95 percent tail#
+	Threshold<-quantile(as.numeric(as.matrix(RESULTS[,2])), 0.972, na.rm=T)#
+	abline(h=Threshold, col="red")#
+	#Find SNPs in genetic map#
+	genMap_results<-genMap[(genMap[,3] %in% (RESULTS[,1])),]#
+	#Unknown marker positions#
+	UNKNOWN<-(setdiff((RESULTS[,1]),genMap_results[,3]))#
+	#Separte the results in SNPs with known and Unknown positions. Then order the known position by cM order#
+	Results_un<-RESULTS[(RESULTS[,1] %in% UNKNOWN),]#
+	Results_known<-RESULTS[(RESULTS[,1] %in% genMap_results$SNP_name),]#
+	  Results_known_or<-Results_known[match(genMap_results$SNP_name, Results_known[,1]),]#
+	  if(identical(as.character(Results_known_or[,1]), as.character(genMap_results$SNP_name)) == FALSE)stop("SNP in results and genMap are in different order")#
+	# Add genetic position#
+	Results_known_or_genmap<-cbind(as.data.frame(genMap_results[,c(4,6)]),Results_known_or)#
+	#Add "Fake" genetic information to the unknown SNPs#
+	CHR_UN<-rep("UN",(dim(Results_un)[1]))#
+	Pos_start<-as.numeric((Results_known_or_genmap[(dim(Results_known_or_genmap)[1]),2]) +1)#
+	Pos_end<-Pos_start +50#
+	Pos_UN<- (seq(Pos_start, Pos_end, 0.02))[1:length(CHR_UN)]#
+	CHR_UN_fake<-cbind(CHR_UN,Pos_UN)#
+	Results_unknown_or_genmap<-cbind(as.data.frame(CHR_UN_fake),Results_un)#
+	colnames(Results_unknown_or_genmap)<-c("Chromosome","Accumulative_cM","1","2")#
+	# Combine all the results#
+	Results_all_genmap<-rbind(Results_known_or_genmap,Results_unknown_or_genmap)
+colnames(Results_all_genmap)<-c("Chromosome","Cumulative_cM","SNP","FST")
+write.table(Results_all_genmap, paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/", NAMES_results[i],".txt", sep=""),quote=F,row.names=F,col.names=T,sep="\t")
+plot(Results_all_genmap[,2], Results_all_genmap[,5])
+head(Results_all_genmap)
+plot(Results_all_genmap[,2], Results_all_genmap[,4])
+plot(Results_all_genmap[,2], as.numeric(as.character(Results_all_genmap[,4])))
+rm(list=ls())#
+#
+NAMES_results<-c("Fst_wild_range_vs_higherLat")
+i<-1
+Results_all_genmap <-read.table(paste("/Users/Mia/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/", NAMES_results[i],".txt", sep=""), header=T)#
+	pdf(paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Plots/Latitude/", NAMES_results[i],".pdf",sep=""), width=7, height=5)#
+	plot(Results_all_genmap[,2],as.character(Results_all_genmap[,4]), ylab="Fst",xlab="Genetic Position", xaxt="n", cex=0.6)#
+	#Separate by chromosome#
+	  CHR1<-Results_all_genmap[c(which(Results_all_genmap[,1] == "1H")),]#
+	  CHR2<-Results_all_genmap[c(which(Results_all_genmap[,1] == "2H")),]#
+	  CHR3<-Results_all_genmap[c(which(Results_all_genmap[,1] == "3H")),]#
+	  CHR4<-Results_all_genmap[c(which(Results_all_genmap[,1] == "4H")),]#
+	  CHR5<-Results_all_genmap[c(which(Results_all_genmap[,1] == "5H")),]#
+	  CHR6<-Results_all_genmap[c(which(Results_all_genmap[,1] == "6H")),]#
+	  CHR7<-Results_all_genmap[c(which(Results_all_genmap[,1] == "7H")),]#
+	  CHR_UN<-Results_all_genmap[c(which(Results_all_genmap[,1] == "UN")),]
+Results_all_genmap <-read.table(paste("/Users/Mia/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/", NAMES_results[i],".txt", sep=""), header=T)
+Results_all_genmap <-read.table(paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/", NAMES_results[i],".txt", sep=""), header=T)
+pdf(paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Plots/Latitude/", NAMES_results[i],".pdf",sep=""), width=7, height=5)#
+	plot(Results_all_genmap[,2],as.character(Results_all_genmap[,4]), ylab="Fst",xlab="Genetic Position", xaxt="n", cex=0.6)
+CHR1<-Results_all_genmap[c(which(Results_all_genmap[,1] == "1H")),]#
+	  CHR2<-Results_all_genmap[c(which(Results_all_genmap[,1] == "2H")),]#
+	  CHR3<-Results_all_genmap[c(which(Results_all_genmap[,1] == "3H")),]#
+	  CHR4<-Results_all_genmap[c(which(Results_all_genmap[,1] == "4H")),]#
+	  CHR5<-Results_all_genmap[c(which(Results_all_genmap[,1] == "5H")),]#
+	  CHR6<-Results_all_genmap[c(which(Results_all_genmap[,1] == "6H")),]#
+	  CHR7<-Results_all_genmap[c(which(Results_all_genmap[,1] == "7H")),]#
+	  CHR_UN<-Results_all_genmap[c(which(Results_all_genmap[,1] == "UN")),]#
+	points(CHR1[,2],as.character(CHR1[,4]), col="red" , cex=0.6)#
+	points(CHR2[,2],as.character(CHR2[,4]), col="BLUE" , cex=0.6)#
+	points(CHR3[,2],as.character(CHR3[,4]), col="GREeN" , cex=0.6)#
+	points(CHR4[,2],as.character(CHR4[,4]), col="ORANGE" , cex=0.6)#
+	points(CHR5[,2],as.character(CHR5[,4]), col="magenta" , cex=0.6)#
+	points(CHR6[,2],as.character(CHR6[,4]), col="cyan" , cex=0.6)#
+	points(CHR7[,2],as.character(CHR7[,4]), col="dark green" , cex=0.6)#
+	points(CHR_UN[,2],as.character(CHR_UN[,4]), col="gray" , cex=0.6)
+abline(h=quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE), col= "red", lty=2)#
+	#find mid point to set tick mark in each chromosome#
+	tick1<-CHR1 [round(dim(CHR1)[1]/2),2]#
+	tick2<-CHR2 [round(dim(CHR2)[1]/2),2]#
+	tick3<-CHR3 [round(dim(CHR3)[1]/2),2]#
+	tick4<-CHR4 [round(dim(CHR4)[1]/2),2]#
+	tick5<-CHR5 [round(dim(CHR5)[1]/2),2]#
+	tick6<-CHR6 [round(dim(CHR6)[1]/2),2]#
+	tick7<-CHR7 [round(dim(CHR7)[1]/2),2]#
+	tickUN<-CHR_UN [round(dim(CHR_UN)[1]/2),2]#
+	axis(1, at=c(tick1, tick2, tick3, tick4, tick5, tick6, tick7, tickUN), c("1H","2H","3H","4H","5H","6H","7H","UN"))
+dev.off()
+Threshold<-quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE)#
+	Outliers<-Results_all_genmap[which(Results_all_genmap[,4] >= Threshold),]#
+	#sort outliers by Fst value#
+	Outliers_or<-Outliers[order(Outliers[,4], decreasing=T),]
+write.table(Outliers_or,paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/Outliers/", NAMES_results[i],"_outliers.txt",sep=""),quote=F,row.names=F,col.names=T,sep="\t")
+COLDlist<-read.csv("~/Dropbox/Landrace_Environmental_Assocation/Data/cold_genes_combined_with_gene_interval_update_01052017.xlsx",sep="\t")
+dim()COLDlist
+dim()
+dim(COLDlist)
+COLDlist<-read.csv("~/Dropbox/Landrace_Environmental_Assocation/Data/cold_genes_combined_with_gene_interval_update_01052017.xlsx",sep="\t",header=T)
+COLDlist<-read.csv("~/Dropbox/Landrace_Environmental_Assocation/Data/cold_genes_combined_with_gene_interval_update_01052017.xlsx",sep="\t",header=F)
+COLDlist<-read.csv("~/Dropbox/Landrace_Environmental_Assocation/Data/cold_genes_combined_with_gene_interval_update_01052017.xlsx")
+COLDlist<-read.csv("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/subset_cold_genes_combined_with_gene_interval_update_01052017.csv")
+dim(COLDlist)
+head(NAMES_results)
+head(Outliers_or)
+SNPnames<-gsub(X,"", Outliers_or[,3])
+SNPnames<-gsub("X","", Outliers_or[,3])
+head(SNPnames)
+Outliers_or$SNPnames<-SNPnames
+COLDlist[1,:3,1:10]
+COLDlist[1:3,1:10]
+COLDlist<-read.csv("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/subset_cold_genes_combined_with_gene_interval_update_01052017.csv",sep="\t")
+dim(COLDlist)
+head(COLDlist)
+COLDlist<-read.csv("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/subset_cold_genes_combined_with_gene_interval_update_01052017.csv",sep=",")
+head(COLDlist)
+COLDlist[(COLDlist$X9k_SNPs %in%Outliers_or$SNPnames ),]
+library(hierfstat)#
+#
+# === IMPORT INPUT FILES ===========================================================================#
+#Load the genetic assignment for k=4 landraces #
+assig<-read.table("~/Dropbox/Landrace_Environmental_Assocation/Data/Poets_etal2015/Landraces_geneticAssingment.txt",header=T)#
+# Import genotypes. Downloaded from Github companion of Poets et al 2015.#
+genotypes<-read.table("~/Dropbox/Landrace_Environmental_Assocation/Data/Poets_etal2015/Land_6152_SNPs_AB.txt",row.names=1, header=T)#
+# Select new geographic location, after Fumi inspected every data point. These are the phenotypes #
+# Fumi used for GAPIT#
+Latlong<-read.csv("~/Dropbox/Landrace_Environmental_Assocation/Analyses/GWAS-GAPIT/Input/myY1.v2.csv",row.names=1)#
+#
+# Import genetic map from Munñoz et al 2011#
+genMap<-read.table("~/Dropbox/Landrace_Environmental_Assocation/Data/Muñoz_etal2011/Consensus_iSelect.txt",header=T)#
+#
+# ==== DATA TRANFORMATIONS ========================================================================#
+# Change genotypes to numeric values AA=2, BB=0, AB=1 ,NA=NA#
+CHANGE<-function(dat){#
+	dat[which(dat == "AA")]<-2#
+	dat[which(dat == "BB")]<-0#
+	dat[which(dat == "AB")]<-1#
+	return(dat)	#
+}#
+GENOTYPE_num<-as.data.frame(apply(genotypes,2, CHANGE))#
+#
+### === Divide samples in within the wild range latitude versus north of there
+head(wild_range)
+wild_range<-row.names(Latlong)[which(Latlong$Latitude >= 30 & Latlong$Latitude <= 46)]#
+#
+above_wild<-row.names(Latlong)[which( Latlong$Latitude > 46)]
+head(above_wild)
+dim above_wild
+dim()
+dim(wild_range)
+length(wild_range)
+sample(wild_range,80,replace=F)
+sample(wild_range,80,replace=F)->all_pops
+GENOTYPE_num[(row.names(GENOTYPE_num) %in% all_pops),]->TOTAL
+GENOTYPE_num[(row.names(GENOTYPE_num) %in% above_wild),]->FOCAL
+loci<-rbind(as.data.frame(FOCAL),as.data.frame(TOTAL))
+levels<-c(rep(0,dim(FOCAL)[1]),rep(1,dim(TOTAL)[1]))
+Fst<-NULL#
+		for (i in 1:dim(loci)[[2]]) {#
+         Fst[i]<-varcomp(data.frame(levels,as.numeric(loci[,i])),diploid=FALSE)$F[1,1]   #
+        }
+Fst_wild_range_vs_higherLat_80samples<-as.data.frame(Fst) # The outlier from this comparison is :SCRI_RS_154144#
+  row.names(Fst_wild_range_vs_higherLat_80samples)<-colnames(loci)
+i<-2
+NAMES_results<-c("Fst_wild_range_vs_higherLat","Fst_wild_range_vs_higherLat_80samples")
+DATA<-get(NAMES_results[i])#
+	RESULTS<-(cbind(row.names(DATA),as.numeric(DATA[,1])))#
+	#find outliers using the 95 percent tail#
+	Threshold<-quantile(as.numeric(as.matrix(RESULTS[,2])), 0.972, na.rm=T)#
+	abline(h=Threshold, col="red")#
+	#Find SNPs in genetic map#
+	genMap_results<-genMap[(genMap[,3] %in% (RESULTS[,1])),]#
+	#Unknown marker positions#
+	UNKNOWN<-(setdiff((RESULTS[,1]),genMap_results[,3]))#
+	#Separte the results in SNPs with known and Unknown positions. Then order the known position by cM order#
+	Results_un<-RESULTS[(RESULTS[,1] %in% UNKNOWN),]#
+	Results_known<-RESULTS[(RESULTS[,1] %in% genMap_results$SNP_name),]#
+	  Results_known_or<-Results_known[match(genMap_results$SNP_name, Results_known[,1]),]#
+	  if(identical(as.character(Results_known_or[,1]), as.character(genMap_results$SNP_name)) == FALSE)stop("SNP in results and genMap are in different order")#
+	# Add genetic position#
+	Results_known_or_genmap<-cbind(as.data.frame(genMap_results[,c(4,6)]),Results_known_or)#
+	#Add "Fake" genetic information to the unknown SNPs#
+	CHR_UN<-rep("UN",(dim(Results_un)[1]))#
+	Pos_start<-as.numeric((Results_known_or_genmap[(dim(Results_known_or_genmap)[1]),2]) +1)#
+	Pos_end<-Pos_start +50#
+	Pos_UN<- (seq(Pos_start, Pos_end, 0.02))[1:length(CHR_UN)]#
+	CHR_UN_fake<-cbind(CHR_UN,Pos_UN)#
+	Results_unknown_or_genmap<-cbind(as.data.frame(CHR_UN_fake),Results_un)#
+	colnames(Results_unknown_or_genmap)<-c("Chromosome","Accumulative_cM","1","2")#
+	# Combine all the results#
+	Results_all_genmap<-rbind(Results_known_or_genmap,Results_unknown_or_genmap)#
+	colnames(Results_all_genmap)<-c("Chromosome","Cumulative_cM","SNP","FST")#
+	write.table(Results_all_genmap, paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/", NAMES_results[i],".txt", sep=""),quote=F,row.names=F,col.names=T,sep="\t")
+NAMES_results<-c("Fst_wild_range_vs_higherLat","Fst_wild_range_vs_higherLat_80samples")
+i<-2
+Results_all_genmap <-read.table(paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/", NAMES_results[i],".txt", sep=""), header=T)#
+	pdf(paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Plots/Latitude/", NAMES_results[i],".pdf",sep=""), width=7, height=5)#
+	plot(Results_all_genmap[,2],as.character(Results_all_genmap[,4]), ylab="Fst",xlab="Genetic Position", xaxt="n", cex=0.6)#
+	#Separate by chromosome#
+	  CHR1<-Results_all_genmap[c(which(Results_all_genmap[,1] == "1H")),]#
+	  CHR2<-Results_all_genmap[c(which(Results_all_genmap[,1] == "2H")),]#
+	  CHR3<-Results_all_genmap[c(which(Results_all_genmap[,1] == "3H")),]#
+	  CHR4<-Results_all_genmap[c(which(Results_all_genmap[,1] == "4H")),]#
+	  CHR5<-Results_all_genmap[c(which(Results_all_genmap[,1] == "5H")),]#
+	  CHR6<-Results_all_genmap[c(which(Results_all_genmap[,1] == "6H")),]#
+	  CHR7<-Results_all_genmap[c(which(Results_all_genmap[,1] == "7H")),]#
+	  CHR_UN<-Results_all_genmap[c(which(Results_all_genmap[,1] == "UN")),]#
+	points(CHR1[,2],as.character(CHR1[,4]), col="red" , cex=0.6)#
+	points(CHR2[,2],as.character(CHR2[,4]), col="BLUE" , cex=0.6)#
+	points(CHR3[,2],as.character(CHR3[,4]), col="GREeN" , cex=0.6)#
+	points(CHR4[,2],as.character(CHR4[,4]), col="ORANGE" , cex=0.6)#
+	points(CHR5[,2],as.character(CHR5[,4]), col="magenta" , cex=0.6)#
+	points(CHR6[,2],as.character(CHR6[,4]), col="cyan" , cex=0.6)#
+	points(CHR7[,2],as.character(CHR7[,4]), col="dark green" , cex=0.6)#
+	points(CHR_UN[,2],as.character(CHR_UN[,4]), col="gray" , cex=0.6)#
+	abline(h=quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE), col= "red", lty=2)#
+	#find mid point to set tick mark in each chromosome#
+	tick1<-CHR1 [round(dim(CHR1)[1]/2),2]#
+	tick2<-CHR2 [round(dim(CHR2)[1]/2),2]#
+	tick3<-CHR3 [round(dim(CHR3)[1]/2),2]#
+	tick4<-CHR4 [round(dim(CHR4)[1]/2),2]#
+	tick5<-CHR5 [round(dim(CHR5)[1]/2),2]#
+	tick6<-CHR6 [round(dim(CHR6)[1]/2),2]#
+	tick7<-CHR7 [round(dim(CHR7)[1]/2),2]#
+	tickUN<-CHR_UN [round(dim(CHR_UN)[1]/2),2]#
+	axis(1, at=c(tick1, tick2, tick3, tick4, tick5, tick6, tick7, tickUN), c("1H","2H","3H","4H","5H","6H","7H","UN"))#
+dev.off()
+Threshold<-quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE)#
+	Outliers<-Results_all_genmap[which(Results_all_genmap[,4] >= Threshold),]#
+	#sort outliers by Fst value#
+	Outliers_or<-Outliers[order(Outliers[,4], decreasing=T),]#
+	write.table(Outliers_or,paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/Outliers/", NAMES_results[i],"_outliers.txt",sep=""),quote=F,row.names=F,col.names=T,sep="\t")
+COLDlist<-read.csv("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/subset_cold_genes_combined_with_gene_interval_update_01052017.csv",sep=",")#
+#
+#replace X in from of SNPs#
+SNPnames<-gsub("X","", Outliers_or[,3])#
+Outliers_or$SNPnames<-SNPnames#
+#
+COLDlist[(COLDlist$X9k_SNPs %in%Outliers_or$SNPnames ),]
+1-97.5
+100-97.5
+COLDlist<-read.csv("~/Dropbox/Landrace_Environmental_Assocation/Data/cold_genes_combined_with_gene_interval_20170117.xlsx",sep=",")
+COLDlist<-read.csv("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/subset_cold_genes_combined_with_gene_interval_20170117.csv",sep=",")
+NAMES_results<-c("Fst_wild_range_vs_higherLat","Fst_wild_range_vs_higherLat_80samples")
+i<-2
+Results_all_genmap <-read.table(paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/", NAMES_results[i],".txt", sep=""), header=T)#
+	pdf(paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Plots/Latitude/", NAMES_results[i],".pdf",sep=""), width=7, height=5)#
+	plot(Results_all_genmap[,2],as.character(Results_all_genmap[,4]), ylab="Fst",xlab="Genetic Position", xaxt="n", cex=0.6)#
+	#Separate by chromosome#
+	  CHR1<-Results_all_genmap[c(which(Results_all_genmap[,1] == "1H")),]#
+	  CHR2<-Results_all_genmap[c(which(Results_all_genmap[,1] == "2H")),]#
+	  CHR3<-Results_all_genmap[c(which(Results_all_genmap[,1] == "3H")),]#
+	  CHR4<-Results_all_genmap[c(which(Results_all_genmap[,1] == "4H")),]#
+	  CHR5<-Results_all_genmap[c(which(Results_all_genmap[,1] == "5H")),]#
+	  CHR6<-Results_all_genmap[c(which(Results_all_genmap[,1] == "6H")),]#
+	  CHR7<-Results_all_genmap[c(which(Results_all_genmap[,1] == "7H")),]#
+	  CHR_UN<-Results_all_genmap[c(which(Results_all_genmap[,1] == "UN")),]#
+	points(CHR1[,2],as.character(CHR1[,4]), col="red" , cex=0.6)#
+	points(CHR2[,2],as.character(CHR2[,4]), col="BLUE" , cex=0.6)#
+	points(CHR3[,2],as.character(CHR3[,4]), col="GREeN" , cex=0.6)#
+	points(CHR4[,2],as.character(CHR4[,4]), col="ORANGE" , cex=0.6)#
+	points(CHR5[,2],as.character(CHR5[,4]), col="magenta" , cex=0.6)#
+	points(CHR6[,2],as.character(CHR6[,4]), col="cyan" , cex=0.6)#
+	points(CHR7[,2],as.character(CHR7[,4]), col="dark green" , cex=0.6)#
+	points(CHR_UN[,2],as.character(CHR_UN[,4]), col="gray" , cex=0.6)#
+	abline(h=quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE), col= "red", lty=2)#
+	#find mid point to set tick mark in each chromosome#
+	tick1<-CHR1 [round(dim(CHR1)[1]/2),2]#
+	tick2<-CHR2 [round(dim(CHR2)[1]/2),2]#
+	tick3<-CHR3 [round(dim(CHR3)[1]/2),2]#
+	tick4<-CHR4 [round(dim(CHR4)[1]/2),2]#
+	tick5<-CHR5 [round(dim(CHR5)[1]/2),2]#
+	tick6<-CHR6 [round(dim(CHR6)[1]/2),2]#
+	tick7<-CHR7 [round(dim(CHR7)[1]/2),2]#
+	tickUN<-CHR_UN [round(dim(CHR_UN)[1]/2),2]#
+	axis(1, at=c(tick1, tick2, tick3, tick4, tick5, tick6, tick7, tickUN), c("1H","2H","3H","4H","5H","6H","7H","UN"))#
+dev.off()
+Threshold<-quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE)#
+	Outliers<-Results_all_genmap[which(Results_all_genmap[,4] >= Threshold),]#
+	#sort outliers by Fst value#
+	Outliers_or<-Outliers[order(Outliers[,4], decreasing=T),]#
+	write.table(Outliers_or,paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/Outliers/", NAMES_results[i],"_outliers.txt",sep=""),quote=F,row.names=F,col.names=T,sep="\t")
+COLDlist<-read.csv("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/subset_cold_genes_combined_with_gene_interval_20170117.csv",sep=",")#
+#
+#replace X in from of SNPs#
+SNPnames<-gsub("X","", Outliers_or[,3])#
+Outliers_or$SNPnames<-SNPnames
+colnames(COLDlist)
+COLDlist[(COLDlist$X9k_SNPs %in%Outliers_or$SNPnames ),]
+i
+i<-1
+Results_all_genmap <-read.table(paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/", NAMES_results[i],".txt", sep=""), header=T)#
+	pdf(paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Plots/Latitude/", NAMES_results[i],".pdf",sep=""), width=7, height=5)#
+	plot(Results_all_genmap[,2],as.character(Results_all_genmap[,4]), ylab="Fst",xlab="Genetic Position", xaxt="n", cex=0.6)#
+	#Separate by chromosome#
+	  CHR1<-Results_all_genmap[c(which(Results_all_genmap[,1] == "1H")),]#
+	  CHR2<-Results_all_genmap[c(which(Results_all_genmap[,1] == "2H")),]#
+	  CHR3<-Results_all_genmap[c(which(Results_all_genmap[,1] == "3H")),]#
+	  CHR4<-Results_all_genmap[c(which(Results_all_genmap[,1] == "4H")),]#
+	  CHR5<-Results_all_genmap[c(which(Results_all_genmap[,1] == "5H")),]#
+	  CHR6<-Results_all_genmap[c(which(Results_all_genmap[,1] == "6H")),]#
+	  CHR7<-Results_all_genmap[c(which(Results_all_genmap[,1] == "7H")),]#
+	  CHR_UN<-Results_all_genmap[c(which(Results_all_genmap[,1] == "UN")),]#
+	points(CHR1[,2],as.character(CHR1[,4]), col="red" , cex=0.6)#
+	points(CHR2[,2],as.character(CHR2[,4]), col="BLUE" , cex=0.6)#
+	points(CHR3[,2],as.character(CHR3[,4]), col="GREeN" , cex=0.6)#
+	points(CHR4[,2],as.character(CHR4[,4]), col="ORANGE" , cex=0.6)#
+	points(CHR5[,2],as.character(CHR5[,4]), col="magenta" , cex=0.6)#
+	points(CHR6[,2],as.character(CHR6[,4]), col="cyan" , cex=0.6)#
+	points(CHR7[,2],as.character(CHR7[,4]), col="dark green" , cex=0.6)#
+	points(CHR_UN[,2],as.character(CHR_UN[,4]), col="gray" , cex=0.6)#
+	abline(h=quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE), col= "red", lty=2)#
+	#find mid point to set tick mark in each chromosome#
+	tick1<-CHR1 [round(dim(CHR1)[1]/2),2]#
+	tick2<-CHR2 [round(dim(CHR2)[1]/2),2]#
+	tick3<-CHR3 [round(dim(CHR3)[1]/2),2]#
+	tick4<-CHR4 [round(dim(CHR4)[1]/2),2]#
+	tick5<-CHR5 [round(dim(CHR5)[1]/2),2]#
+	tick6<-CHR6 [round(dim(CHR6)[1]/2),2]#
+	tick7<-CHR7 [round(dim(CHR7)[1]/2),2]#
+	tickUN<-CHR_UN [round(dim(CHR_UN)[1]/2),2]#
+	axis(1, at=c(tick1, tick2, tick3, tick4, tick5, tick6, tick7, tickUN), c("1H","2H","3H","4H","5H","6H","7H","UN"))#
+dev.off()#
+	# Get outlier markers#
+	Threshold<-quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE)#
+	Outliers<-Results_all_genmap[which(Results_all_genmap[,4] >= Threshold),]#
+	#sort outliers by Fst value#
+	Outliers_or<-Outliers[order(Outliers[,4], decreasing=T),]#
+	write.table(Outliers_or,paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/Outliers/", NAMES_results[i],"_outliers.txt",sep=""),quote=F,row.names=F,col.names=T,sep="\t")
+COLDlist<-read.csv("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/subset_cold_genes_combined_with_gene_interval_20170117.csv",sep=",")#
+#
+#replace X in from of SNPs#
+SNPnames<-gsub("X","", Outliers_or[,3])#
+Outliers_or$SNPnames<-SNPnames#
+#
+COLDlist[(COLDlist$X9k_SNPs %in%Outliers_or$SNPnames ),]
+wild_range
+sample(wild_range,80,replace=F)->all_pops#
+#c(wild_range)->all_pops#
+GENOTYPE_num[(row.names(GENOTYPE_num) %in% all_pops),]->TOTAL#
+GENOTYPE_num[(row.names(GENOTYPE_num) %in% above_wild),]->FOCAL#
+#Ready to calculate hierFst Fst#
+loci<-rbind(as.data.frame(FOCAL),as.data.frame(TOTAL))#
+levels<-c(rep(0,dim(FOCAL)[1]),rep(1,dim(TOTAL)[1]))#
+#
+#look at the Fst at each locus#
+	Fst<-NULL#
+		for (i in 1:dim(loci)[[2]]) {#
+         Fst[i]<-varcomp(data.frame(levels,as.numeric(loci[,i])),diploid=FALSE)$F[1,1]   #
+        }#
+  Fst_wild_range_vs_higherLat_80samples<-as.data.frame(Fst) # The outlier from this comparison is :SCRI_RS_154144#
+  row.names(Fst_wild_range_vs_higherLat_80samples)<-colnames(loci)
+i<-2
+NAMES_results<-c("Fst_wild_range_vs_higherLat","Fst_wild_range_vs_higherLat_80samples")
+DATA<-get(NAMES_results[i])#
+	RESULTS<-(cbind(row.names(DATA),as.numeric(DATA[,1])))#
+	#find outliers using the 95 percent tail#
+	Threshold<-quantile(as.numeric(as.matrix(RESULTS[,2])), 0.972, na.rm=T)#
+	abline(h=Threshold, col="red")#
+	#Find SNPs in genetic map#
+	genMap_results<-genMap[(genMap[,3] %in% (RESULTS[,1])),]#
+	#Unknown marker positions#
+	UNKNOWN<-(setdiff((RESULTS[,1]),genMap_results[,3]))#
+	#Separte the results in SNPs with known and Unknown positions. Then order the known position by cM order#
+	Results_un<-RESULTS[(RESULTS[,1] %in% UNKNOWN),]#
+	Results_known<-RESULTS[(RESULTS[,1] %in% genMap_results$SNP_name),]#
+	  Results_known_or<-Results_known[match(genMap_results$SNP_name, Results_known[,1]),]#
+	  if(identical(as.character(Results_known_or[,1]), as.character(genMap_results$SNP_name)) == FALSE)stop("SNP in results and genMap are in different order")#
+	# Add genetic position#
+	Results_known_or_genmap<-cbind(as.data.frame(genMap_results[,c(4,6)]),Results_known_or)#
+	#Add "Fake" genetic information to the unknown SNPs#
+	CHR_UN<-rep("UN",(dim(Results_un)[1]))#
+	Pos_start<-as.numeric((Results_known_or_genmap[(dim(Results_known_or_genmap)[1]),2]) +1)#
+	Pos_end<-Pos_start +50#
+	Pos_UN<- (seq(Pos_start, Pos_end, 0.02))[1:length(CHR_UN)]#
+	CHR_UN_fake<-cbind(CHR_UN,Pos_UN)#
+	Results_unknown_or_genmap<-cbind(as.data.frame(CHR_UN_fake),Results_un)#
+	colnames(Results_unknown_or_genmap)<-c("Chromosome","Accumulative_cM","1","2")#
+	# Combine all the results#
+	Results_all_genmap<-rbind(Results_known_or_genmap,Results_unknown_or_genmap)#
+	colnames(Results_all_genmap)<-c("Chromosome","Cumulative_cM","SNP","FST")
+Results_all_ge
+plot(Results_all_genmap[,2],as.character(Results_all_genmap[,4]), ylab="Fst",xlab="Genetic Position", xaxt="n", cex=0.6)#
+	#Separate by chromosome#
+	  CHR1<-Results_all_genmap[c(which(Results_all_genmap[,1] == "1H")),]#
+	  CHR2<-Results_all_genmap[c(which(Results_all_genmap[,1] == "2H")),]#
+	  CHR3<-Results_all_genmap[c(which(Results_all_genmap[,1] == "3H")),]#
+	  CHR4<-Results_all_genmap[c(which(Results_all_genmap[,1] == "4H")),]#
+	  CHR5<-Results_all_genmap[c(which(Results_all_genmap[,1] == "5H")),]#
+	  CHR6<-Results_all_genmap[c(which(Results_all_genmap[,1] == "6H")),]#
+	  CHR7<-Results_all_genmap[c(which(Results_all_genmap[,1] == "7H")),]#
+	  CHR_UN<-Results_all_genmap[c(which(Results_all_genmap[,1] == "UN")),]#
+	points(CHR1[,2],as.character(CHR1[,4]), col="red" , cex=0.6)#
+	points(CHR2[,2],as.character(CHR2[,4]), col="BLUE" , cex=0.6)#
+	points(CHR3[,2],as.character(CHR3[,4]), col="GREeN" , cex=0.6)#
+	points(CHR4[,2],as.character(CHR4[,4]), col="ORANGE" , cex=0.6)#
+	points(CHR5[,2],as.character(CHR5[,4]), col="magenta" , cex=0.6)#
+	points(CHR6[,2],as.character(CHR6[,4]), col="cyan" , cex=0.6)#
+	points(CHR7[,2],as.character(CHR7[,4]), col="dark green" , cex=0.6)#
+	points(CHR_UN[,2],as.character(CHR_UN[,4]), col="gray" , cex=0.6)#
+	abline(h=quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE), col= "red", lty=2)#
+	#find mid point to set tick mark in each chromosome#
+	tick1<-CHR1 [round(dim(CHR1)[1]/2),2]#
+	tick2<-CHR2 [round(dim(CHR2)[1]/2),2]#
+	tick3<-CHR3 [round(dim(CHR3)[1]/2),2]#
+	tick4<-CHR4 [round(dim(CHR4)[1]/2),2]#
+	tick5<-CHR5 [round(dim(CHR5)[1]/2),2]#
+	tick6<-CHR6 [round(dim(CHR6)[1]/2),2]#
+	tick7<-CHR7 [round(dim(CHR7)[1]/2),2]#
+	tickUN<-CHR_UN [round(dim(CHR_UN)[1]/2),2]#
+	axis(1, at=c(tick1, tick2, tick3, tick4, tick5, tick6, tick7, tickUN), c("1H","2H","3H","4H","5H","6H","7H","UN"))
+Threshold<-quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE)#
+	Outliers<-Results_all_genmap[which(Results_all_genmap[,4] >= Threshold),]#
+	#sort outliers by Fst value#
+	Outliers_or<-Outliers[order(Outliers[,4], decreasing=T),]
+head(Results_all_genmap)
+Threshold<-quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE)
+Outliers<-Results_all_genmap[which(Results_all_genmap[,4] >= Threshold),]
+Outliers<-Results_all_genmap[which(as.numeric(as.character(Results_all_genmap[,4])) >= Threshold),]
+Outliers_or<-Outliers[order(Outliers[,4], decreasing=T),]
+COLDlist<-read.csv("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/subset_cold_genes_combined_with_gene_interval_20170117.csv",sep=",")#
+#
+#replace X in from of SNPs#
+SNPnames<-gsub("X","", Outliers_or[,3])#
+Outliers_or$SNPnames<-SNPnames#
+#
+COLDlist[(COLDlist$X9k_SNPs %in%Outliers_or$SNPnames ),]
+head(Fst_wild_range_vs_higherLat_80samples)
+20*80
+513/80
+Fst_wild_range_vs_higherLat_80samples_Iteration<-NULL
+Fst_wild_range_vs_higherLat_80samples<- cbind(Fst_wild_range_vs_higherLat_80samples_Iteration, Fst_wild_range_vs_higherLat_80samples)
+dim()
+dim(GENOTYPE_num)
+Fst_wild_range_vs_higherLat_80samples_Iteration<-as.data.frame(rep(NA, dim(GENOTYPE_num)[2]))
+Fst_wild_range_vs_higherLat_80samples<- cbind(Fst_wild_range_vs_higherLat_80samples_Iteration, Fst_wild_range_vs_higherLat_80samples)
+head(Fst_wild_range_vs_higherLat_80samples)
+Fst_wild_range_vs_higherLat_80samples_Iteration<-as.data.frame(rep(NA, dim(GENOTYPE_num)[2]))
+Fst_wild_range_vs_higherLat_80samples<-as.data.frame(Fst) # The outlier from this comparison is :SCRI_RS_154144
+row.names(Fst_wild_range_vs_higherLat_80samples)<-colnames(loci)
+Fst_wild_range_vs_higherLat_80samples_Iteration <- cbind(Fst_wild_range_vs_higherLat_80samples_Iteration, Fst_wild_range_vs_higherLat_80samples)
+head(Fst_wild_range_vs_higherLat_80samples_Iteration)
+Fst_wild_range_vs_higherLat_80samples_Iteration<-as.data.frame(rep(NA, dim(GENOTYPE_num)[2]))#
+#
+while (i <11){#
+	sample(wild_range,80,replace=F)->all_pops#
+	#c(wild_range)->all_pops#
+	GENOTYPE_num[(row.names(GENOTYPE_num) %in% all_pops),]->TOTAL#
+	GENOTYPE_num[(row.names(GENOTYPE_num) %in% above_wild),]->FOCAL#
+	#Ready to calculate hierFst Fst#
+	loci<-rbind(as.data.frame(FOCAL),as.data.frame(TOTAL))#
+	levels<-c(rep(0,dim(FOCAL)[1]),rep(1,dim(TOTAL)[1]))#
+	#look at the Fst at each locus#
+		Fst<-NULL#
+			for (i in 1:dim(loci)[[2]]) {#
+	         Fst[i]<-varcomp(data.frame(levels,as.numeric(loci[,i])),diploid=FALSE)$F[1,1]   #
+	        }#
+	  Fst_wild_range_vs_higherLat_80samples<-as.data.frame(Fst) # The outlier from this comparison is :SCRI_RS_154144#
+	  row.names(Fst_wild_range_vs_higherLat_80samples)<-colnames(loci)#
+	 Fst_wild_range_vs_higherLat_80samples_Iteration <- cbind(Fst_wild_range_vs_higherLat_80samples_Iteration, Fst_wild_range_vs_higherLat_80samples)#
+	 i<=i+1#
+}
+Fst_wild_range_vs_higherLat_80samples_Iteration<-as.data.frame(rep(NA, dim(GENOTYPE_num)[2]))#
+#
+while (i <11){#
+	sample(wild_range,80,replace=F)->all_pops#
+	#c(wild_range)->all_pops#
+	GENOTYPE_num[(row.names(GENOTYPE_num) %in% all_pops),]->TOTAL#
+	GENOTYPE_num[(row.names(GENOTYPE_num) %in% above_wild),]->FOCAL#
+	#Ready to calculate hierFst Fst#
+	loci<-rbind(as.data.frame(FOCAL),as.data.frame(TOTAL))#
+	levels<-c(rep(0,dim(FOCAL)[1]),rep(1,dim(TOTAL)[1]))#
+	#look at the Fst at each locus#
+		Fst<-NULL#
+			for (i in 1:dim(loci)[[2]]) {#
+	         Fst[i]<-varcomp(data.frame(levels,as.numeric(loci[,i])),diploid=FALSE)$F[1,1]   #
+	        }#
+	  Fst_wild_range_vs_higherLat_80samples<-as.data.frame(Fst) # The outlier from this comparison is :SCRI_RS_154144#
+	  row.names(Fst_wild_range_vs_higherLat_80samples)<-colnames(loci)#
+	 Fst_wild_range_vs_higherLat_80samples_Iteration <- cbind(Fst_wild_range_vs_higherLat_80samples_Iteration, Fst_wild_range_vs_higherLat_80samples)#
+	 i==i+1#
+}
+dim(Fst_wild_range_vs_higherLat_80samples_Iteration)
+Fst_wild_range_vs_higherLat_80samples_Iteration<-as.data.frame(rep(NA, dim(GENOTYPE_num)[2]))#
+#
+while (x <11){#
+	sample(wild_range,80,replace=F)->all_pops#
+	#c(wild_range)->all_pops#
+	GENOTYPE_num[(row.names(GENOTYPE_num) %in% all_pops),]->TOTAL#
+	GENOTYPE_num[(row.names(GENOTYPE_num) %in% above_wild),]->FOCAL#
+	#Ready to calculate hierFst Fst#
+	loci<-rbind(as.data.frame(FOCAL),as.data.frame(TOTAL))#
+	levels<-c(rep(0,dim(FOCAL)[1]),rep(1,dim(TOTAL)[1]))#
+	#look at the Fst at each locus#
+		Fst<-NULL#
+			for (i in 1:dim(loci)[[2]]) {#
+	         Fst[i]<-varcomp(data.frame(levels,as.numeric(loci[,i])),diploid=FALSE)$F[1,1]   #
+	        }#
+	  Fst_wild_range_vs_higherLat_80samples<-as.data.frame(Fst) # The outlier from this comparison is :SCRI_RS_154144#
+	  row.names(Fst_wild_range_vs_higherLat_80samples)<-colnames(loci)#
+	 Fst_wild_range_vs_higherLat_80samples_Iteration <- cbind(Fst_wild_range_vs_higherLat_80samples_Iteration, Fst_wild_range_vs_higherLat_80samples)#
+	 x==x+1#
+}
+while (x <11){#
+	y==x#
+	sample(wild_range,80,replace=F)->all_pops#
+	#c(wild_range)->all_pops#
+	GENOTYPE_num[(row.names(GENOTYPE_num) %in% all_pops),]->TOTAL#
+	GENOTYPE_num[(row.names(GENOTYPE_num) %in% above_wild),]->FOCAL#
+	#Ready to calculate hierFst Fst#
+	loci<-rbind(as.data.frame(FOCAL),as.data.frame(TOTAL))#
+	levels<-c(rep(0,dim(FOCAL)[1]),rep(1,dim(TOTAL)[1]))#
+	#look at the Fst at each locus#
+		Fst<-NULL#
+			for (i in 1:dim(loci)[[2]]) {#
+	         Fst[i]<-varcomp(data.frame(levels,as.numeric(loci[,i])),diploid=FALSE)$F[1,1]   #
+	        }#
+	  Fst_wild_range_vs_higherLat_80samples<-as.data.frame(Fst) # The outlier from this comparison is :SCRI_RS_154144#
+	  row.names(Fst_wild_range_vs_higherLat_80samples)<-colnames(loci)#
+	 Fst_wild_range_vs_higherLat_80samples_Iteration <- cbind(Fst_wild_range_vs_higherLat_80samples_Iteration, Fst_wild_range_vs_higherLat_80samples)#
+	 x==y+1#
+}
+while (x <11){#
+	x#
+	sample(wild_range,80,replace=F)->all_pops#
+	#c(wild_range)->all_pops#
+	GENOTYPE_num[(row.names(GENOTYPE_num) %in% all_pops),]->TOTAL#
+	GENOTYPE_num[(row.names(GENOTYPE_num) %in% above_wild),]->FOCAL#
+	#Ready to calculate hierFst Fst#
+	loci<-rbind(as.data.frame(FOCAL),as.data.frame(TOTAL))#
+	levels<-c(rep(0,dim(FOCAL)[1]),rep(1,dim(TOTAL)[1]))#
+	#look at the Fst at each locus#
+		Fst<-NULL#
+			for (i in 1:dim(loci)[[2]]) {#
+	         Fst[i]<-varcomp(data.frame(levels,as.numeric(loci[,i])),diploid=FALSE)$F[1,1]   #
+	        }#
+	  Fst_wild_range_vs_higherLat_80samples<-as.data.frame(Fst) # The outlier from this comparison is :SCRI_RS_154144#
+	  row.names(Fst_wild_range_vs_higherLat_80samples)<-colnames(loci)#
+	 Fst_wild_range_vs_higherLat_80samples_Iteration <- cbind(Fst_wild_range_vs_higherLat_80samples_Iteration, Fst_wild_range_vs_higherLat_80samples)#
+	 x<-x+1#
+}
+x<-1
+while (x <=10){#
+	x#
+	sample(wild_range,80,replace=F)->all_pops#
+	#c(wild_range)->all_pops#
+	GENOTYPE_num[(row.names(GENOTYPE_num) %in% all_pops),]->TOTAL#
+	GENOTYPE_num[(row.names(GENOTYPE_num) %in% above_wild),]->FOCAL#
+	#Ready to calculate hierFst Fst#
+	loci<-rbind(as.data.frame(FOCAL),as.data.frame(TOTAL))#
+	levels<-c(rep(0,dim(FOCAL)[1]),rep(1,dim(TOTAL)[1]))#
+	#look at the Fst at each locus#
+		Fst<-NULL#
+			for (i in 1:dim(loci)[[2]]) {#
+	         Fst[i]<-varcomp(data.frame(levels,as.numeric(loci[,i])),diploid=FALSE)$F[1,1]   #
+	        }#
+	  Fst_wild_range_vs_higherLat_80samples<-as.data.frame(Fst) # The outlier from this comparison is :SCRI_RS_154144#
+	  row.names(Fst_wild_range_vs_higherLat_80samples)<-colnames(loci)#
+	 Fst_wild_range_vs_higherLat_80samples_Iteration <- cbind(Fst_wild_range_vs_higherLat_80samples_Iteration, Fst_wild_range_vs_higherLat_80samples)#
+	 x<-x+1#
+}
+dim(Fst_wild_range_vs_higherLat_80samples_Iteration)
+head(Fst_wild_range_vs_higherLat_80samples_Iteration)
+Fst_wild_range_vs_higherLat_80samples_Iteration_resutls<-Fst_wild_range_vs_higherLat_80samples_Iteration[,-1]
+sapply(Fst_wild_range_vs_higherLat_80samples_Iteration_resutls, function(x) mean(x))
+sapply(t(Fst_wild_range_vs_higherLat_80samples_Iteration_resutls), function(x) mean(x))
+dim(Fst_wild_range_vs_higherLat_80samples_Iteration_resutls)
+Fst_average<-sapply(t(Fst_wild_range_vs_higherLat_80samples_Iteration_resutls), function(x) mean(x))
+Fst_average<-as.data.frame(sapply(t(Fst_wild_range_vs_higherLat_80samples_Iteration_resutls), function(x) mean(x)))
+row.names(Fst_average)<-row.names(Fst_wild_range_vs_higherLat_80samples_Iteration_resutls)
+length(Fst_average)
+dim(Fst_average)
+Fst_average<-apply(Fst_wild_range_vs_higherLat_80samples_Iteration_resutls, 1, mean)
+row.names(Fst_average)<-row.names(Fst_wild_range_vs_higherLat_80samples_Iteration_resutls)
+Fst_average<-as.data.frame(apply(Fst_wild_range_vs_higherLat_80samples_Iteration_resutls, 1, mean))
+row.names(Fst_average)<-row.names(Fst_wild_range_vs_higherLat_80samples_Iteration_resutls)
+head(Fst_average)
+Fst_average_80samp_10iter <-as.data.frame(apply(Fst_wild_range_vs_higherLat_80samples_Iteration_resutls, 1, mean))
+row.names(Fst_average_80samp_10iter)<-row.names(Fst_wild_range_vs_higherLat_80samples_Iteration_resutls)
+NAMES_results<-c("Fst_wild_range_vs_higherLat","Fst_wild_range_vs_higherLat_80samples","Fst_average_80samp_10iter")
+i<-3
+DATA<-get(NAMES_results[i])#
+	RESULTS<-(cbind(row.names(DATA),as.numeric(DATA[,1])))#
+	#find outliers using the 95 percent tail#
+	Threshold<-quantile(as.numeric(as.matrix(RESULTS[,2])), 0.972, na.rm=T)#
+	abline(h=Threshold, col="red")#
+	#Find SNPs in genetic map#
+	genMap_results<-genMap[(genMap[,3] %in% (RESULTS[,1])),]#
+	#Unknown marker positions#
+	UNKNOWN<-(setdiff((RESULTS[,1]),genMap_results[,3]))#
+	#Separte the results in SNPs with known and Unknown positions. Then order the known position by cM order#
+	Results_un<-RESULTS[(RESULTS[,1] %in% UNKNOWN),]#
+	Results_known<-RESULTS[(RESULTS[,1] %in% genMap_results$SNP_name),]#
+	  Results_known_or<-Results_known[match(genMap_results$SNP_name, Results_known[,1]),]#
+	  if(identical(as.character(Results_known_or[,1]), as.character(genMap_results$SNP_name)) == FALSE)stop("SNP in results and genMap are in different order")#
+	# Add genetic position#
+	Results_known_or_genmap<-cbind(as.data.frame(genMap_results[,c(4,6)]),Results_known_or)#
+	#Add "Fake" genetic information to the unknown SNPs#
+	CHR_UN<-rep("UN",(dim(Results_un)[1]))#
+	Pos_start<-as.numeric((Results_known_or_genmap[(dim(Results_known_or_genmap)[1]),2]) +1)#
+	Pos_end<-Pos_start +50#
+	Pos_UN<- (seq(Pos_start, Pos_end, 0.02))[1:length(CHR_UN)]#
+	CHR_UN_fake<-cbind(CHR_UN,Pos_UN)#
+	Results_unknown_or_genmap<-cbind(as.data.frame(CHR_UN_fake),Results_un)#
+	colnames(Results_unknown_or_genmap)<-c("Chromosome","Accumulative_cM","1","2")#
+	# Combine all the results#
+	Results_all_genmap<-rbind(Results_known_or_genmap,Results_unknown_or_genmap)#
+	colnames(Results_all_genmap)<-c("Chromosome","Cumulative_cM","SNP","FST")#
+	write.table(Results_all_genmap, paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/", NAMES_results[i],".txt", sep=""),quote=F,row.names=F,col.names=T,sep="\t")
+NAMES_results<-c("Fst_wild_range_vs_higherLat","Fst_wild_range_vs_higherLat_80samples","Fst_average_80samp_10iter")
+Results_all_genmap <-read.table(paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/", NAMES_results[i],".txt", sep=""), header=T)#
+	pdf(paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Plots/Latitude/", NAMES_results[i],".pdf",sep=""), width=7, height=5)#
+	plot(Results_all_genmap[,2],as.character(Results_all_genmap[,4]), ylab="Fst",xlab="Genetic Position", xaxt="n", cex=0.6)#
+	#Separate by chromosome#
+	  CHR1<-Results_all_genmap[c(which(Results_all_genmap[,1] == "1H")),]#
+	  CHR2<-Results_all_genmap[c(which(Results_all_genmap[,1] == "2H")),]#
+	  CHR3<-Results_all_genmap[c(which(Results_all_genmap[,1] == "3H")),]#
+	  CHR4<-Results_all_genmap[c(which(Results_all_genmap[,1] == "4H")),]#
+	  CHR5<-Results_all_genmap[c(which(Results_all_genmap[,1] == "5H")),]#
+	  CHR6<-Results_all_genmap[c(which(Results_all_genmap[,1] == "6H")),]#
+	  CHR7<-Results_all_genmap[c(which(Results_all_genmap[,1] == "7H")),]#
+	  CHR_UN<-Results_all_genmap[c(which(Results_all_genmap[,1] == "UN")),]#
+	points(CHR1[,2],as.character(CHR1[,4]), col="red" , cex=0.6)#
+	points(CHR2[,2],as.character(CHR2[,4]), col="BLUE" , cex=0.6)#
+	points(CHR3[,2],as.character(CHR3[,4]), col="GREeN" , cex=0.6)#
+	points(CHR4[,2],as.character(CHR4[,4]), col="ORANGE" , cex=0.6)#
+	points(CHR5[,2],as.character(CHR5[,4]), col="magenta" , cex=0.6)#
+	points(CHR6[,2],as.character(CHR6[,4]), col="cyan" , cex=0.6)#
+	points(CHR7[,2],as.character(CHR7[,4]), col="dark green" , cex=0.6)#
+	points(CHR_UN[,2],as.character(CHR_UN[,4]), col="gray" , cex=0.6)#
+	abline(h=quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE), col= "red", lty=2)#
+	#find mid point to set tick mark in each chromosome#
+	tick1<-CHR1 [round(dim(CHR1)[1]/2),2]#
+	tick2<-CHR2 [round(dim(CHR2)[1]/2),2]#
+	tick3<-CHR3 [round(dim(CHR3)[1]/2),2]#
+	tick4<-CHR4 [round(dim(CHR4)[1]/2),2]#
+	tick5<-CHR5 [round(dim(CHR5)[1]/2),2]#
+	tick6<-CHR6 [round(dim(CHR6)[1]/2),2]#
+	tick7<-CHR7 [round(dim(CHR7)[1]/2),2]#
+	tickUN<-CHR_UN [round(dim(CHR_UN)[1]/2),2]#
+	axis(1, at=c(tick1, tick2, tick3, tick4, tick5, tick6, tick7, tickUN), c("1H","2H","3H","4H","5H","6H","7H","UN"))#
+dev.off()
+Threshold<-quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE)#
+	Outliers<-Results_all_genmap[which(Results_all_genmap[,4] >= Threshold),]#
+	#sort outliers by Fst value#
+	Outliers_or<-Outliers[order(Outliers[,4], decreasing=T),]#
+	write.table(Outliers_or,paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/Outliers/", NAMES_results[i],"_outliers.txt",sep=""),quote=F,row.names=F,col.names=T,sep="\t")
+COLDlist<-read.csv("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Latitude/subset_cold_genes_combined_with_gene_interval_20170117.csv",sep=",")#
+#
+#replace X in from of SNPs#
+SNPnames<-gsub("X","", Outliers_or[,3])#
+Outliers_or$SNPnames<-SNPnames#
+#
+COLDlist[(COLDlist$X9k_SNPs %in%Outliers_or$SNPnames ),]
+dim(Outliers_or)
+dim(GENOTYPE_num)
+dim()
+wild_range
+length(wild_range)
+rm(list=ls())#
+#
+library(hierfstat)#
+#
+# === IMPORT INPUT FILES ===========================================================================#
+#Load the genetic assignment for k=4 landraces #
+assig<-read.table("~/Dropbox/Landrace_Environmental_Assocation/Data/Poets_etal2015/Landraces_geneticAssingment.txt",header=T)#
+# Import genotypes. Downloaded from Github companion of Poets et al 2015.#
+genotypes<-read.table("~/Dropbox/Landrace_Environmental_Assocation/Data/Poets_etal2015/Land_6152_SNPs_AB.txt",row.names=1, header=T)#
+# Select new geographic location, after Fumi inspected every data point. These are the phenotypes #
+# Fumi used for GAPIT#
+Latlong<-read.csv("~/Dropbox/Landrace_Environmental_Assocation/Analyses/GWAS-GAPIT/Input/myY1.v2.csv",row.names=1)#
+#
+# Import genetic map from Munñoz et al 2011#
+genMap<-read.table("~/Dropbox/Landrace_Environmental_Assocation/Data/Muñoz_etal2011/Consensus_iSelect.txt",header=T)
+CHANGE<-function(dat){#
+	dat[which(dat == "AA")]<-2#
+	dat[which(dat == "BB")]<-0#
+	dat[which(dat == "AB")]<-1#
+	return(dat)	#
+}#
+GENOTYPE_num<-as.data.frame(apply(genotypes,2, CHANGE))
+TOP<-max(Latlong$Latitude)
+TOP
+BOTTOM<-46
+MIDDLE<-(BOTTOM+TOP)/2
+MIDDLE

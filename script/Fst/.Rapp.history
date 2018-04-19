@@ -1,0 +1,631 @@
+Fst_2500vs1000<-read.table("/Users/Mia/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Fst_2500vs1000.txt",header=T,row.names=1)#
+Fst_5000_vs2500<-read.table("/Users/Mia/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Fst_5000_vs2500.txt", header=T,row.names=1)#
+Fst_5000_vs1000<- read.table("/Users/Mia/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Fst_5000_vs1000.txt", header=T,row.names=1)
+head(Fst_5000_vs1000)
+RESULTS<-(cbind(row.names(Fst_5000_vs1000),as.numeric(Fst_5000_vs1000[,1])))
+plot(RESULTS[,2], ylab="Fst", xlab="SNPs")
+Threshold<-quantile(as.numeric(as.matrix(RESULTS[,2])), 0.972, na.rm=T)#
+abline(h=Threshold, col="red")#
+#
+#Find SNPs in genetic map#
+genMap_results<-genMap[(genMap[,3] %in% (RESULTS[,1])),]#
+#Unknown marker positions#
+UNKNOWN<-(setdiff((RESULTS[,1]),genMap_results[,3]))#
+#
+#Separte the results in SNPs with known and Unknown positions. Then order the known position by cM order#
+Results_un<-RESULTS[(RESULTS[,1] %in% UNKNOWN),]#
+Results_known<-RESULTS[(RESULTS[,1] %in% genMap_results$SNP_name),]#
+  Results_known_or<-Results_known[match(genMap_results$SNP_name, Results_known[,1]),]#
+  if(identical(as.character(Results_known_or[,1]), as.character(genMap_results$SNP_name)) == FALSE)stop("SNP in results and genMap are in different order")#
+#
+# Add genetic position#
+Results_known_or_genmap<-cbind(as.data.frame(genMap_results[,c(4,6)]),Results_known_or)#
+#
+#Add "Fake" genetic information to the unknown SNPs#
+CHR_UN<-rep("UN",(dim(Results_un)[1]))#
+Pos_start<-as.numeric((Results_known_or_genmap[(dim(Results_known_or_genmap)[1]),2]) +1)#
+Pos_end<-Pos_start +50#
+Pos_UN<- (seq(Pos_start, Pos_end, 0.02))[1:length(CHR_UN)]#
+#
+CHR_UN_fake<-cbind(CHR_UN,Pos_UN)#
+Results_unknown_or_genmap<-cbind(as.data.frame(CHR_UN_fake),Results_un)#
+colnames(Results_unknown_or_genmap)<-c("Chromosome","Accumulative_cM","1","2")
+Results_all_genmap<-rbind(Results_known_or_genmap,Results_unknown_or_genmap)
+plot(Results_all_genmap[,2],as.character(Results_all_genmap[,4]), ylab="Fst",xlab="Genetic Position")#
+#
+#Separate by chromosome#
+  CHR1<-Results_all_genmap[c(which(Results_all_genmap[,1] == "1H")),]#
+  CHR2<-Results_all_genmap[c(which(Results_all_genmap[,1] == "2H")),]#
+  CHR3<-Results_all_genmap[c(which(Results_all_genmap[,1] == "3H")),]#
+  CHR4<-Results_all_genmap[c(which(Results_all_genmap[,1] == "4H")),]#
+  CHR5<-Results_all_genmap[c(which(Results_all_genmap[,1] == "5H")),]#
+  CHR6<-Results_all_genmap[c(which(Results_all_genmap[,1] == "6H")),]#
+  CHR7<-Results_all_genmap[c(which(Results_all_genmap[,1] == "7H")),]#
+  CHR_UN<-Results_all_genmap[c(which(Results_all_genmap[,1] == "UN")),]#
+#
+points(CHR1[,2],as.character(CHR1[,4]), col="red" )#
+points(CHR2[,2],as.character(CHR2[,4]), col="BLUE" )#
+points(CHR3[,2],as.character(CHR3[,4]), col="GREeN" )#
+points(CHR4[,2],as.character(CHR4[,4]), col="ORANGE" )#
+points(CHR5[,2],as.character(CHR5[,4]), col="magenta" )#
+points(CHR6[,2],as.character(CHR6[,4]), col="cyan" )#
+points(CHR7[,2],as.character(CHR7[,4]), col="dark green" )#
+points(CHR_UN[,2],as.character(CHR_UN[,4]), col="gray" )#
+#
+abline(h=quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE), col= "red", lty=2)
+genMap<-read.table("/Users/Mia/Dropbox/Landrace_Environmental_Assocation/Data/Muñoz_etal2011/Consensus_iSelect.txt",header=T)
+genMap_results<-genMap[(genMap[,3] %in% (RESULTS[,1])),]
+UNKNOWN<-(setdiff((RESULTS[,1]),genMap_results[,3]))
+Results_un<-RESULTS[(RESULTS[,1] %in% UNKNOWN),]
+Results_known<-RESULTS[(RESULTS[,1] %in% genMap_results$SNP_name),]
+Results_known_or<-Results_known[match(genMap_results$SNP_name, Results_known[,1]),]
+if(identical(as.character(Results_known_or[,1]), as.character(genMap_results$SNP_name)) == FALSE)stop("SNP in results and genMap are in different order")
+Results_known_or_genmap<-cbind(as.data.frame(genMap_results[,c(4,6)]),Results_known_or)
+CHR_UN<-rep("UN",(dim(Results_un)[1]))
+Pos_start<-as.numeric((Results_known_or_genmap[(dim(Results_known_or_genmap)[1]),2]) +1)
+Pos_end<-Pos_start +50
+Pos_UN<- (seq(Pos_start, Pos_end, 0.02))[1:length(CHR_UN)]
+CHR_UN_fake<-cbind(CHR_UN,Pos_UN)
+Results_unknown_or_genmap<-cbind(as.data.frame(CHR_UN_fake),Results_un)
+colnames(Results_unknown_or_genmap)<-c("Chromosome","Accumulative_cM","1","2")
+Results_all_genmap<-rbind(Results_known_or_genmap,Results_unknown_or_genmap)
+plot(Results_all_genmap[,2],as.character(Results_all_genmap[,4]), ylab="Fst",xlab="Genetic Position")
+CHR1<-Results_all_genmap[c(which(Results_all_genmap[,1] == "1H")),]#
+  CHR2<-Results_all_genmap[c(which(Results_all_genmap[,1] == "2H")),]#
+  CHR3<-Results_all_genmap[c(which(Results_all_genmap[,1] == "3H")),]#
+  CHR4<-Results_all_genmap[c(which(Results_all_genmap[,1] == "4H")),]#
+  CHR5<-Results_all_genmap[c(which(Results_all_genmap[,1] == "5H")),]#
+  CHR6<-Results_all_genmap[c(which(Results_all_genmap[,1] == "6H")),]#
+  CHR7<-Results_all_genmap[c(which(Results_all_genmap[,1] == "7H")),]#
+  CHR_UN<-Results_all_genmap[c(which(Results_all_genmap[,1] == "UN")),]#
+#
+points(CHR1[,2],as.character(CHR1[,4]), col="red" )#
+points(CHR2[,2],as.character(CHR2[,4]), col="BLUE" )#
+points(CHR3[,2],as.character(CHR3[,4]), col="GREeN" )#
+points(CHR4[,2],as.character(CHR4[,4]), col="ORANGE" )#
+points(CHR5[,2],as.character(CHR5[,4]), col="magenta" )#
+points(CHR6[,2],as.character(CHR6[,4]), col="cyan" )#
+points(CHR7[,2],as.character(CHR7[,4]), col="dark green" )#
+points(CHR_UN[,2],as.character(CHR_UN[,4]), col="gray" )
+abline(h=quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE), col= "red", lty=2)
+head(CHR1)
+dim(CHR1[,2])[1]/2
+CHR1 [round(dim(CHR1)[1]/2),2]
+tick1<-CHR1 [round(dim(CHR1)[1]/2),2]#
+tick2<-CHR2 [round(dim(CHR2)[1]/2),2]#
+tick3<-CHR3 [round(dim(CHR3)[1]/2),2]#
+tick4<-CHR4 [round(dim(CHR4)[1]/2),2]#
+tick5<-CHR5 [round(dim(CHR5)[1]/2),2]#
+tick6<-CHR6 [round(dim(CHR6)[1]/2),2]#
+tick7<-CHR7 [round(dim(CHR7)[1]/2),2]#
+tickUN<-CHRUN [round(dim(CHR_UN)[1]/2),2]
+tickUN<-CHR_UN [round(dim(CHR_UN)[1]/2),2]
+tickUN
+plot(Results_all_genmap[,2],as.character(Results_all_genmap[,4]), ylab="Fst",xlab="Genetic Position", xaxt="")
+plot(Results_all_genmap[,2],as.character(Results_all_genmap[,4]), ylab="Fst",xlab="Genetic Position", xaxt="n")
+axis(1, at=c(tick1, tick2, tick3, tick4, tick5, tick6, tick7, tick1UN), c("1H","2H","3H","4H","5H","6H","7H","UN"))
+axis(1, at=c(tick1, tick2, tick3, tick4, tick5, tick6, tick7, tickUN), c("1H","2H","3H","4H","5H","6H","7H","UN"))
+points(CHR1[,2],as.character(CHR1[,4]), col="red" )#
+points(CHR2[,2],as.character(CHR2[,4]), col="BLUE" )#
+points(CHR3[,2],as.character(CHR3[,4]), col="GREeN" )#
+points(CHR4[,2],as.character(CHR4[,4]), col="ORANGE" )#
+points(CHR5[,2],as.character(CHR5[,4]), col="magenta" )#
+points(CHR6[,2],as.character(CHR6[,4]), col="cyan" )#
+points(CHR7[,2],as.character(CHR7[,4]), col="dark green" )#
+points(CHR_UN[,2],as.character(CHR_UN[,4]), col="gray" )
+plot(Results_all_genmap[,2],as.character(Results_all_genmap[,4]), ylab="Fst",xlab="Genetic Position", xaxt="n", cex=0.6)
+plot(Results_all_genmap[,2],as.character(Results_all_genmap[,4]), ylab="Fst",xlab="Genetic Position", xaxt="n", cex=0.6)#
+#
+#Separate by chromosome#
+  CHR1<-Results_all_genmap[c(which(Results_all_genmap[,1] == "1H")),]#
+  CHR2<-Results_all_genmap[c(which(Results_all_genmap[,1] == "2H")),]#
+  CHR3<-Results_all_genmap[c(which(Results_all_genmap[,1] == "3H")),]#
+  CHR4<-Results_all_genmap[c(which(Results_all_genmap[,1] == "4H")),]#
+  CHR5<-Results_all_genmap[c(which(Results_all_genmap[,1] == "5H")),]#
+  CHR6<-Results_all_genmap[c(which(Results_all_genmap[,1] == "6H")),]#
+  CHR7<-Results_all_genmap[c(which(Results_all_genmap[,1] == "7H")),]#
+  CHR_UN<-Results_all_genmap[c(which(Results_all_genmap[,1] == "UN")),]#
+#
+points(CHR1[,2],as.character(CHR1[,4]), col="red" , cex=0.6)#
+points(CHR2[,2],as.character(CHR2[,4]), col="BLUE" , cex=0.6)#
+points(CHR3[,2],as.character(CHR3[,4]), col="GREeN" , cex=0.6)#
+points(CHR4[,2],as.character(CHR4[,4]), col="ORANGE" , cex=0.6)#
+points(CHR5[,2],as.character(CHR5[,4]), col="magenta" , cex=0.6)#
+points(CHR6[,2],as.character(CHR6[,4]), col="cyan" , cex=0.6)#
+points(CHR7[,2],as.character(CHR7[,4]), col="dark green" , cex=0.6)#
+points(CHR_UN[,2],as.character(CHR_UN[,4]), col="gray" , cex=0.6)#
+#
+abline(h=quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE), col= "red", lty=2)#
+#
+#find mid point to set tick mark in each chromosome#
+tick1<-CHR1 [round(dim(CHR1)[1]/2),2]#
+tick2<-CHR2 [round(dim(CHR2)[1]/2),2]#
+tick3<-CHR3 [round(dim(CHR3)[1]/2),2]#
+tick4<-CHR4 [round(dim(CHR4)[1]/2),2]#
+tick5<-CHR5 [round(dim(CHR5)[1]/2),2]#
+tick6<-CHR6 [round(dim(CHR6)[1]/2),2]#
+tick7<-CHR7 [round(dim(CHR7)[1]/2),2]#
+tickUN<-CHR_UN [round(dim(CHR_UN)[1]/2),2]#
+#
+axis(1, at=c(tick1, tick2, tick3, tick4, tick5, tick6, tick7, tickUN), c("1H","2H","3H","4H","5H","6H","7H","UN"))
+plot(Results_all_genmap[,2],as.character(Results_all_genmap[,4]), ylab="Fst",xlab="Genetic Position", xaxt="n", cex=0.6)#
+#
+#Separate by chromosome#
+  CHR1<-Results_all_genmap[c(which(Results_all_genmap[,1] == "1H")),]#
+  CHR2<-Results_all_genmap[c(which(Results_all_genmap[,1] == "2H")),]#
+  CHR3<-Results_all_genmap[c(which(Results_all_genmap[,1] == "3H")),]#
+  CHR4<-Results_all_genmap[c(which(Results_all_genmap[,1] == "4H")),]#
+  CHR5<-Results_all_genmap[c(which(Results_all_genmap[,1] == "5H")),]#
+  CHR6<-Results_all_genmap[c(which(Results_all_genmap[,1] == "6H")),]#
+  CHR7<-Results_all_genmap[c(which(Results_all_genmap[,1] == "7H")),]#
+  CHR_UN<-Results_all_genmap[c(which(Results_all_genmap[,1] == "UN")),]#
+#
+points(CHR1[,2],as.character(CHR1[,4]), col="red" , cex=0.6)#
+points(CHR2[,2],as.character(CHR2[,4]), col="BLUE" , cex=0.6)#
+points(CHR3[,2],as.character(CHR3[,4]), col="GREeN" , cex=0.6)#
+points(CHR4[,2],as.character(CHR4[,4]), col="ORANGE" , cex=0.6)#
+points(CHR5[,2],as.character(CHR5[,4]), col="magenta" , cex=0.6)#
+points(CHR6[,2],as.character(CHR6[,4]), col="cyan" , cex=0.6)#
+points(CHR7[,2],as.character(CHR7[,4]), col="dark green" , cex=0.6)#
+points(CHR_UN[,2],as.character(CHR_UN[,4]), col="gray" , cex=0.6)#
+#
+abline(h=quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE), col= "red", lty=2)#
+#
+#find mid point to set tick mark in each chromosome#
+tick1<-CHR1 [round(dim(CHR1)[1]/2),2]#
+tick2<-CHR2 [round(dim(CHR2)[1]/2),2]#
+tick3<-CHR3 [round(dim(CHR3)[1]/2),2]#
+tick4<-CHR4 [round(dim(CHR4)[1]/2),2]#
+tick5<-CHR5 [round(dim(CHR5)[1]/2),2]#
+tick6<-CHR6 [round(dim(CHR6)[1]/2),2]#
+tick7<-CHR7 [round(dim(CHR7)[1]/2),2]#
+tickUN<-CHR_UN [round(dim(CHR_UN)[1]/2),2]#
+#
+axis(1, at=c(tick1, tick2, tick3, tick4, tick5, tick6, tick7, tickUN), c("1H","2H","3H","4H","5H","6H","7H","UN"))9
+plot(Results_all_genmap[,2],as.character(Results_all_genmap[,4]), ylab="Fst",xlab="Genetic Position", xaxt="n", cex=0.6)#
+#
+#Separate by chromosome#
+  CHR1<-Results_all_genmap[c(which(Results_all_genmap[,1] == "1H")),]#
+  CHR2<-Results_all_genmap[c(which(Results_all_genmap[,1] == "2H")),]#
+  CHR3<-Results_all_genmap[c(which(Results_all_genmap[,1] == "3H")),]#
+  CHR4<-Results_all_genmap[c(which(Results_all_genmap[,1] == "4H")),]#
+  CHR5<-Results_all_genmap[c(which(Results_all_genmap[,1] == "5H")),]#
+  CHR6<-Results_all_genmap[c(which(Results_all_genmap[,1] == "6H")),]#
+  CHR7<-Results_all_genmap[c(which(Results_all_genmap[,1] == "7H")),]#
+  CHR_UN<-Results_all_genmap[c(which(Results_all_genmap[,1] == "UN")),]#
+#
+points(CHR1[,2],as.character(CHR1[,4]), col="red" , cex=0.6)#
+points(CHR2[,2],as.character(CHR2[,4]), col="BLUE" , cex=0.6)#
+points(CHR3[,2],as.character(CHR3[,4]), col="GREeN" , cex=0.6)#
+points(CHR4[,2],as.character(CHR4[,4]), col="ORANGE" , cex=0.6)#
+points(CHR5[,2],as.character(CHR5[,4]), col="magenta" , cex=0.6)#
+points(CHR6[,2],as.character(CHR6[,4]), col="cyan" , cex=0.6)#
+points(CHR7[,2],as.character(CHR7[,4]), col="dark green" , cex=0.6)#
+points(CHR_UN[,2],as.character(CHR_UN[,4]), col="gray" , cex=0.6)#
+#
+abline(h=quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE), col= "red", lty=2)#
+#
+#find mid point to set tick mark in each chromosome#
+tick1<-CHR1 [round(dim(CHR1)[1]/2),2]#
+tick2<-CHR2 [round(dim(CHR2)[1]/2),2]#
+tick3<-CHR3 [round(dim(CHR3)[1]/2),2]#
+tick4<-CHR4 [round(dim(CHR4)[1]/2),2]#
+tick5<-CHR5 [round(dim(CHR5)[1]/2),2]#
+tick6<-CHR6 [round(dim(CHR6)[1]/2),2]#
+tick7<-CHR7 [round(dim(CHR7)[1]/2),2]#
+tickUN<-CHR_UN [round(dim(CHR_UN)[1]/2),2]#
+#
+axis(1, at=c(tick1, tick2, tick3, tick4, tick5, tick6, tick7, tickUN), c("1H","2H","3H","4H","5H","6H","7H","UN"))
+plot(Results_all_genmap[,2],as.character(Results_all_genmap[,4]), ylab="Fst",xlab="Genetic Position", xaxt="n", cex=0.6)#
+#
+#Separate by chromosome#
+  CHR1<-Results_all_genmap[c(which(Results_all_genmap[,1] == "1H")),]#
+  CHR2<-Results_all_genmap[c(which(Results_all_genmap[,1] == "2H")),]#
+  CHR3<-Results_all_genmap[c(which(Results_all_genmap[,1] == "3H")),]#
+  CHR4<-Results_all_genmap[c(which(Results_all_genmap[,1] == "4H")),]#
+  CHR5<-Results_all_genmap[c(which(Results_all_genmap[,1] == "5H")),]#
+  CHR6<-Results_all_genmap[c(which(Results_all_genmap[,1] == "6H")),]#
+  CHR7<-Results_all_genmap[c(which(Results_all_genmap[,1] == "7H")),]#
+  CHR_UN<-Results_all_genmap[c(which(Results_all_genmap[,1] == "UN")),]#
+#
+points(CHR1[,2],as.character(CHR1[,4]), col="red" , cex=0.6)#
+points(CHR2[,2],as.character(CHR2[,4]), col="BLUE" , cex=0.6)#
+points(CHR3[,2],as.character(CHR3[,4]), col="GREeN" , cex=0.6)#
+points(CHR4[,2],as.character(CHR4[,4]), col="ORANGE" , cex=0.6)#
+points(CHR5[,2],as.character(CHR5[,4]), col="magenta" , cex=0.6)#
+points(CHR6[,2],as.character(CHR6[,4]), col="cyan" , cex=0.6)#
+points(CHR7[,2],as.character(CHR7[,4]), col="dark green" , cex=0.6)#
+points(CHR_UN[,2],as.character(CHR_UN[,4]), col="gray" , cex=0.6)#
+#
+abline(h=quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE), col= "red", lty=2)#
+#
+#find mid point to set tick mark in each chromosome#
+tick1<-CHR1 [round(dim(CHR1)[1]/2),2]#
+tick2<-CHR2 [round(dim(CHR2)[1]/2),2]#
+tick3<-CHR3 [round(dim(CHR3)[1]/2),2]#
+tick4<-CHR4 [round(dim(CHR4)[1]/2),2]#
+tick5<-CHR5 [round(dim(CHR5)[1]/2),2]#
+tick6<-CHR6 [round(dim(CHR6)[1]/2),2]#
+tick7<-CHR7 [round(dim(CHR7)[1]/2),2]#
+tickUN<-CHR_UN [round(dim(CHR_UN)[1]/2),2]#
+#
+axis(1, at=c(tick1, tick2, tick3, tick4, tick5, tick6, tick7, tickUN), c("1H","2H","3H","4H","5H","6H","7H","UN"))
+plot(Results_all_genmap[,2],as.character(Results_all_genmap[,4]), ylab="Fst",xlab="Genetic Position", xaxt="n", cex=0.6)#
+#
+#Separate by chromosome#
+  CHR1<-Results_all_genmap[c(which(Results_all_genmap[,1] == "1H")),]#
+  CHR2<-Results_all_genmap[c(which(Results_all_genmap[,1] == "2H")),]#
+  CHR3<-Results_all_genmap[c(which(Results_all_genmap[,1] == "3H")),]#
+  CHR4<-Results_all_genmap[c(which(Results_all_genmap[,1] == "4H")),]#
+  CHR5<-Results_all_genmap[c(which(Results_all_genmap[,1] == "5H")),]#
+  CHR6<-Results_all_genmap[c(which(Results_all_genmap[,1] == "6H")),]#
+  CHR7<-Results_all_genmap[c(which(Results_all_genmap[,1] == "7H")),]#
+  CHR_UN<-Results_all_genmap[c(which(Results_all_genmap[,1] == "UN")),]#
+#
+points(CHR1[,2],as.character(CHR1[,4]), col="red" , cex=0.6)#
+points(CHR2[,2],as.character(CHR2[,4]), col="BLUE" , cex=0.6)#
+points(CHR3[,2],as.character(CHR3[,4]), col="GREeN" , cex=0.6)#
+points(CHR4[,2],as.character(CHR4[,4]), col="ORANGE" , cex=0.6)#
+points(CHR5[,2],as.character(CHR5[,4]), col="magenta" , cex=0.6)#
+points(CHR6[,2],as.character(CHR6[,4]), col="cyan" , cex=0.6)#
+points(CHR7[,2],as.character(CHR7[,4]), col="dark green" , cex=0.6)#
+points(CHR_UN[,2],as.character(CHR_UN[,4]), col="gray" , cex=0.6)#
+#
+abline(h=quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE), col= "red", lty=2)#
+#
+#find mid point to set tick mark in each chromosome#
+tick1<-CHR1 [round(dim(CHR1)[1]/2),2]#
+tick2<-CHR2 [round(dim(CHR2)[1]/2),2]#
+tick3<-CHR3 [round(dim(CHR3)[1]/2),2]#
+tick4<-CHR4 [round(dim(CHR4)[1]/2),2]#
+tick5<-CHR5 [round(dim(CHR5)[1]/2),2]#
+tick6<-CHR6 [round(dim(CHR6)[1]/2),2]#
+tick7<-CHR7 [round(dim(CHR7)[1]/2),2]#
+tickUN<-CHR_UN [round(dim(CHR_UN)[1]/2),2]#
+#
+axis(1, at=c(tick1, tick2, tick3, tick4, tick5, tick6, tick7, tickUN), c("1H","2H","3H","4H","5H","6H","7H","UN"))
+identify(Results_all_genmap[,2],as.character(Results_all_genmap[,4])
+)
+Results_all_genmap[980,]
+Results_all_genmap[Results_all_genmap[,2],as.character(Results_all_genmap[,4]),]
+Results_all_genmap[Results_all_genmap[,2],as.character(Results_all_genmap[,4]),]
+Results_all_genmap[identify(Results_all_genmap[,2],as.character(Results_all_genmap[,4])),]
+head(Results_all_genmap)
+i<-1
+DATA<-get(NAMES_results[i])
+NAMES_results<-c("Fst_2500vs1000", "Fst_5000_vs1000", "Fst_1000vsAll")
+DATA<-get(NAMES_results[i])
+head(DATA)
+#Author: Ana Poets#
+# Description: Allele frequency differenciation among the landraces at three different elevations#
+##################################################################################################
+rm(list=ls())#
+#
+library(hierfstat)#
+#
+# === IMPORT INPUT FILES ===========================================================================#
+#Load the genetic assignment for k=4 landraces #
+assig<-read.table("/Users/Mia/Dropbox/Landrace_Environmental_Assocation/Data/Poets_etal2015/Landraces_geneticAssingment.txt",header=T)#
+# Import genotypes. Downloaded from Github companion of Poets et al 2015.#
+genotypes<-read.table("~/Dropbox/Landrace_Environmental_Assocation/Data/Poets_etal2015/Land_6152_SNPs_AB.txt",row.names=1, header=T)#
+# Select new geographic location, after Fumi inspected every data point. These are the phenotypes #
+# Fumi used for GAPIT#
+Latlong<-read.csv("~/Dropbox/Landrace_Environmental_Assocation/Analyses/GWAS-GAPIT/Input/myY1.v2.csv",row.names=1)#
+#
+# Import genetic map from Munñoz et al 2011#
+genMap<-read.table("/Users/Mia/Dropbox/Landrace_Environmental_Assocation/Data/Muñoz_etal2011/Consensus_iSelect.txt",header=T)#
+#
+# ==== DATA TRANFORMATIONS ========================================================================#
+# Change genotypes to numeric values AA=2, BB=0, AB=1 ,NA=NA#
+CHANGE<-function(dat){#
+	dat[which(dat == "AA")]<-2#
+	dat[which(dat == "BB")]<-0#
+	dat[which(dat == "AB")]<-1#
+	return(dat)	#
+}#
+GENOTYPE_num<-as.data.frame(apply(genotypes,2, CHANGE))#
+# Use the altitude to devide the landraces into categories at ≤1000m, 1000≥2500, >2500#
+m1000<-row.names(Latlong)[which(Latlong$altitude <=1000)]#
+m2500<-row.names(Latlong)[which(Latlong$altitude > 1000 & Latlong$altitude <=2500)]#
+m5000<-row.names(Latlong)[which(Latlong$altitude > 2500)]#
+#
+### the next tree rows will arrange the files for Focal Fst analysis#
+# A. 1000 m vs >1000#
+c(m2500, m5000)->all_pops#
+GENOTYPE_num[(row.names(GENOTYPE_num) %in% all_pops),]->TOTAL#
+GENOTYPE_num[(row.names(GENOTYPE_num) %in% m1000),]->FOCAL#
+#Ready to calculate hierFst Fst#
+loci<-rbind(as.data.frame(FOCAL),as.data.frame(TOTAL))#
+levels<-c(rep(0,dim(FOCAL)[1]),rep(1,dim(TOTAL)[1]))#
+#
+#look at the Fst at each locus#
+	Fst<-NULL#
+		for (i in 1:dim(loci)[[2]]) {#
+         Fst[i]<-varcomp(data.frame(levels,as.numeric(loci[,i])),diploid=FALSE)$F[1,1]   #
+        }#
+  Fst_1000vsAll<-as.data.frame(Fst) # The outlier from this comparison is :SCRI_RS_154144#
+  row.names(Fst_1000vsAll)<-colnames(loci)#
+ # write.table(Fst_1000vsAll, "/Users/Mia/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Fst_1000vsAll.txt",quote=F,row.names=T,col.names=T,sep="\t")#
+# ===============B. 1000m vs. 2500m#
+#
+GENOTYPE_num[(row.names(GENOTYPE_num) %in% m2500),]->TOTAL#
+GENOTYPE_num[(row.names(GENOTYPE_num) %in% m1000),]->FOCAL#
+#Ready to calculate hierFst Fst#
+loci<-rbind(as.data.frame(FOCAL),as.data.frame(TOTAL))#
+levels<-c(rep(0,dim(FOCAL)[1]),rep(1,dim(TOTAL)[1]))#
+#
+#look at the Fst at each locus#
+	Fst<-NULL#
+		for (i in 1:dim(loci)[[2]]) {#
+         Fst[i]<-varcomp(data.frame(levels,as.numeric(loci[,i])),diploid=FALSE)$F[1,1]   #
+        }#
+#
+Fst_2500vs1000<-as.data.frame(Fst) # The outlier from this comparison is :"X11_10855"      "SCRI_RS_149432" "SCRI_RS_154144"#
+row.names(Fst_2500vs1000)<-colnames(loci)#
+#
+#write.table(Fst_2500vs1000, "/Users/Mia/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Fst_2500vs1000.txt",quote=F,row.names=T,col.names=T,sep="\t")#
+#================== C. 2500m vs. 5000m ============================================#
+#
+GENOTYPE_num[(row.names(GENOTYPE_num) %in% m2500),]->TOTAL#
+GENOTYPE_num[(row.names(GENOTYPE_num) %in% m5000),]->FOCAL#
+#Ready to calculate hierFst Fst#
+loci<-rbind(as.data.frame(FOCAL),as.data.frame(TOTAL))#
+levels<-c(rep(0,dim(FOCAL)[1]),rep(1,dim(TOTAL)[1]))#
+#
+#look at the Fst at each locus#
+Fst<-NULL#
+for (i in 1:dim(loci)[[2]]) {#
+  Fst[i]<-varcomp(data.frame(levels,as.numeric(loci[,i])),diploid=FALSE)$F[1,1]   #
+}#
+Fst_5000_vs2500<-as.data.frame(Fst) # The outlier from this comparison is :"SCRI_RS_146573"#
+row.names(Fst_5000_vs2500)<-colnames(loci)#
+#
+#write.table(Fst_5000_vs2500, "/Users/Mia/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Fst_5000_vs2500.txt",quote=F,row.names=T,col.names=T,sep="\t")#
+#================== D. 1000m vs. 5000m ============================================#
+#
+GENOTYPE_num[(row.names(GENOTYPE_num) %in% m1000),]->TOTAL#
+GENOTYPE_num[(row.names(GENOTYPE_num) %in% m5000),]->FOCAL#
+#Ready to calculate hierFst Fst#
+loci<-rbind(as.data.frame(FOCAL),as.data.frame(TOTAL))#
+levels<-c(rep(0,dim(FOCAL)[1]),rep(1,dim(TOTAL)[1]))#
+#
+#look at the Fst at each locus#
+Fst<-NULL#
+for (i in 1:dim(loci)[[2]]) {#
+  Fst[i]<-varcomp(data.frame(levels,as.numeric(loci[,i])),diploid=FALSE)$F[1,1]   #
+}#
+Fst_5000_vs1000<-as.data.frame(Fst) # The outlier from this comparison is :"X12_11285" "X12_21479"#
+row.names(Fst_5000_vs1000)<-colnames(loci)#
+#
+#write.table(Fst_5000_vs1000, "/Users/Mia/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Fst_5000_vs1000.txt",quote=F,row.names=T,col.names=T,sep="\t")#
+#
+##=============#
+#
+NAMES_results<-c("Fst_2500vs1000", "Fst_5000_vs1000", "Fst_1000vsAll","Fst_5000_vs2500")#
+#
+for ( i in 1:length(NAMES_results)){#
+	DATA<-get(NAMES_results[i])#
+	RESULTS<-(cbind(row.names(DATA),as.numeric(DATA[,1])))#
+	#find outliers using the 95 percent tail#
+	Threshold<-quantile(as.numeric(as.matrix(RESULTS[,2])), 0.972, na.rm=T)#
+	abline(h=Threshold, col="red")#
+	#Find SNPs in genetic map#
+	genMap_results<-genMap[(genMap[,3] %in% (RESULTS[,1])),]#
+	#Unknown marker positions#
+	UNKNOWN<-(setdiff((RESULTS[,1]),genMap_results[,3]))#
+	#Separte the results in SNPs with known and Unknown positions. Then order the known position by cM order#
+	Results_un<-RESULTS[(RESULTS[,1] %in% UNKNOWN),]#
+	Results_known<-RESULTS[(RESULTS[,1] %in% genMap_results$SNP_name),]#
+	  Results_known_or<-Results_known[match(genMap_results$SNP_name, Results_known[,1]),]#
+	  if(identical(as.character(Results_known_or[,1]), as.character(genMap_results$SNP_name)) == FALSE)stop("SNP in results and genMap are in different order")#
+	# Add genetic position#
+	Results_known_or_genmap<-cbind(as.data.frame(genMap_results[,c(4,6)]),Results_known_or)#
+	#Add "Fake" genetic information to the unknown SNPs#
+	CHR_UN<-rep("UN",(dim(Results_un)[1]))#
+	Pos_start<-as.numeric((Results_known_or_genmap[(dim(Results_known_or_genmap)[1]),2]) +1)#
+	Pos_end<-Pos_start +50#
+	Pos_UN<- (seq(Pos_start, Pos_end, 0.02))[1:length(CHR_UN)]#
+	CHR_UN_fake<-cbind(CHR_UN,Pos_UN)#
+	Results_unknown_or_genmap<-cbind(as.data.frame(CHR_UN_fake),Results_un)#
+	colnames(Results_unknown_or_genmap)<-c("Chromosome","Accumulative_cM","1","2")#
+	# Combine all the results#
+	Results_all_genmap<-rbind(Results_known_or_genmap,Results_unknown_or_genmap)#
+	write.table(Results_all_genmap, paste("/Users/Mia/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/", NAMES_results[i],".txt", sep=""),quote=F,row.names=T,col.names=T,sep="\t")#
+#
+}
+NAMES_results<-c("Fst_2500vs1000", "Fst_5000_vs1000", "Fst_1000vsAll","Fst_5000_vs2500")#
+#
+for ( i in 1:length(NAMES_results)){#
+	DATA<-get(NAMES_results[i])#
+	RESULTS<-(cbind(row.names(DATA),as.numeric(DATA[,1])))#
+	#find outliers using the 95 percent tail#
+	Threshold<-quantile(as.numeric(as.matrix(RESULTS[,2])), 0.972, na.rm=T)#
+	abline(h=Threshold, col="red")#
+	#Find SNPs in genetic map#
+	genMap_results<-genMap[(genMap[,3] %in% (RESULTS[,1])),]#
+	#Unknown marker positions#
+	UNKNOWN<-(setdiff((RESULTS[,1]),genMap_results[,3]))#
+	#Separte the results in SNPs with known and Unknown positions. Then order the known position by cM order#
+	Results_un<-RESULTS[(RESULTS[,1] %in% UNKNOWN),]#
+	Results_known<-RESULTS[(RESULTS[,1] %in% genMap_results$SNP_name),]#
+	  Results_known_or<-Results_known[match(genMap_results$SNP_name, Results_known[,1]),]#
+	  if(identical(as.character(Results_known_or[,1]), as.character(genMap_results$SNP_name)) == FALSE)stop("SNP in results and genMap are in different order")#
+	# Add genetic position#
+	Results_known_or_genmap<-cbind(as.data.frame(genMap_results[,c(4,6)]),Results_known_or)#
+	#Add "Fake" genetic information to the unknown SNPs#
+	CHR_UN<-rep("UN",(dim(Results_un)[1]))#
+	Pos_start<-as.numeric((Results_known_or_genmap[(dim(Results_known_or_genmap)[1]),2]) +1)#
+	Pos_end<-Pos_start +50#
+	Pos_UN<- (seq(Pos_start, Pos_end, 0.02))[1:length(CHR_UN)]#
+	CHR_UN_fake<-cbind(CHR_UN,Pos_UN)#
+	Results_unknown_or_genmap<-cbind(as.data.frame(CHR_UN_fake),Results_un)#
+	colnames(Results_unknown_or_genmap)<-c("Chromosome","Accumulative_cM","1","2")#
+	# Combine all the results#
+	Results_all_genmap<-rbind(Results_known_or_genmap,Results_unknown_or_genmap)#
+	write.table(Results_all_genmap, paste("/Users/Mia/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/", NAMES_results[i],".txt", sep=""),quote=F,row.names=F,col.names=T,sep="\t")#
+#
+}
+NAMES_results<-c("Fst_2500vs1000", "Fst_5000_vs1000", "Fst_1000vsAll","Fst_5000_vs2500")#
+#
+for ( i in 1:length(NAMES_results)){#
+	DATA<-get(NAMES_results[i])#
+	RESULTS<-(cbind(row.names(DATA),as.numeric(DATA[,1])))#
+	#find outliers using the 95 percent tail#
+	Threshold<-quantile(as.numeric(as.matrix(RESULTS[,2])), 0.972, na.rm=T)#
+	abline(h=Threshold, col="red")#
+	#Find SNPs in genetic map#
+	genMap_results<-genMap[(genMap[,3] %in% (RESULTS[,1])),]#
+	#Unknown marker positions#
+	UNKNOWN<-(setdiff((RESULTS[,1]),genMap_results[,3]))#
+	#Separte the results in SNPs with known and Unknown positions. Then order the known position by cM order#
+	Results_un<-RESULTS[(RESULTS[,1] %in% UNKNOWN),]#
+	Results_known<-RESULTS[(RESULTS[,1] %in% genMap_results$SNP_name),]#
+	  Results_known_or<-Results_known[match(genMap_results$SNP_name, Results_known[,1]),]#
+	  if(identical(as.character(Results_known_or[,1]), as.character(genMap_results$SNP_name)) == FALSE)stop("SNP in results and genMap are in different order")#
+	# Add genetic position#
+	Results_known_or_genmap<-cbind(as.data.frame(genMap_results[,c(4,6)]),Results_known_or)#
+	#Add "Fake" genetic information to the unknown SNPs#
+	CHR_UN<-rep("UN",(dim(Results_un)[1]))#
+	Pos_start<-as.numeric((Results_known_or_genmap[(dim(Results_known_or_genmap)[1]),2]) +1)#
+	Pos_end<-Pos_start +50#
+	Pos_UN<- (seq(Pos_start, Pos_end, 0.02))[1:length(CHR_UN)]#
+	CHR_UN_fake<-cbind(CHR_UN,Pos_UN)#
+	Results_unknown_or_genmap<-cbind(as.data.frame(CHR_UN_fake),Results_un)#
+	colnames(Results_unknown_or_genmap)<-c("Chromosome","Accumulative_cM","1","2")#
+	# Combine all the results#
+	Results_all_genmap<-rbind(Results_known_or_genmap,Results_unknown_or_genmap)#
+	colnames(Results_all_genmap)<-c("Chromosome","Cumulative_cM","SNP","FST")#
+	write.table(Results_all_genmap, paste("/Users/Mia/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/", NAMES_results[i],".txt", sep=""),quote=F,row.names=F,col.names=T,sep="\t")#
+#
+}
+Results_all_genmap <-read.table(paste("/Users/Mia/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/", NAMES_results[i],".txt", sep=""), header=T)
+head(Results_all_genmap)
+plot(Results_all_genmap[,2],as.character(Results_all_genmap[,4]), ylab="Fst",xlab="Genetic Position", xaxt="n", cex=0.6)#
+	#Separate by chromosome#
+	  CHR1<-Results_all_genmap[c(which(Results_all_genmap[,1] == "1H")),]#
+	  CHR2<-Results_all_genmap[c(which(Results_all_genmap[,1] == "2H")),]#
+	  CHR3<-Results_all_genmap[c(which(Results_all_genmap[,1] == "3H")),]#
+	  CHR4<-Results_all_genmap[c(which(Results_all_genmap[,1] == "4H")),]#
+	  CHR5<-Results_all_genmap[c(which(Results_all_genmap[,1] == "5H")),]#
+	  CHR6<-Results_all_genmap[c(which(Results_all_genmap[,1] == "6H")),]#
+	  CHR7<-Results_all_genmap[c(which(Results_all_genmap[,1] == "7H")),]#
+	  CHR_UN<-Results_all_genmap[c(which(Results_all_genmap[,1] == "UN")),]#
+	points(CHR1[,2],as.character(CHR1[,4]), col="red" , cex=0.6)#
+	points(CHR2[,2],as.character(CHR2[,4]), col="BLUE" , cex=0.6)#
+	points(CHR3[,2],as.character(CHR3[,4]), col="GREeN" , cex=0.6)#
+	points(CHR4[,2],as.character(CHR4[,4]), col="ORANGE" , cex=0.6)#
+	points(CHR5[,2],as.character(CHR5[,4]), col="magenta" , cex=0.6)#
+	points(CHR6[,2],as.character(CHR6[,4]), col="cyan" , cex=0.6)#
+	points(CHR7[,2],as.character(CHR7[,4]), col="dark green" , cex=0.6)#
+	points(CHR_UN[,2],as.character(CHR_UN[,4]), col="gray" , cex=0.6)#
+	abline(h=quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE), col= "red", lty=2)#
+	#find mid point to set tick mark in each chromosome#
+	tick1<-CHR1 [round(dim(CHR1)[1]/2),2]#
+	tick2<-CHR2 [round(dim(CHR2)[1]/2),2]#
+	tick3<-CHR3 [round(dim(CHR3)[1]/2),2]#
+	tick4<-CHR4 [round(dim(CHR4)[1]/2),2]#
+	tick5<-CHR5 [round(dim(CHR5)[1]/2),2]#
+	tick6<-CHR6 [round(dim(CHR6)[1]/2),2]#
+	tick7<-CHR7 [round(dim(CHR7)[1]/2),2]#
+	tickUN<-CHR_UN [round(dim(CHR_UN)[1]/2),2]#
+	axis(1, at=c(tick1, tick2, tick3, tick4, tick5, tick6, tick7, tickUN), c("1H","2H","3H","4H","5H","6H","7H","UN"))
+### ================================ PLOTS =================================================#
+NAMES_results<-c("Fst_2500vs1000", "Fst_5000_vs1000", "Fst_1000vsAll","Fst_5000_vs2500")#
+#
+for (i in 1:length(NAMES_results)){#
+	Results_all_genmap <-read.table(paste("/Users/Mia/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/", NAMES_results[i],".txt", sep=""), header=T)#
+	pdf(paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Plots/", NAMES_results[i],".pdf",sep=""), width=7, height=5)#
+	plot(Results_all_genmap[,2],as.character(Results_all_genmap[,4]), ylab="Fst",xlab="Genetic Position", xaxt="n", cex=0.6)#
+	#Separate by chromosome#
+	  CHR1<-Results_all_genmap[c(which(Results_all_genmap[,1] == "1H")),]#
+	  CHR2<-Results_all_genmap[c(which(Results_all_genmap[,1] == "2H")),]#
+	  CHR3<-Results_all_genmap[c(which(Results_all_genmap[,1] == "3H")),]#
+	  CHR4<-Results_all_genmap[c(which(Results_all_genmap[,1] == "4H")),]#
+	  CHR5<-Results_all_genmap[c(which(Results_all_genmap[,1] == "5H")),]#
+	  CHR6<-Results_all_genmap[c(which(Results_all_genmap[,1] == "6H")),]#
+	  CHR7<-Results_all_genmap[c(which(Results_all_genmap[,1] == "7H")),]#
+	  CHR_UN<-Results_all_genmap[c(which(Results_all_genmap[,1] == "UN")),]#
+	points(CHR1[,2],as.character(CHR1[,4]), col="red" , cex=0.6)#
+	points(CHR2[,2],as.character(CHR2[,4]), col="BLUE" , cex=0.6)#
+	points(CHR3[,2],as.character(CHR3[,4]), col="GREeN" , cex=0.6)#
+	points(CHR4[,2],as.character(CHR4[,4]), col="ORANGE" , cex=0.6)#
+	points(CHR5[,2],as.character(CHR5[,4]), col="magenta" , cex=0.6)#
+	points(CHR6[,2],as.character(CHR6[,4]), col="cyan" , cex=0.6)#
+	points(CHR7[,2],as.character(CHR7[,4]), col="dark green" , cex=0.6)#
+	points(CHR_UN[,2],as.character(CHR_UN[,4]), col="gray" , cex=0.6)#
+	abline(h=quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE), col= "red", lty=2)#
+	#find mid point to set tick mark in each chromosome#
+	tick1<-CHR1 [round(dim(CHR1)[1]/2),2]#
+	tick2<-CHR2 [round(dim(CHR2)[1]/2),2]#
+	tick3<-CHR3 [round(dim(CHR3)[1]/2),2]#
+	tick4<-CHR4 [round(dim(CHR4)[1]/2),2]#
+	tick5<-CHR5 [round(dim(CHR5)[1]/2),2]#
+	tick6<-CHR6 [round(dim(CHR6)[1]/2),2]#
+	tick7<-CHR7 [round(dim(CHR7)[1]/2),2]#
+	tickUN<-CHR_UN [round(dim(CHR_UN)[1]/2),2]#
+	axis(1, at=c(tick1, tick2, tick3, tick4, tick5, tick6, tick7, tickUN), c("1H","2H","3H","4H","5H","6H","7H","UN"))#
+dev.off()#
+}
+rm(list=ls())
+Threshold<-quantile(as.numeric(as.character(Results_all_genmap[,4]))
+)
+NAMES_results<-c("Fst_2500vs1000", "Fst_5000_vs1000", "Fst_1000vsAll","Fst_5000_vs2500")
+i<-1
+Results_all_genmap <-read.table(paste("/Users/Mia/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/", NAMES_results[i],".txt", sep=""), header=T)
+Threshold<-quantile(as.numeric(as.character(Results_all_genmap[,4])))
+Threshold<-quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE)
+Threshold
+Results_all_genmap[which(Results_all_genmap[,4] >= Threshold),]
+Outliers<-Results_all_genmap[which(Results_all_genmap[,4] >= Threshold),]
+Outliers_or<-Outliers[order(Outliers[,4], decreassing=T),]
+head(Outliers)
+Outliers_or<-Outliers[order(Outliers[,4], decreasing=T),]
+head(Outliers_or)
+write.table(Outliers_or,paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Outliers/", NAMES_results[i],"_outliers.txt",sep=""),quote=F,row.names=F,col.names=T,sep="\t")
+# Author: Ana Poets#
+# Description: Plot Fst results#
+#####################################################################################################################
+rm(list=ls())#
+#
+NAMES_results<-c("Fst_2500vs1000", "Fst_5000_vs1000", "Fst_1000vsAll","Fst_5000_vs2500")#
+#
+for (i in 1:length(NAMES_results)){#
+	Results_all_genmap <-read.table(paste("/Users/Mia/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/", NAMES_results[i],".txt", sep=""), header=T)#
+	pdf(paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Plots/", NAMES_results[i],".pdf",sep=""), width=7, height=5)#
+	plot(Results_all_genmap[,2],as.character(Results_all_genmap[,4]), ylab="Fst",xlab="Genetic Position", xaxt="n", cex=0.6)#
+	#Separate by chromosome#
+	  CHR1<-Results_all_genmap[c(which(Results_all_genmap[,1] == "1H")),]#
+	  CHR2<-Results_all_genmap[c(which(Results_all_genmap[,1] == "2H")),]#
+	  CHR3<-Results_all_genmap[c(which(Results_all_genmap[,1] == "3H")),]#
+	  CHR4<-Results_all_genmap[c(which(Results_all_genmap[,1] == "4H")),]#
+	  CHR5<-Results_all_genmap[c(which(Results_all_genmap[,1] == "5H")),]#
+	  CHR6<-Results_all_genmap[c(which(Results_all_genmap[,1] == "6H")),]#
+	  CHR7<-Results_all_genmap[c(which(Results_all_genmap[,1] == "7H")),]#
+	  CHR_UN<-Results_all_genmap[c(which(Results_all_genmap[,1] == "UN")),]#
+	points(CHR1[,2],as.character(CHR1[,4]), col="red" , cex=0.6)#
+	points(CHR2[,2],as.character(CHR2[,4]), col="BLUE" , cex=0.6)#
+	points(CHR3[,2],as.character(CHR3[,4]), col="GREeN" , cex=0.6)#
+	points(CHR4[,2],as.character(CHR4[,4]), col="ORANGE" , cex=0.6)#
+	points(CHR5[,2],as.character(CHR5[,4]), col="magenta" , cex=0.6)#
+	points(CHR6[,2],as.character(CHR6[,4]), col="cyan" , cex=0.6)#
+	points(CHR7[,2],as.character(CHR7[,4]), col="dark green" , cex=0.6)#
+	points(CHR_UN[,2],as.character(CHR_UN[,4]), col="gray" , cex=0.6)#
+	abline(h=quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE), col= "red", lty=2)#
+	#find mid point to set tick mark in each chromosome#
+	tick1<-CHR1 [round(dim(CHR1)[1]/2),2]#
+	tick2<-CHR2 [round(dim(CHR2)[1]/2),2]#
+	tick3<-CHR3 [round(dim(CHR3)[1]/2),2]#
+	tick4<-CHR4 [round(dim(CHR4)[1]/2),2]#
+	tick5<-CHR5 [round(dim(CHR5)[1]/2),2]#
+	tick6<-CHR6 [round(dim(CHR6)[1]/2),2]#
+	tick7<-CHR7 [round(dim(CHR7)[1]/2),2]#
+	tickUN<-CHR_UN [round(dim(CHR_UN)[1]/2),2]#
+	axis(1, at=c(tick1, tick2, tick3, tick4, tick5, tick6, tick7, tickUN), c("1H","2H","3H","4H","5H","6H","7H","UN"))#
+dev.off()#
+	# Get outlier markers#
+	Threshold<-quantile(as.numeric(as.character(Results_all_genmap[,4])), 0.975, na.rm=TRUE)#
+	Outliers<-Results_all_genmap[which(Results_all_genmap[,4] >= Threshold),]#
+	#sort outliers by Fst value#
+	Outliers_or<-Outliers[order(Outliers[,4], decreasing=T),]#
+	write.table(Outliers_or,paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Outliers/", NAMES_results[i],"_outliers.txt",sep=""),quote=F,row.names=F,col.names=T,sep="\t")#
+}
