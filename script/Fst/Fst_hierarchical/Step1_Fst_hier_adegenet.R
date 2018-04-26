@@ -1,13 +1,15 @@
 #Author: Ana Poets
-# Description: Allele frequency differenciation among the landraces at three different elevations
+# Description: Allele frequency differenciation in a hierarchical fashion for latitude within
+# growth habit and elevation within growth habit
 #################################################################################################
 rm(list=ls())
-
+#install.packages("adegenet",dep=TRUE)
 library(hierfstat)
-
+library(adegenet)
+library(pegas)
 # === IMPORT INPUT FILES ===========================================================================
 #Load the growth type assignations 
-GH<-read.csv("/Users/Mia/Dropbox/GITHUB/Barley_Landrace_EnvAssoc/Fst/Fst_byGrowthType/784_landrace_habit.csv",header=F,sep=",")
+GH<-read.csv("~/Dropbox/GITHUB/Barley_Landrace_EnvAssoc/Fst/Fst_byGrowthType/784_landrace_habit.csv",header=F,sep=",")
 # Select new geographic location, after Fumi inspected every data point. These are the phenotypes 
 # Fumi used for GAPIT
 Latlong<-read.csv("~/Dropbox/Landrace_Environmental_Assocation/Analyses/GWAS-GAPIT/Input/myY1.v2.csv",row.names=1)
@@ -18,6 +20,7 @@ genotypes<-read.table("~/Dropbox/Landrace_Environmental_Assocation/Data/Poets_et
 
 # Import genetic map from Munñoz et al 2011
 genMap<-read.table("~/Dropbox/Landrace_Environmental_Assocation/Data/Muñoz_etal2011/Consensus_iSelect.txt",header=T)
+
 ################ Combine lat, long, altitude and GH levels #########################################
 Samples_geoInfo<-intersect(GH[,1],row.names(Latlong))
 
@@ -75,49 +78,53 @@ if (identical(row.names(genotypes_lev_or),row.names(LEVELS_or))==FALSE)stop("Lev
 # ==== DATA TRANFORMATIONS ========================================================================
 # Change genotypes to numeric values AA=2, BB=0, AB=1 ,NA=NA
 CHANGE<-function(dat){
-  dat[which(dat == "AA")]<-2
-  dat[which(dat == "BB")]<-0
-  dat[which(dat == "AB")]<-1
+  dat[which(dat == "AA")]<-"2/2"
+  dat[which(dat == "BB")]<-"1/1"
+  dat[which(dat == "AB")]<-"1/2"
   return(dat)	
 }
 GENOTYPE_num<-as.data.frame(apply(genotypes_lev_or,2, CHANGE))
 
-# Calculate Fst for Latitude WITHIN GH
 
 
-#look at the Fst at each locus
-Fst<-NULL
-for (i in 1:dim(GENOTYPE_num)[[2]]) {
-  #Fst[i]<-varcomp(data.frame(LEVELS_or[,1],as.numeric(GENOTYPE_num[,i])),diploid=FALSE)$F[1,1]
-  Fst<-c(Fst,mean(test.within(data.frame(GENOTYPE_num[,i]),test=LEVELS_or[,2],within=LEVELS_or[,1],nperm=100,diploid=FALSE)$g))   
-}
-Fst_Latitude_withinGH<-as.data.frame(Fst) 
-row.names(Fst_Latitude_withinGH)<-colnames(GENOTYPE_num)
+#================================= Calculate Fst for Latitude WITHIN GH ====================================================
+# Combine Genotypes with levels
+str<-cbind(LEVELS_or[,c(1:2)],GENOTYPE_num)
+dim(str)
+write.table(str,"~/Desktop/temp.txt",quote=F,row.names=T,col.names=T,sep="\t")
+str<-read.table("~/Desktop/temp.txt",header=T)
+strpop <- str[,c(1,2)] #pull out the strata
 
-write.table(Fst_Latitude_withinGH, "~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/GrowthHabit/Fst_Latitude_withinGH.txt",quote=F,row.names=T,col.names=T,sep="\t")
+testStr <- df2genind(str[,-c(1,2)],sep="/",ploidy=2,pop =str$LatitudeLevels, strata = strpop)
+fstat_out<-fstat(testStr)
+Fst_loci<-Fst(as.loci(testStr))
 
-# Fst in Elevation within Growth habit
-Fst2<-NULL
-for (i in 1:dim(GENOTYPE_num)[[2]]) {
-  #Fst[i]<-varcomp(data.frame(LEVELS_or[,1],as.numeric(GENOTYPE_num[,i])),diploid=FALSE)$F[1,1]
-  Fst2<-c(Fst2,mean(test.within(data.frame(GENOTYPE_num[,i]),test=LEVELS_or[,3],within=LEVELS_or[,1],nperm=100,diploid=FALSE)$g))   
-}
-Fst_Elevation_withinGH<-as.data.frame(Fst2) 
-row.names(Fst_Elevation_withinGH)<-colnames(GENOTYPE_num)
+write.table(fstat_out,"~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Hierarchical_adegenet/Fstat_out_Lat_withinGH.txt",quote=F,row.names=T,col.names=T,sep="\t")
+write.table(Fst_loci,"~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Hierarchical_adegenet/FstLoci_out_Lat_withinGH.txt",quote=F,row.names=T,col.names=T,sep="\t")
 
-write.table(Fst_Elevation_withinGH, "~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/GrowthHabit/Fst_Elevation_withinGH.txt",quote=F,row.names=T,col.names=T,sep="\t")
+#================================= Calculate Fst for Elevation WITHIN GH ====================================================
+# Combine Genotypes with levels
+str<-cbind(LEVELS_or[,c(1,3)],GENOTYPE_num)
+dim(str)
+write.table(str,"~/Desktop/temp.txt",quote=F,row.names=T,col.names=T,sep="\t")
+str<-read.table("~/Desktop/temp.txt",header=T)
+strpop <- str[,c(1,2)] #pull out the strata
+
+testStr <- df2genind(str[,-c(1,2)],sep="/",ploidy=2,pop =str$ElevationLevels, strata = strpop)
+fstat_out<-fstat(testStr)
+Fst_loci<-Fst(as.loci(testStr))
+
+write.table(fstat_out,"~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Hierarchical_adegenet/Fstat_out_elev_withinGH.txt",quote=F,row.names=T,col.names=T,sep="\t")
+write.table(Fst_loci,"~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Hierarchical_adegenet/FstLoci_out_elev_withinGH.txt",quote=F,row.names=T,col.names=T,sep="\t")
+
 
 ##============= Add SNP information to the output files =============================================================
 
-NAMES_results<-c("Fst_Elevation_withinGH")
+NAMES_results<-c("FstLoci_out_Lat_withinGH","FstLoci_out_elev_withinGH")
 for ( i in 1:length(NAMES_results)){
-  DATA<-get(NAMES_results[i])
-  RESULTS<-(cbind(row.names(DATA),as.numeric(DATA[,1])))
-  
-  #find outliers using the 95 percent tail
-  Threshold<-quantile(as.numeric(as.matrix(RESULTS[,2])), 0.972, na.rm=T)
-  #abline(h=Threshold, col="red")
-  
+  DATA<-read.table(paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Hierarchical_adegenet/", NAMES_results[i],".txt", sep=""), header=T)
+  # combine SNP name with Fst value
+  RESULTS<-(cbind(row.names(DATA),as.numeric(DATA[,2])))
   #Find SNPs in genetic map
   genMap_results<-genMap[(genMap[,3] %in% (RESULTS[,1])),]
   #Unknown marker positions
@@ -145,6 +152,6 @@ for ( i in 1:length(NAMES_results)){
   # Combine all the results
   Results_all_genmap<-rbind(Results_known_or_genmap,Results_unknown_or_genmap)
   colnames(Results_all_genmap)<-c("Chromosome","Cumulative_cM","SNP","G")
-  write.table(Results_all_genmap, paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/GrowthHabit/", NAMES_results[i],".txt", sep=""),quote=F,row.names=F,col.names=T,sep="\t")
+  write.table(Results_all_genmap, paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Hierarchical_adegenet/", NAMES_results[i],"_SNPorder.txt", sep=""),quote=F,row.names=F,col.names=T,sep="\t")
   
 }
