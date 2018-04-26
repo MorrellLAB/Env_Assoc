@@ -39,7 +39,7 @@ readData <- function(filename) {
 }
 
 fixNaming <- function(data.file) {
-    #   Add 'X' character at the beginning of each character element
+    #   Replace 'X' character at the beginning of each character element
     #   regex pattern "^" is point before first character
     data.file$SNP <- sub("X", "", data.file$SNP)
     return(data.file)
