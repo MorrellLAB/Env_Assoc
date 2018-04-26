@@ -3,13 +3,13 @@
 ####################################################################################################################
 rm(list=ls())
 
-NAMES_results<-c("Fst_Latitude_withinGH","Fst_Elevation_withinGH")
+NAMES_results<-c("FstLoci_out_Lat_withinGH","FstLoci_out_elev_withinGH")
 
 for (i in 1:length(NAMES_results)){
-	Results_all_genmap <-read.table(paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/GrowthHabit/", NAMES_results[i],".txt", sep=""), header=T)
+	Results_all_genmap <-read.table(paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Results/Hierarchical_adegenet/", NAMES_results[i],"_SNPorder.txt", sep=""), header=T)
 	
-	pdf(paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Plots/GrowthHabit/", NAMES_results[i],".pdf",sep=""), width=7, height=5)
-	plot(Results_all_genmap[,2],as.character(Results_all_genmap[,4]), ylab="G",xlab="Genetic Position", xaxt="n", cex=0.6)
+	pdf(paste("~/Dropbox/Landrace_Environmental_Assocation/Analyses/Fst/Plots/Hierarchical_adegenet/", NAMES_results[i],"_SNPorder.pdf",sep=""), width=7, height=5)
+	plot(Results_all_genmap[,2],as.character(Results_all_genmap[,4]), ylab="Fst",xlab="Genetic Position", xaxt="n", cex=0.6)
 	
 	#Separate by chromosome
 	  CHR1<-Results_all_genmap[c(which(Results_all_genmap[,1] == "1H")),]
