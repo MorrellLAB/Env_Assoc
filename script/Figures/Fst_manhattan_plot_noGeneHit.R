@@ -2,20 +2,21 @@
 #   Chaochih Liu - April 27, 2018
 
 #   This script takes in Fst output files with a column of physical positions and generates
-#   a manhattan plot. This script highlights gene hits of interest.
+#   a manhattan plot.
+#       Note: this script is similar to Fst_manhattan_plot.R script except no gene hits
+#       are highlighted here.
 
 #   Usage:
-#   ./Fst_manhattan_plot_noGeneHit.R [fst.txt] [gene_hits.txt] [outlier_threshold] [plot_title] [out_dir] [out_name]
+#   ./Fst_manhattan_plot_noGeneHit.R [fst.txt] [outlier_threshold] [plot_title] [out_dir] [out_name]
 
 #   Where:
 #   1) [fst.txt] contains our Fst results and the following columns:
 #       SNP, Chromosome, Cumulative_cM, FST, Chr_2016, and PhysPos_2016
-#   2) [gene_hits.txt] is a file with SNPs that are gene hits. The column name must be "9k_SNPs" for script to work
-#   3) [outlier_threshold] is our fst outlier threshold (i.e. for 97.5% threshold, use 0.975)
-#   4) [plot_title] must be wrapped in double quotes if there are spaces
-#   5) [out_dir] is the full filepath to our output directory. NOTE: remove ending "/"
+#   2) [outlier_threshold] is our fst outlier threshold (i.e. for 97.5% threshold, use 0.975)
+#   3) [plot_title] must be wrapped in double quotes if there are spaces
+#   4) [out_dir] is the full filepath to our output directory. NOTE: remove ending "/"
 #       otherwise filename will have one too many slashes
-#   6) [out_name] is our output file names including file extension ".pdf" (i.e. fst_lat.pdf)
+#   5) [out_name] is our output file names including file extension ".pdf" (i.e. fst_lat.pdf)
 
 #   Define function to read in .txt
 readData <- function(filename) {
@@ -23,7 +24,8 @@ readData <- function(filename) {
         file = filename,
         header = TRUE,
         sep = "\t",
-        na.strings = "NA"
+        na.strings = "NA",
+        fill = TRUE
     )
     #   Remove rows with missing physical position
     df.filter <- df[!is.na(df$PhysPos_2016), ]
@@ -130,33 +132,11 @@ plot.manhattan <- function(df, fst.outlier.threshold, plot.title, ticks) {
     legend(
         "topright",
         bty = 'n',
-        c("Gene hits", "Fst Outlier Threshold"),
-        lty = c(0, 3), # first slot put nothing, second slot use dotted line
-        pch = c(20, NA), # first slot put filled circle, second slot put nothing
-        col = c("blue", "black"),
+        "Fst Outlier Threshold",
+        lty = 3, # use dotted line
+        col = "black",
         cex = 0.75,
         pt.cex = 1.2
-    )
-}
-
-highlight.gene.hits <- function(df, plot.title) {
-    #   Plot SNPs that hit interesting genes
-    par(mar = c(5, 5, 5, 2))
-    plot(
-        x = df$scaled.BP,
-        y = df$FST,
-        col = adjustcolor(col = "blue", alpha.f = 0.7),
-        xlim = c(0, 4569031868),
-        ylim = c(0, 0.8),
-        pch = 20,
-        cex = 1,
-        cex.lab = 1.4,
-        cex.main = 1.6,
-        cex.axis = 1.2,
-        xlab = "Chromosome",
-        ylab = expression('F'[ST]), # subscript
-        xaxt = "n",
-        main = plot.title
     )
 }
 
@@ -165,15 +145,13 @@ main <- function() {
     args <- commandArgs(trailingOnly = TRUE)
     #   User provided arguments
     fst.fp <- args[1] # full filepath to Fst file
-    genehits.fp <- args[2] # full filepath to file containing gene hits
-    outlier.threshold <- args[3] # threshold (i.e. 97.5% would be input as 0.975)
-    title <- args[4] # Title for our plot (i.e. "Fst - Elevation below 3000m vs above 3000m")
-    out.dir <- args[5] # full filepath to output directory
-    out.name <- args[6] # output filename including ".pdf" file extension (i.e. fst_lat.pdf)
+    outlier.threshold <- args[2] # threshold (i.e. 97.5% would be input as 0.975)
+    title <- args[3] # Title for our plot (i.e. "Fst - Elevation below 3000m vs above 3000m")
+    out.dir <- args[4] # full filepath to output directory
+    out.name <- args[5] # output filename including ".pdf" file extension (i.e. fst_lat.pdf)
     
     #   Read in Fst and gene hits files
     fst.df <- readData(filename = fst.fp)
-    genehits.df <- readData(filename = genehits.fp)
     
     #   Compute cutoff fst value for n% outlier threshold
     #   This is the value that will be used in the plots later on
@@ -220,21 +198,12 @@ main <- function() {
     )
 
     #   Generate Plots
-    #   Create subset containing SNPs that hit interesting genes
-    genehits.subset <- fst.dfrs[fst.dfrs$SNP %in% genehits.df$X9k_SNPs, ]
-    
-    #   Make plot
     pdf(file = paste0(out.dir, "/", out.name), width = 12, height = 8)
     plot.manhattan(
         df = fst.dfrs,
         fst.outlier.threshold = outlier.cutoff,
         plot.title = title,
         ticks = t.chr
-    )
-    par(new = TRUE)
-    highlight.gene.hits(
-        df = genehits.subset,
-        plot.title = title
     )
     dev.off()
 }
