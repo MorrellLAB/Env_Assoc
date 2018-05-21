@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-#PBS -l mem=22gb,nodes=1:ppn=16,walltime=02:00:00
+#PBS -l mem=22gb,nodes=1:ppn=16,walltime=03:00:00
 #PBS -m abe
 #PBS -M liux1299@umn.edu
-#PBS -q lab
+#PBS -q small
 
 set -e
 set -o pipefail
