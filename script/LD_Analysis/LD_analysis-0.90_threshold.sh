@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 #PBS -l mem=22gb,nodes=1:ppn=16,walltime=03:00:00
 #PBS -m abe
@@ -37,11 +37,11 @@ BP=100000
 #   Minor Allele Frequency threshold to use for VCF to Htable conversion (i.e. 0.01 for 1% MAF)
 MAF=0.01
 #   Missing data threshold to use for filtering (i.e. 0.15 for 15% missing data)
-P_MISSING=0.9
+P_MISSING=0.90
 #   What prefix do we want to use for our output files?
-PREFIX=ld_Barley_NAM_200Kb_0.9
+PREFIX=ld_Barley_NAM_200Kb_0.90
 #   Where is our output directory?
-OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/gwas_sig_snps_200Kb/0.9_threshold
+OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/gwas_sig_snps_200Kb/0.90_threshold
 
 #   Extract GWAS significant SNPs from 9k_masked_90idt.vcf
 function extractSNPs() {
