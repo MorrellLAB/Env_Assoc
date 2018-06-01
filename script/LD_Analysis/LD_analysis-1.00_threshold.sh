@@ -2,7 +2,7 @@
 #PBS -l mem=22gb,nodes=1:ppn=16,walltime=03:00:00
 #PBS -m abe
 #PBS -M liux1299@umn.edu
-#PBS -q small
+#PBS -q lab
 
 set -e
 set -o pipefail
@@ -10,7 +10,7 @@ set -o pipefail
 module load R/3.4.3
 module load python2/2.7.8 # Tom's VCF_To_Htable-TK.py script runs in Python 2
 module load vcflib_ML/1.0.0
-module load parallel
+module load parallel/20160822
 
 #   Usage message:
 #       This script performs LD analysis on 100Kb windows around significant SNPs from Environmental
@@ -36,11 +36,11 @@ BP=100000
 #   Minor Allele Frequency threshold to use for VCF to Htable conversion (i.e. 0.01 for 1% MAF)
 MAF=0.01
 #   Missing data threshold to use for filtering (i.e. 0.15 for 15% missing data)
-P_MISSING=1.0
+P_MISSING=1.00
 #   What prefix do we want to use for our output files?
-PREFIX=ld_Barley_NAM_200Kb_1.0
+PREFIX=ld_Barley_NAM_200Kb_1.00
 #   Where is our output directory?
-OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/gwas_sig_snps_200Kb/1.0_threshold
+OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/gwas_sig_snps_200Kb/1.00_threshold
 
 #   Extract GWAS significant SNPs from 9k_masked_90idt.vcf
 function extractSNPs() {
@@ -161,7 +161,6 @@ function ldHeatMap() {
 
 export -f ldHeatMap
 
-
 #   Number of Individuals we have data for (i.e. WBDC)
 N_INDIVIDUALS=$(grep "#CHROM" "${MAIN_VCF}" | tr '\t' '\n' | tail -n +10 | wc -l)
 echo "Number of individuals in data:"
@@ -207,19 +206,20 @@ touch "${OUT_DIR}"/extracted_sig_snps_vcf/sig_snp_not_in_9k.txt
 parallel extractSNPs {} "${VCF_9K}" "${PREFIX}" "${OUT_DIR}"/extracted_sig_snps_vcf ::: "${SNP_LIST[@]}"
 echo "Done extracting significant SNPs."
 
-
 echo "Removing non-existent SNP from bash array..."
 #   Check if out directory exists, if not make directory
 mkdir -p "${OUT_DIR}/temp" "${OUT_DIR}/temp"
 #   Filter out and remove SNPs that don't exist from bash array
 DELETE=($(cat "${OUT_DIR}"/extracted_sig_snps_vcf/sig_snp_not_in_9k.txt))
-echo ${SNP_LIST[@]} | tr ' ' '\n' > "${OUT_DIR}"/temp/tmp_snp_list.txt
+for i in "${SNP_LIST[@]}"
+do
+    echo ${i} >> "${OUT_DIR}"/temp/tmp_snp_list.txt
+done
 SNP_LIST_FILT=($(grep -vf "${OUT_DIR}"/extracted_sig_snps_vcf/sig_snp_not_in_9k.txt "${OUT_DIR}"/temp/tmp_snp_list.txt))
 rm "${OUT_DIR}"/temp/tmp_snp_list.txt
 echo "Done removing non-existent SNP from bash array."
 echo "Number of GWAS Significant SNPs that exist in 9k_masked_90idt.vcf file:"
 echo ${#SNP_LIST_FILT[@]}
-
 
 echo "Extracting all SNPs that fall within window defined..."
 #   Check if out directory exists, if not make directory
@@ -234,7 +234,6 @@ mkdir -p "${OUT_DIR}/extracted_window" "${OUT_DIR}/extracted_window"
 #   to pull down all SNPs that fall within our BED file interval.
 parallel extractWin {} "${EXTRACT_BED}" "${BP}" "${OUT_DIR}"/extracted_sig_snps_vcf/"${PREFIX}"_{}_9k_masked_90idt.vcf "${MAIN_VCF}" "${PREFIX}" "${OUT_DIR}"/extracted_window ::: "${SNP_LIST_FILT[@]}"
 echo "Done extracting SNPs within window."
-
 
 #   Filter out intersect.vcf files that are empty by removing SNP name from bash array
 INTERSECT_VCF=($(find "${OUT_DIR}"/extracted_window/*.vcf))
@@ -261,7 +260,6 @@ do
     fi
 done
 
-
 echo "Converting VCF to fake Hudson table..."
 #   Check if out directory exists, if not make directory
 mkdir -p "${OUT_DIR}/Htable" "${OUT_DIR}/Htable"
@@ -275,7 +273,6 @@ mkdir -p "${OUT_DIR}/Htable" "${OUT_DIR}/Htable"
 parallel vcfToHtable {} "${VCF_TO_HTABLE}" "${MAF}" "${TRANSPOSE_DATA}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_INT_VCF[@]}"
 echo "Done converting VCF to fake Hudson table."
 
-
 echo "Creating SNP_BAC.txt file..."
 #   Check if out directory exists, if not make directory
 mkdir -p "${OUT_DIR}/snp_bac" "${OUT_DIR}/snp_bac"
@@ -287,7 +284,6 @@ mkdir -p "${OUT_DIR}/snp_bac" "${OUT_DIR}/snp_bac"
 parallel makeSnpBac {} "${PREFIX}" "${OUT_DIR}" ::: "${SNP_INT_VCF[@]}"
 echo "Done creating SNP_BAC.txt."
 
-
 echo "Preparing data for LD analysis..."
 #   Check if out directory exists, if not make directory
 mkdir -p "${OUT_DIR}/ld_data_prep" "${OUT_DIR}/ld_data_prep"
@@ -297,7 +293,6 @@ mkdir -p "${OUT_DIR}/ld_data_prep" "${OUT_DIR}/ld_data_prep"
 #       3) SNP_BAC_filtered.txt has all non-existent SNPs removed so it doesn't cause errors when using LDheatmap command in R
 parallel ldDataPrep {} "${LD_DATA_PREP}" "${EXTRACTION_SNPS}" "${OUT_DIR}"/Htable/"${PREFIX}"_{}_intersect_Htable_sorted_transposed_noX.txt "${PREFIX}" "${OUT_DIR}" ::: "${SNP_INT_VCF[@]}"
 echo "Done preparing data."
-
 
 echo "Running LD analysis..."
 mkdir -p "${OUT_DIR}/ld_results" "${OUT_DIR}/ld_results"
