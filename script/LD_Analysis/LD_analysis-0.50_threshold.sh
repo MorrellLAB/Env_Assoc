@@ -42,8 +42,6 @@ PREFIX=ld_Barley_NAM_200Kb_0.50
 #   Where is our output directory?
 OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/gwas_sig_snps_200Kb/0.50_threshold
 
-env &> ${OUT_DIR}/environment_lab.txt
-
 #   Extract GWAS significant SNPs from 9k_masked_90idt.vcf
 function extractSNPs() {
     local snp=$1
@@ -213,14 +211,14 @@ echo "Removing non-existent SNP from bash array..."
 mkdir -p "${OUT_DIR}/temp" "${OUT_DIR}/temp"
 #   Filter out and remove SNPs that don't exist from bash array
 DELETE=($(cat "${OUT_DIR}"/extracted_sig_snps_vcf/sig_snp_not_in_9k.txt))
-#echo ${SNP_LIST[@]} | tr ' ' '\n' > "${OUT_DIR}"/temp/tmp_snp_list.txt
+echo ${SNP_LIST[@]} | tr ' ' '\n' > "${OUT_DIR}"/temp/tmp_snp_list.txt
 #echo "${SNP_LIST[@]}" | sed -e 's/ /\n/g' > "${OUT_DIR}"/temp/tmp_snp_list.txt
-for i in "${SNP_LIST[@]}"
-do
-    echo ${i} >> "${OUT_DIR}"/temp/tmp_snp_list.txt
-done
+# for i in "${SNP_LIST[@]}"
+# do
+#     echo ${i} >> "${OUT_DIR}"/temp/tmp_snp_list.txt
+# done
 SNP_LIST_FILT=($(grep -vf "${OUT_DIR}"/extracted_sig_snps_vcf/sig_snp_not_in_9k.txt "${OUT_DIR}"/temp/tmp_snp_list.txt))
-#rm "${OUT_DIR}"/temp/tmp_snp_list.txt
+rm "${OUT_DIR}"/temp/tmp_snp_list.txt
 echo "Done removing non-existent SNP from bash array."
 echo "Number of GWAS Significant SNPs that exist in 9k_masked_90idt.vcf file:"
 echo ${#SNP_LIST_FILT[@]}
@@ -298,7 +296,6 @@ mkdir -p "${OUT_DIR}/ld_data_prep" "${OUT_DIR}/ld_data_prep"
 parallel ldDataPrep {} "${LD_DATA_PREP}" "${EXTRACTION_SNPS}" "${OUT_DIR}"/Htable/"${PREFIX}"_{}_intersect_Htable_sorted_transposed_noX.txt "${PREFIX}" "${OUT_DIR}" ::: "${SNP_INT_VCF[@]}"
 echo "Done preparing data."
 
-set -x
 echo "Running LD analysis..."
 mkdir -p "${OUT_DIR}/ld_results" "${OUT_DIR}/ld_results"
 #   Running ldHeatMap will output the following files:
@@ -313,4 +310,4 @@ mkdir -p "${OUT_DIR}/ld_results" "${OUT_DIR}/ld_results"
 #       8) HM_Dprime.txt is a matrix of D' values used in heatmap
 parallel ldHeatMap {} "${LD_HEATMAP}" "${N_INDIVIDUALS}" "${P_MISSING}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_INT_VCF[@]}"
 echo "Done."
-set +x
+echo "End of analyses."
