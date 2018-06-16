@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #PBS -l mem=22gb,nodes=1:ppn=16,walltime=03:00:00
 #PBS -m abe
 #PBS -M liux1299@umn.edu
@@ -10,7 +10,7 @@ set -o pipefail
 module load R/3.4.3
 module load python2/2.7.8 # Tom's VCF_To_Htable-TK.py script runs in Python 2
 module load vcflib_ML/1.0.0
-module load parallel/20160822
+module load parallel
 
 #   Usage message:
 #       This script performs LD analysis on 100Kb windows around significant SNPs from Environmental
@@ -212,11 +212,6 @@ mkdir -p "${OUT_DIR}/temp" "${OUT_DIR}/temp"
 #   Filter out and remove SNPs that don't exist from bash array
 DELETE=($(cat "${OUT_DIR}"/extracted_sig_snps_vcf/sig_snp_not_in_9k.txt))
 echo ${SNP_LIST[@]} | tr ' ' '\n' > "${OUT_DIR}"/temp/tmp_snp_list.txt
-#echo "${SNP_LIST[@]}" | sed -e 's/ /\n/g' > "${OUT_DIR}"/temp/tmp_snp_list.txt
-# for i in "${SNP_LIST[@]}"
-# do
-#     echo ${i} >> "${OUT_DIR}"/temp/tmp_snp_list.txt
-# done
 SNP_LIST_FILT=($(grep -vf "${OUT_DIR}"/extracted_sig_snps_vcf/sig_snp_not_in_9k.txt "${OUT_DIR}"/temp/tmp_snp_list.txt))
 rm "${OUT_DIR}"/temp/tmp_snp_list.txt
 echo "Done removing non-existent SNP from bash array."
@@ -310,4 +305,3 @@ mkdir -p "${OUT_DIR}/ld_results" "${OUT_DIR}/ld_results"
 #       8) HM_Dprime.txt is a matrix of D' values used in heatmap
 parallel ldHeatMap {} "${LD_HEATMAP}" "${N_INDIVIDUALS}" "${P_MISSING}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_INT_VCF[@]}"
 echo "Done."
-echo "End of analyses."
