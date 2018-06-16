@@ -20,11 +20,11 @@
 
 #   To run: ./LDheatmap.R [genoData.txt] [physPos.txt] [Plot Name] [Out File Prefix] [out directory] [include/exclude] [# of individuals] [missing data threshold]
 
-library(LDheatmap)
-library(genetics)
-library(RColorBrewer)
-library(grDevices)
-require(chopsticks) # used for LDheatmap function
+suppressPackageStartupMessages(library(LDheatmap))
+suppressPackageStartupMessages(library(genetics))
+suppressPackageStartupMessages(library(RColorBrewer))
+suppressPackageStartupMessages(library(grDevices))
+suppressPackageStartupMessages(require(chopsticks)) # used for LDheatmap function
 
 #   Read in genotype data with input data frame sorted by SNP names
 readGenoFile <- function(filename) {
