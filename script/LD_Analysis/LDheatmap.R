@@ -20,11 +20,15 @@
 
 #   To run: ./LDheatmap.R [genoData.txt] [physPos.txt] [Plot Name] [Out File Prefix] [out directory] [include/exclude] [# of individuals] [missing data threshold]
 
+#   Dependencies
+#   To install chopsticks through Bioconductor, follow:
+#   https://bioconductor.org/packages/release/bioc/html/chopsticks.html
 suppressPackageStartupMessages(library(LDheatmap))
 suppressPackageStartupMessages(library(genetics))
 suppressPackageStartupMessages(library(RColorBrewer))
 suppressPackageStartupMessages(library(grDevices))
 suppressPackageStartupMessages(require(chopsticks)) # used for LDheatmap function
+
 
 #   Read in genotype data with input data frame sorted by SNP names
 readGenoFile <- function(filename) {
@@ -197,6 +201,11 @@ main <- function() {
 
     #   Create output and plot names
     outname <- paste0(outDir, "/", outPrefix, "_SNP_info")
+    #   Extract target SNP name from outPrefix
+    #   NOTE: this assumes prefix contains "Chr1-7_" pattern
+    #   If not, will need to change this line
+    target_snp_name <- gsub(pattern = "Chr1-7_", replacement = "", x = outPrefix)
+    cat("Starting analysis for snp:", target_snp_name, "...\n")
 
     #   Convert data to compatible format
     geno.converted <- makeGeno(genoData = genoFile)
@@ -242,7 +251,7 @@ main <- function() {
 
     #   Filter out data with greater than n% missing data
     cat("Filtering out data with greater than:", sep = "\n")
-    cat(p.missing * 100, "% missing data")
+    cat(p.missing * 100, "% missing data\n")
     results.filt <- apply(X = incomp.cols.removed,
                           MARGIN = 2, # Applied over columns
                           FUN = filterMissing,
@@ -286,23 +295,23 @@ main <- function() {
         snpname <- X.names.filtered$Query_SNP
     }
 
-    cat("LDheatmap - r2 starting...", sep = "\n")
+    cat(target_snp_name, "LDheatmap - r2 starting...\n")
     plot.r2 <- hm.r2(genoData = pass.samples,
                      PhysPos = X.names.filtered,
                      plotName = plotName,
                      snpName = snpname,
                      outName = outPrefix,
                      directory = outDir)
-    cat("LDheatmap - r2 done.", sep = "\n")
+    cat(target_snp_name, "LDheatmap - r2 done.\n")
 
-    cat("LDheatmap - D' starting...", sep = "\n")
+    cat(target_snp_name, "LDheatmap - D' starting...\n")
     plot.D <- hm.Dprime(genoData = pass.samples,
                         PhysPos = X.names.filtered,
                         plotName = plotName,
                         snpName = snpname,
                         outName = outPrefix,
                         directory = outDir)
-    cat("LDheatmap - D' done", sep = "\n")
+    cat(target_snp_name, "LDheatmap - D' done.\n")
 
     cat("Saving files to out directory...", sep = "\n")
     outFile(outName = outPrefix,
@@ -313,7 +322,7 @@ main <- function() {
             directory = outDir,
             heatmap = plot.D,
             LDcalc = "Dprime")
-    cat("Done.", sep = "\n")
+    cat("Done with LDheatmap analysis for snp:", target_snp_name, "\n")
 }
 
 #   Run the program
