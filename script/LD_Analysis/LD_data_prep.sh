@@ -37,9 +37,9 @@ function sampleList() {
     #   Only keep unique SNP names
     #   Process GBS SNPs with naming format S1H1_71079
     echo "Generating sample lists..."
-    (head -n 1 ${snp_bac} && tail -n +2 ${snp_bac} | sort -u -k2n,2) > ${work_dir}/SNP_BAC_${out_prefix}_sorted_uniq.txt
+    (head -n 1 "${snp_bac}" && tail -n +2 "${snp_bac}" | sort -u -k2n,2) > "${work_dir}/SNP_BAC_${out_prefix}_sorted_uniq.txt"
     #   Generate sample lists
-    for i in $(awk '{ print $1 }' ${work_dir}/SNP_BAC_${out_prefix}_sorted_uniq.txt | tail -n +2); do echo "$i"; done > ${work_dir}/${out_prefix}_sampleList.txt
+    for i in $(awk '{ print $1 }' "${work_dir}/SNP_BAC_${out_prefix}_sorted_uniq.txt" | tail -n +2); do echo "$i"; done > "${work_dir}/${out_prefix}_sampleList.txt"
 }
 
 export -f sampleList
@@ -56,13 +56,13 @@ function extractSNPs() {
     #   Use Perl script to pull down markers of interest
     #   and create new dataframe
     echo "Pulling down markers of interest..."
-    ${extraction} ${geno} ${sample_names} | \
-        #   Markers in both genotype dataframe and sample list
-        tee >(awk '!/NOT_EXISTS/' > ${work_dir}/${out_prefix}_EXISTS.txt) | \
-        #   Markers that are not in genotype dataframe are redirected to new file
-        awk '/NOT_EXISTS/' | tee ${work_dir}/${out_prefix}_NOT_EXISTS.txt | \
-        #   How many SNPs were not found in dataframe?
-        echo "$(wc -l) SNPs did not exist in dataframe"
+    #   Markers in both genotype dataframe and sample list
+    "${extraction}" "${geno}" "${sample_names}" | awk '!/NOT_EXISTS/' > "${work_dir}/${out_prefix}_EXISTS.txt"
+    #   Markers that are not in genotype dataframe are redirected to new file
+    "${extraction}" "${geno}" "${sample_names}" | awk '/NOT_EXISTS/' > "${work_dir}/${out_prefix}_NOT_EXISTS.txt"
+    #   How many SNPs were not found in dataframe?
+    NOT_IN_DF=$(wc -l "${work_dir}/${out_prefix}_NOT_EXISTS.txt")
+    echo "${NOT_IN_DF} SNPs did not exist in dataframe"
 }
 
 export -f extractSNPs
@@ -77,21 +77,21 @@ function sortData() {
     #   with SNPs as rows and individual names as columns
     #   sort -V allows alphanumeric sort
     echo "Sorting output data..."
-    awk 'NR<2{ print $0;next }{ print $0 | "sort -V" }' ${exists} > ${work_dir}/${out_prefix}_sorted_EXISTS.txt
+    awk 'NR<2{ print $0;next }{ print $0 | "sort -V" }' "${exists}" > "${work_dir}/${out_prefix}_sorted_EXISTS.txt"
     echo "Creating temporary sample list of existing markers..."
     #   Create tmp sample list from *_EXISTS.txt
-    awk '{ print $1 }' ${work_dir}/${out_prefix}_sorted_EXISTS.txt | tail -n +2 > ${work_dir}/tmp_${out_prefix}_filtered_sampleList.txt
+    awk '{ print $1 }' "${work_dir}/${out_prefix}_sorted_EXISTS.txt" | tail -n +2 > "${work_dir}/tmp_${out_prefix}_filtered_sampleList.txt"
     echo "Creating filtered SNP_BAC.txt file"
     #   Create header for output file
-    head -n 1 ${work_dir}/SNP_BAC_${out_prefix}_sorted_uniq.txt > ${work_dir}/SNP_BAC_${out_prefix}_filtered.txt
+    head -n 1 "${work_dir}/SNP_BAC_${out_prefix}_sorted_uniq.txt" > "${work_dir}/SNP_BAC_${out_prefix}_filtered.txt"
     #   Pull out markers that actually exist from SNP_BAC.txt
-    grep -f ${work_dir}/tmp_${out_prefix}_filtered_sampleList.txt ${work_dir}/SNP_BAC_${out_prefix}_sorted_uniq.txt >> ${work_dir}/SNP_BAC_${out_prefix}_filtered.txt
+    grep -f "${work_dir}/tmp_${out_prefix}_filtered_sampleList.txt" "${work_dir}/SNP_BAC_${out_prefix}_sorted_uniq.txt" >> "${work_dir}/SNP_BAC_${out_prefix}_filtered.txt"
     echo "Cleaning up..."
     #   Cleanup unnecessary files
-    rm ${work_dir}/${out_prefix}_sampleList.txt
-    rm ${work_dir}/tmp_${out_prefix}_filtered_sampleList.txt
-    rm ${work_dir}/SNP_BAC_${out_prefix}_sorted_uniq.txt
-    rm ${work_dir}/${out_prefix}_EXISTS.txt
+    rm "${work_dir}/${out_prefix}_sampleList.txt"
+    rm "${work_dir}/tmp_${out_prefix}_filtered_sampleList.txt"
+    rm "${work_dir}/SNP_BAC_${out_prefix}_sorted_uniq.txt"
+    rm "${work_dir}/${out_prefix}_EXISTS.txt"
     echo "Done."
 }
 
@@ -109,6 +109,6 @@ EXTRACTION=$5
 #   Generate sample lists
 sampleList "${SNP_BAC}" "${OUT_PREFIX}" "${WORK_DIR}"
 #   Outputs dataframe with SNPs as columns and sample names as rows
-extractSNPs "${EXTRACTION}" "${GENO}" "${WORK_DIR}"/"${OUT_PREFIX}"_sampleList.txt "${OUT_PREFIX}" "${WORK_DIR}"
+extractSNPs "${EXTRACTION}" "${GENO}" "${WORK_DIR}/${OUT_PREFIX}_sampleList.txt" "${OUT_PREFIX}" "${WORK_DIR}"
 #   Sort dataframes and pull out unique SNPs
-sortData "${WORK_DIR}"/"${OUT_PREFIX}"_EXISTS.txt "${OUT_PREFIX}" "${WORK_DIR}"/SNP_BAC_"${OUT_PREFIX}"_sorted_uniq.txt "${WORK_DIR}"
+sortData "${WORK_DIR}/${OUT_PREFIX}_EXISTS.txt" "${OUT_PREFIX}" "${WORK_DIR}/SNP_BAC_${OUT_PREFIX}_sorted_uniq.txt" "${WORK_DIR}"
