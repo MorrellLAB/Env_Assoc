@@ -307,5 +307,5 @@ mkdir -p "${OUT_DIR}/ld_results" "${OUT_DIR}/ld_results"
 #       6) HM_Dprime.pdf is a heatmap for D' calculation
 #       7) HM_r2.txt is a matrix of r2 values used in heatmap
 #       8) HM_Dprime.txt is a matrix of D' values used in heatmap
-parallel ldHeatMap {} "${LD_HEATMAP}" "${N_INDIVIDUALS}" "${P_MISSING}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_INT_VCF[@]}"
+parallel ldHeatMap {} "${LD_HEATMAP}" "${N_INDIVIDUALS}" "${P_MISSING}" "${PREFIX}" "${OUT_DIR}" 2>&1 "${OUT_DIR}/ld_analysis.log" ::: "${SNP_INT_VCF[@]}"
 echo "Done with all analyses."
