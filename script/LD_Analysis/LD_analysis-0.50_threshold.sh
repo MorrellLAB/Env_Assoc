@@ -2,7 +2,7 @@
 #PBS -l mem=22gb,nodes=1:ppn=16,walltime=03:00:00
 #PBS -m abe
 #PBS -M liux1299@umn.edu
-#PBS -q lab
+#PBS -q small
 
 set -e
 set -o pipefail
@@ -152,15 +152,17 @@ function ldHeatMap() {
     local out_dir=$6
     #   SNP_BAC.txt file must be sorted by SNP names
     #   Genotype data (i.e. *EXISTS.txt genotype data) must be sorted by SNP names
+    set -x
     "${ld_heatmap}" \
         "${out_dir}/ld_data_prep/Chr1-7_${snp}_sorted_EXISTS.txt" \ # genotyping data
         "${out_dir}/ld_data_prep/SNP_BAC_Chr1-7_${snp}_filtered.txt" \ # physical positions
         "Chr1-7 ${snp}" \ # heatmap plot name
         "Chr1-7_${snp}" \ # output file prefix, no space
         "${out_dir}/ld_results" \ # out directory
-        exclude \ # include or exclude SNP names in heatmap
+        "exclude" \ # include or exclude SNP names in heatmap
         "${n_individuals}" \ # number of individuals
         "${p_missing}" # missing data threshold
+    set +x
 }
 
 export -f ldHeatMap
@@ -295,7 +297,6 @@ mkdir -p "${OUT_DIR}/ld_data_prep" "${OUT_DIR}/ld_data_prep"
 parallel ldDataPrep {} "${LD_DATA_PREP}" "${EXTRACTION_SNPS}" "${OUT_DIR}"/Htable/"${PREFIX}"_{}_intersect_Htable_sorted_transposed_noX.txt "${PREFIX}" "${OUT_DIR}" ::: "${SNP_INT_VCF[@]}"
 echo "Done preparing data."
 
-set -x
 echo "Running LD analysis..."
 mkdir -p "${OUT_DIR}/ld_results" "${OUT_DIR}/ld_results"
 #   Running ldHeatMap will output the following files:
@@ -308,6 +309,5 @@ mkdir -p "${OUT_DIR}/ld_results" "${OUT_DIR}/ld_results"
 #       6) HM_Dprime.pdf is a heatmap for D' calculation
 #       7) HM_r2.txt is a matrix of r2 values used in heatmap
 #       8) HM_Dprime.txt is a matrix of D' values used in heatmap
-parallel ldHeatMap {} "${LD_HEATMAP}" "${N_INDIVIDUALS}" "${P_MISSING}" "${PREFIX}" "${OUT_DIR}" 2>&1 "${OUT_DIR}/ld_analysis.log" ::: "${SNP_INT_VCF[@]}"
+parallel ldHeatMap {} "${LD_HEATMAP}" "${N_INDIVIDUALS}" "${P_MISSING}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_INT_VCF[@]}"
 echo "Done with all analyses."
-set +x
