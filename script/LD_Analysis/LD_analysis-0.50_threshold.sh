@@ -2,7 +2,7 @@
 #PBS -l mem=22gb,nodes=1:ppn=16,walltime=03:00:00
 #PBS -m abe
 #PBS -M liux1299@umn.edu
-#PBS -q small
+#PBS -q lab
 
 set -e
 set -o pipefail
@@ -217,7 +217,7 @@ echo "Removing non-existent SNP from bash array..."
 mkdir -p "${OUT_DIR}/temp" "${OUT_DIR}/temp"
 #   Filter out and remove SNPs that don't exist from bash array
 DELETE=($(cat "${OUT_DIR}/extracted_sig_snps_vcf/sig_snp_not_in_9k.txt"))
-echo ${SNP_LIST[@]} | tr " " "\n" > "${OUT_DIR}/temp/tmp_snp_list.txt"
+echo ${SNP_LIST[@]} | tr ' ' '\n' > "${OUT_DIR}/temp/tmp_snp_list.txt"
 SNP_LIST_FILT=($(grep -vf "${OUT_DIR}/extracted_sig_snps_vcf/sig_snp_not_in_9k.txt" "${OUT_DIR}/temp/tmp_snp_list.txt"))
 rm "${OUT_DIR}/temp/tmp_snp_list.txt"
 echo "Done removing non-existent SNP from bash array."
