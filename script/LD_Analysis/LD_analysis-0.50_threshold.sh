@@ -152,16 +152,16 @@ function ldHeatMap() {
     local out_dir=$6
     #   SNP_BAC.txt file must be sorted by SNP names
     #   Genotype data (i.e. *EXISTS.txt genotype data) must be sorted by SNP names
+    #   Arg 1: genotyping data
+    #   Arg 2: physical positions
+    #   Arg 3: heatmap plot name
+    #   Arg 4: output file prefix, no space
+    #   Arg 5: out directory
+    #   Arg 6: include or exclude SNP names in heatmap
+    #   Arg 7: number of individuals
+    #   Arg 8: missing data threshold
     set -x
-    "${ld_heatmap}" \
-        "${out_dir}/ld_data_prep/Chr1-7_${snp}_sorted_EXISTS.txt" \ # genotyping data
-        "${out_dir}/ld_data_prep/SNP_BAC_Chr1-7_${snp}_filtered.txt" \ # physical positions
-        "Chr1-7 ${snp}" \ # heatmap plot name
-        "Chr1-7_${snp}" \ # output file prefix, no space
-        "${out_dir}/ld_results" \ # out directory
-        "exclude" \ # include or exclude SNP names in heatmap
-        "${n_individuals}" \ # number of individuals
-        "${p_missing}" # missing data threshold
+    "${ld_heatmap}" "${out_dir}/ld_data_prep/Chr1-7_${snp}_sorted_EXISTS.txt" "${out_dir}/ld_data_prep/SNP_BAC_Chr1-7_${snp}_filtered.txt" "Chr1-7 ${snp}" "Chr1-7_${snp}" "${out_dir}/ld_results" "exclude" "${n_individuals}" "${p_missing}"
     set +x
 }
 
