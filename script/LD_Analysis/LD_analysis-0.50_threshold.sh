@@ -295,6 +295,7 @@ mkdir -p "${OUT_DIR}/ld_data_prep" "${OUT_DIR}/ld_data_prep"
 parallel ldDataPrep {} "${LD_DATA_PREP}" "${EXTRACTION_SNPS}" "${OUT_DIR}"/Htable/"${PREFIX}"_{}_intersect_Htable_sorted_transposed_noX.txt "${PREFIX}" "${OUT_DIR}" ::: "${SNP_INT_VCF[@]}"
 echo "Done preparing data."
 
+set -x
 echo "Running LD analysis..."
 mkdir -p "${OUT_DIR}/ld_results" "${OUT_DIR}/ld_results"
 #   Running ldHeatMap will output the following files:
@@ -309,3 +310,4 @@ mkdir -p "${OUT_DIR}/ld_results" "${OUT_DIR}/ld_results"
 #       8) HM_Dprime.txt is a matrix of D' values used in heatmap
 parallel ldHeatMap {} "${LD_HEATMAP}" "${N_INDIVIDUALS}" "${P_MISSING}" "${PREFIX}" "${OUT_DIR}" 2>&1 "${OUT_DIR}/ld_analysis.log" ::: "${SNP_INT_VCF[@]}"
 echo "Done with all analyses."
+set +x
