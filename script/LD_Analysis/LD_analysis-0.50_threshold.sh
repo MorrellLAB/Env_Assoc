@@ -148,8 +148,7 @@ function ldHeatMap() {
     local ld_heatmap=$2
     local n_individuals=$3
     local p_missing=$4
-    local prefix=$5
-    local out_dir=$6
+    local out_dir=$5
     #   SNP_BAC.txt file must be sorted by SNP names
     #   Genotype data (i.e. *EXISTS.txt genotype data) must be sorted by SNP names
     #   Arg 1: genotyping data
@@ -160,9 +159,15 @@ function ldHeatMap() {
     #   Arg 6: include or exclude SNP names in heatmap
     #   Arg 7: number of individuals
     #   Arg 8: missing data threshold
-    set -x
     "${ld_heatmap}" "${out_dir}/ld_data_prep/Chr1-7_${snp}_sorted_EXISTS.txt" "${out_dir}/ld_data_prep/SNP_BAC_Chr1-7_${snp}_filtered.txt" "Chr1-7 ${snp}" "Chr1-7_${snp}" "${out_dir}/ld_results" "exclude" "${n_individuals}" "${p_missing}"
-    set +x
+    #   Move files associated with SNP that had an error (i.e. gdat undefined column error) when running ldHeatMap function to subdirectory
+    if [ -f "${out_dir}/ld_results/Chr1-7_${snp}_ldheatmap_fn_error.txt" ]
+    then
+        echo "Chr1-7_${snp}_ldheatmap_fn_error.txt found\nMoving files to ldheatmap_error_snps directory.\n"
+        mv "${out_dir}"/ld_results/*"${snp}"* "${out_dir}/ld_results/ldheatmap_error_snps"
+    else
+        echo "LD heatmap function completed successfully for snp: ${snp}.\n"
+    fi
 }
 
 export -f ldHeatMap
@@ -299,6 +304,7 @@ echo "Done preparing data."
 
 echo "Running LD analysis..."
 mkdir -p "${OUT_DIR}/ld_results" "${OUT_DIR}/ld_results"
+mkdir -p "${OUT_DIR}/ld_results/undefined_col_error" "${OUT_DIR}/ld_results/ldheatmap_error_snps"
 #   Running ldHeatMap will output the following files:
 #       1) SNP_info-empty_cols.csv is a list of samples with empty columns
 #       2) SNP_info-failed_snps.csv is a list of incompatible genotype columns
@@ -309,5 +315,5 @@ mkdir -p "${OUT_DIR}/ld_results" "${OUT_DIR}/ld_results"
 #       6) HM_Dprime.pdf is a heatmap for D' calculation
 #       7) HM_r2.txt is a matrix of r2 values used in heatmap
 #       8) HM_Dprime.txt is a matrix of D' values used in heatmap
-parallel ldHeatMap {} "${LD_HEATMAP}" "${N_INDIVIDUALS}" "${P_MISSING}" "${PREFIX}" "${OUT_DIR}" ::: "${SNP_INT_VCF[@]}"
+parallel ldHeatMap {} "${LD_HEATMAP}" "${N_INDIVIDUALS}" "${P_MISSING}" "${OUT_DIR}" ::: "${SNP_INT_VCF[@]}"
 echo "Done with all analyses."
