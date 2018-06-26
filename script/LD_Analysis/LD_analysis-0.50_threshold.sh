@@ -303,8 +303,7 @@ parallel ldDataPrep {} "${LD_DATA_PREP}" "${EXTRACTION_SNPS}" "${OUT_DIR}"/Htabl
 echo "Done preparing data."
 
 echo "Running LD analysis..."
-mkdir -p "${OUT_DIR}/ld_results" "${OUT_DIR}/ld_results"
-mkdir -p "${OUT_DIR}/ld_results/undefined_col_error" "${OUT_DIR}/ld_results/ldheatmap_error_snps"
+mkdir -p "${OUT_DIR}/ld_results/ldheatmap_error_snps" "${OUT_DIR}/ld_results/ldheatmap_error_snps"
 #   Running ldHeatMap will output the following files:
 #       1) SNP_info-empty_cols.csv is a list of samples with empty columns
 #       2) SNP_info-failed_snps.csv is a list of incompatible genotype columns
