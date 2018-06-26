@@ -304,7 +304,7 @@ main <- function() {
                          outName = outPrefix,
                          directory = outDir)
         cat("Done with LDheatmap - r2 analysis for:", target_snp_name, "\n")
-        
+
         cat(target_snp_name, "LDheatmap - D' starting...\n")
         plot.D <- hm.Dprime(genoData = pass.samples,
                             PhysPos = X.names.filtered,
@@ -313,7 +313,7 @@ main <- function() {
                             outName = outPrefix,
                             directory = outDir)
         cat("Done with LDheatmap - D' analysis for:", target_snp_name, "\n")
-        
+
         cat("Saving files to out directory...", sep = "\n")
         outFile(outName = outPrefix,
                 directory = outDir,
@@ -328,11 +328,11 @@ main <- function() {
         cat("Error - LD analysis for snp", target_snp_name, "failed.\nSaving this SNP to file for further troubleshooting.\n")
         write.table(
             x = target_snp_name,
-            file = paste0(outDir, "/", outPrefix, "_gdat_undefined_col_error.txt"),
+            file = paste0(outDir, "/", outPrefix, "_ldheatmap_fn_error.txt"),
             quote = FALSE,
             sep = "\t",
             eol = "\n",
-            col.names = TRUE,
+            col.names = FALSE,
             row.names = FALSE
         )
     })
