@@ -163,10 +163,10 @@ function ldHeatMap() {
     #   Move files associated with SNP that had an error (i.e. gdat undefined column error) when running ldHeatMap function to subdirectory
     if [ -f "${out_dir}/ld_results/Chr1-7_${snp}_ldheatmap_fn_error.txt" ]
     then
-        echo "Chr1-7_${snp}_ldheatmap_fn_error.txt found\nMoving files to ldheatmap_error_snps directory.\n"
+        echo "Chr1-7_${snp}_ldheatmap_fn_error.txt found. Moving files to ldheatmap_error_snps directory."
         mv "${out_dir}"/ld_results/*"${snp}"* "${out_dir}/ld_results/ldheatmap_error_snps"
     else
-        echo "LD heatmap function completed successfully for snp: ${snp}.\n"
+        echo "LD heatmap function completed successfully for snp: ${snp}."
     fi
 }
 
