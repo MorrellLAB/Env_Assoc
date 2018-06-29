@@ -24,7 +24,7 @@ module load parallel
 #   Make sure all scripts needed are in same directory as this script
 SCRIPT_DIR=/home/morrellp/liux1299/GitHub/Env_Assoc/script/LD_Analysis
 #   List of sorted fst oulier SNP names based on Ana's fstOutlier analysis
-FST_OUTLIER_SNPS=/home/morrellp/liux1299/Projects/Land_Env_Assoc/Analysis/LD_Analysis/data/combinedFstOutliers_sorted_uniq.txt
+FST_OUTLIER_SNPS=/home/morrellp/liux1299/Projects/Land_Env_Assoc/Analysis/LD_Analysis/data/combinedFstOutliers_sorted_uniq_part1.txt
 #   Need sorted_all_9k_masked_90idt.vcf
 VCF_9K=/home/morrellp/liux1299/GitHub/9k_BOPA_SNP/BOPA_9k_vcf_Morex_refv1/sorted_all_9k_masked_90idt.vcf
 #   VCF file from dataset we are interested in (i.e. OnlyLandrace_Barley_NAM_Parents_Final_renamed.vcf)
@@ -38,7 +38,7 @@ P_MISSING=0.30
 #   What prefix do we want to use for our output files?
 PREFIX=ld_Barley_NAM_200Kb_0.30
 #   Where is our output directory?
-OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/fst_outlier_snps_200Kb/0.30_threshold
+OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/fst_outlier_snps_200Kb/0.30_threshold_p1
 
 #   Extract fstOutlier SNPs from 9k_masked_90idt.vcf
 function extractSNPs() {
