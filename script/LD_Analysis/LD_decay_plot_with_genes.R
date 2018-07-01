@@ -99,7 +99,7 @@ extractTargetSNP <- function(filename, p) {
 r2.reformat <- function(r2.df, index) {
     #   Extract row of index we are currently working with
     current.row <- r2.df[index, ]
-    
+
     #   Create reformmated data frame
     current.df <- data.frame(
         m_row_snps = rownames(current.row),
@@ -123,7 +123,7 @@ mergeFile <- function(ldData, physPosData) {
         all.y = FALSE # Rows that do not have a match with x will not be added to x
     )
     colnames(m)[4] <- "cSnpPhysPos"
-    
+
     #   Extract physical position for target SNP from LD data
     #   This is the SNP that existed in VCF file and was used for LD calculation
     #   NOT the actual Query SNP (as included in the filename of the LD matrix)
@@ -160,7 +160,7 @@ calcGeneInterDist <- function(physPosData, geneInt.df, t.snp) {
 }
 
 #   ld.type is either r2 or Dprime depending on which measure you are plotting
-plotLDdecay <- function(ldData, geneInt.df, t.snp, original.t.snp, ld.type, ylabel, windowSize, outputDir) {
+plotLDdecay <- function(ldData, geneInt.df, physPosData, t.snp, original.t.snp, ld.type, ylabel, windowSize, outputDir) {
     #   Set our x axis limits
     winStart <- -(windowSize/2)/1000
     winEnd <- (windowSize/2)/1000
@@ -192,7 +192,7 @@ plotLDdecay <- function(ldData, geneInt.df, t.snp, original.t.snp, ld.type, ylab
             original.t.snp,
             "\nLD decay for SNPs around SNP: ",
             t.snp,
-            "\n(", unique(geneInt.df$chr_gene), ":",
+            "\n(", unique(physPosData$Chr), ":",
             as.character(unique(ldData$tSnpPhysPos)),
             "bp )")
     )
@@ -237,12 +237,12 @@ main <- function() {
     r2.fp <- scan(file = r2.list, what = "", sep = "\n")
     phys.fp <- scan(file = physPos.list, what = "", sep = "\n")
     geneInt.fp <-  scan(file = geneInt.list, what = "", sep = "\n")
-    
+
     #   Read in data, this is place outside of runAll function to reduce number of times
     #   files need to be read in
     maf <- readMAF(filename = maf.fp)
     trans.maf <- readMAF(filename = trans.maf.fp)
-    
+
     #   Function that runs all functions for every sample in list
     runAll <- function(ldmatrix.fp, geneIntervals.fp, physPos.fp, maf.df, trans.maf.df, file.prefix, window, out.directory) {
         #   Read in LD matrix and physical positions
@@ -255,10 +255,10 @@ main <- function() {
         #       for the environmental associations project.
         targetSNP <- extractTargetSNP(filename = ldmatrix.fp, p = file.prefix)
         original.targetSNP <- targetSNP # Save for use in plot title later
-        
+
         #   Create subset maf.df containing only SNPs in matrix we are currently working with
         sub.maf.df <- maf.df[maf.df$ID %in% rownames(x = tmp.r2.df), ]
-        
+
         if (targetSNP %in% rownames(tmp.r2.df)) {
             #   Identify index of row that contains targetSNP
             target.index <- which(
@@ -269,10 +269,10 @@ main <- function() {
             cat("Target SNP: ")
             cat(targetSNP)
             cat(" doesn't exist in VCF file, can't pick closest MAF SNP from 62 NAM Parents VCF.\n
-                Will pick closest MAF SNP based on significant SNP MAF in 9k genotyping data for 
+                Will pick closest MAF SNP based on significant SNP MAF in 9k genotyping data for
                 803 landrace accessions.\n")
-            #   Extract MAF for significant SNP from 803 landrace significant SNPs data frame 
-            #   containing all MAF values for all SNPs. This is because, some edge cases the target 
+            #   Extract MAF for significant SNP from 803 landrace significant SNPs data frame
+            #   containing all MAF values for all SNPs. This is because, some edge cases the target
             #   SNP doesn't exist in the r2 data frame that's the whole reason this section is needed
             tsnp.maf <- as.numeric(trans.maf.df[trans.maf.df$SNP == targetSNP, 2])
             closest.MAF.index <- which.min(abs(as.numeric(sub.maf.df$MAF) - tsnp.maf)) # Find index of closest MAF SNP
@@ -285,7 +285,7 @@ main <- function() {
         } else {
             cat("Target SNP: ")
             cat(targetSNP)
-            cat(" isn't in LD analysis matrix, will pick closest MAF SNP from 62 NAM Parents VCF to use 
+            cat(" isn't in LD analysis matrix, will pick closest MAF SNP from 62 NAM Parents VCF to use
                 as fake target SNP.\n")
             #   Extract MAF for significant SNP from master data frame containing all MAF values for all SNPs
             #   This is because, some edge cases the target SNP doesn't exist in the r2 data frame
@@ -299,10 +299,10 @@ main <- function() {
                 arr.ind = TRUE # return array index
             )
         }
-        
+
         #   Reformat LD matrix for compatibility with downstream functions
         r2.df <- r2.reformat(r2.df = tmp.r2.df, index = target.index)
-        
+
         #   Create empty list to store data frames that get reformatted
         d.list <- list()
         #   Loop over every row up until row containing pairwise comparison between
@@ -322,12 +322,12 @@ main <- function() {
         #   to merge by physical position in later steps
         cs.swap.tsnp <- data.frame(targetSnp = cs.tsnp$m_col_snps, comparisonSnp = cs.tsnp$m_row_snps, r2 = cs.tsnp$r2)
         #   Add check/print statement to make sure targetSNP matches targetSNP in cs.swap.tsnp
-        
+
         #   Combine these two subsets
         int.df <- rbind(cs.swap.tsnp, rs.tsnp)
         #   Remove rows with NA in r2 column
         clean.data <- int.df[!is.na(int.df$r2), ]
-        
+
         #   Merge LD matrix and physical positions based on matching SNP names
         merged.df <- mergeFile(ldData = clean.data, physPosData = physPos.df)
 
@@ -341,6 +341,7 @@ main <- function() {
         plotLDdecay(
             ldData = interDist.df,
             geneInt.df = geneInterDist.df,
+            physPosData = physPos.df,
             t.snp = targetSNP,
             original.t.snp = original.targetSNP,
             ld.type = "r2",
