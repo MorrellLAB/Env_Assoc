@@ -306,15 +306,8 @@ main <- function() {
             )
         }
         
-        if (is.na(t.index)) {
-            cat("snp doesn't exist in either file")
-        } else {
-            cat("continue analyses")
-        }
-        
+        #   If target SNP does not exist in either VCF file or 9k genotyping data...
         if (is.na(target.index)) {
-            #   If target SNP does not exist in either VCF file or 9k genotyping
-            #   data (this case is implemented in if else statement above),
             #   save snp to file
             write.table(
                 x = targetSNP,
@@ -324,6 +317,7 @@ main <- function() {
                 row.names = FALSE,
                 col.names = FALSE
             )
+        #   else, make LD decay plot
         } else {
             #   Reformat LD matrix for compatibility with downstream functions
             r2.df <- r2.reformat(r2.df = tmp.r2.df, index = target.index)
