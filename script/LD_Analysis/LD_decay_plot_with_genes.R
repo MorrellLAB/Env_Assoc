@@ -275,80 +275,106 @@ main <- function() {
             #   containing all MAF values for all SNPs. This is because, some edge cases the target
             #   SNP doesn't exist in the r2 data frame that's the whole reason this section is needed
             tsnp.maf <- as.numeric(trans.maf.df[trans.maf.df$SNP == targetSNP, 2])
-            closest.MAF.index <- which.min(abs(as.numeric(sub.maf.df$MAF) - tsnp.maf)) # Find index of closest MAF SNP
-            targetSNP <- sub.maf.df[closest.MAF.index]$ID # Extract SNP name of closest MAF SNP
+            #   Find index of closest MAF SNP
+            closest.MAF.index <- which.min(abs(as.numeric(sub.maf.df$MAF) - tsnp.maf))
+            #   Extract SNP name of closest MAF SNP
+            targetSNP <- sub.maf.df[closest.MAF.index]$ID
             #   Find our "fake" target SNP
             target.index <- which(
                 x = rownames(tmp.r2.df) == targetSNP, # extract row containing fake target SNP
                 arr.ind = TRUE # return array index
             )
+        } else if (is.na(as.numeric(maf.df[maf.df$ID == targetSNP, 7])) && is.na(as.numeric(trans.maf.df[trans.maf.df$SNP == targetSNP, 2]))) {
+            #   This edge case is for when MAF doesn't exist in either MAF file provided.
+            cat("Target SNP:", targetSNP, "doesn't exist in either VCF file or 9k genotyping data for 803 landrace accessions. Therefore, no MAF or physical position exists for this SNP. We will save this SNP in it's own file and exit script.\n")
+            #   Set target.index to be NA if this case is met
+            target.index <- NA
         } else {
-            cat("Target SNP: ")
-            cat(targetSNP)
-            cat(" isn't in LD analysis matrix, will pick closest MAF SNP from 62 NAM Parents VCF to use
-                as fake target SNP.\n")
-            #   Extract MAF for significant SNP from master data frame containing all MAF values for all SNPs
+            cat("Target SNP:", targetSNP, "isn't in LD analysis matrix, will pick closest MAF SNP from 62 NAM Parents VCF to use as fake target SNP.\n")
+            #   Extract MAF for significant SNP from master df containing all MAF values for all SNPs
             #   This is because, some edge cases the target SNP doesn't exist in the r2 data frame
             #   that's the whole reason this section is needed
             tsnp.maf <- as.numeric(maf.df[maf.df$ID == targetSNP, 7])
-            closest.MAF.index <- which.min(abs(as.numeric(sub.maf.df$MAF) - tsnp.maf)) # Find index of closest MAF SNP
-            targetSNP <- sub.maf.df[closest.MAF.index]$ID # Extract SNP name of closest MAF SNP
+            #   Find index of closest MAF SNP
+            closest.MAF.index <- which.min(abs(as.numeric(sub.maf.df$MAF) - tsnp.maf))
+            #   Extract SNP name of closest MAF SNP
+            targetSNP <- sub.maf.df[closest.MAF.index]$ID
             #   Find our "fake" target SNP
             target.index <- which(
                 x = rownames(tmp.r2.df) == targetSNP, # extract row containing fake target SNP
                 arr.ind = TRUE # return array index
             )
         }
-
-        #   Reformat LD matrix for compatibility with downstream functions
-        r2.df <- r2.reformat(r2.df = tmp.r2.df, index = target.index)
-
-        #   Create empty list to store data frames that get reformatted
-        d.list <- list()
-        #   Loop over every row up until row containing pairwise comparison between
-        #       target SNP and all other SNPs
-        for (i in 1:target.index) {
-            tmp.df <- r2.reformat(r2.df = tmp.r2.df, index = i)
-            d.list[[i]] <- tmp.df
+        
+        if (is.na(t.index)) {
+            cat("snp doesn't exist in either file")
+        } else {
+            cat("continue analyses")
         }
-        #   Combine data frames stored as lists into one data frame
-        comb.data <- do.call(what = rbind, args = d.list) # Combined data up until target index number
-        #   Extract all rows where row.snp column contains target SNP
-        rs.tsnp <- comb.data[comb.data$m_row_snps == targetSNP, ]
-        #   Rename columns of rs.tsnp
-        colnames(rs.tsnp) <- c("targetSnp", "comparisonSnp", "r2")
-        cs.tsnp <- comb.data[comb.data$m_col_snps == targetSNP, ]
-        #   Swap m_row_snps and m_col_snps in cs.tsnp data frame to make it possible
-        #   to merge by physical position in later steps
-        cs.swap.tsnp <- data.frame(targetSnp = cs.tsnp$m_col_snps, comparisonSnp = cs.tsnp$m_row_snps, r2 = cs.tsnp$r2)
-        #   Add check/print statement to make sure targetSNP matches targetSNP in cs.swap.tsnp
-
-        #   Combine these two subsets
-        int.df <- rbind(cs.swap.tsnp, rs.tsnp)
-        #   Remove rows with NA in r2 column
-        clean.data <- int.df[!is.na(int.df$r2), ]
-
-        #   Merge LD matrix and physical positions based on matching SNP names
-        merged.df <- mergeFile(ldData = clean.data, physPosData = physPos.df)
-
-        #   Calculate distances between SNPs
-        interDist.df <- calcInterDist(ldData = merged.df, t.snp = original.targetSNP, physPosData = physPos.df)
-        #   Calculate distances between gene interval and target SNP
-        #   This ensures we have the correct positions when plotting genes
-        geneInterDist.df <- calcGeneInterDist(physPosData = physPos.df, geneInt.df = geneInterval.df, t.snp = targetSNP)
-
-        #   Plot LD decay and save to out directory
-        plotLDdecay(
-            ldData = interDist.df,
-            geneInt.df = geneInterDist.df,
-            physPosData = physPos.df,
-            t.snp = targetSNP,
-            original.t.snp = original.targetSNP,
-            ld.type = "r2",
-            ylabel = expression(paste("LD estimate (", italic("r"^"2"), ")")),
-            windowSize = window,
-            outputDir = out.directory
-        )
+        
+        if (is.na(target.index)) {
+            #   If target SNP does not exist in either VCF file or 9k genotyping
+            #   data (this case is implemented in if else statement above),
+            #   save snp to file
+            write.table(
+                x = targetSNP,
+                file = paste0(out.directory, "/", "not_in_VCFor9k_", targetSNP, ".txt"),
+                quote = FALSE,
+                sep = "\t",
+                row.names = FALSE,
+                col.names = FALSE
+            )
+        } else {
+            #   Reformat LD matrix for compatibility with downstream functions
+            r2.df <- r2.reformat(r2.df = tmp.r2.df, index = target.index)
+            
+            #   Create empty list to store data frames that get reformatted
+            d.list <- list()
+            #   Loop over every row up until row containing pairwise comparison between
+            #       target SNP and all other SNPs
+            for (i in 1:target.index) {
+                tmp.df <- r2.reformat(r2.df = tmp.r2.df, index = i)
+                d.list[[i]] <- tmp.df
+            }
+            #   Combine data frames stored as lists into one data frame
+            comb.data <- do.call(what = rbind, args = d.list) # Combined data up until target index number
+            #   Extract all rows where row.snp column contains target SNP
+            rs.tsnp <- comb.data[comb.data$m_row_snps == targetSNP, ]
+            #   Rename columns of rs.tsnp
+            colnames(rs.tsnp) <- c("targetSnp", "comparisonSnp", "r2")
+            cs.tsnp <- comb.data[comb.data$m_col_snps == targetSNP, ]
+            #   Swap m_row_snps and m_col_snps in cs.tsnp data frame to make it possible
+            #   to merge by physical position in later steps
+            cs.swap.tsnp <- data.frame(targetSnp = cs.tsnp$m_col_snps, comparisonSnp = cs.tsnp$m_row_snps, r2 = cs.tsnp$r2)
+            #   Add check/print statement to make sure targetSNP matches targetSNP in cs.swap.tsnp
+            
+            #   Combine these two subsets
+            int.df <- rbind(cs.swap.tsnp, rs.tsnp)
+            #   Remove rows with NA in r2 column
+            clean.data <- int.df[!is.na(int.df$r2), ]
+            
+            #   Merge LD matrix and physical positions based on matching SNP names
+            merged.df <- mergeFile(ldData = clean.data, physPosData = physPos.df)
+            
+            #   Calculate distances between SNPs
+            interDist.df <- calcInterDist(ldData = merged.df, t.snp = original.targetSNP, physPosData = physPos.df)
+            #   Calculate distances between gene interval and target SNP
+            #   This ensures we have the correct positions when plotting genes
+            geneInterDist.df <- calcGeneInterDist(physPosData = physPos.df, geneInt.df = geneInterval.df, t.snp = targetSNP)
+            
+            #   Plot LD decay and save to out directory
+            plotLDdecay(
+                ldData = interDist.df,
+                geneInt.df = geneInterDist.df,
+                physPosData = physPos.df,
+                t.snp = targetSNP,
+                original.t.snp = original.targetSNP,
+                ld.type = "r2",
+                ylabel = expression(paste("LD estimate (", italic("r"^"2"), ")")),
+                windowSize = window,
+                outputDir = out.directory
+            )
+        }
     }
 
     #   Run all functions on list of files
