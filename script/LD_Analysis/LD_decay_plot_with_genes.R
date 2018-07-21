@@ -265,6 +265,11 @@ main <- function() {
                 x = rownames(tmp.r2.df) == targetSNP, # extract row containing target SNP
                 arr.ind = TRUE # return array index
             )
+        } else if (is.na(as.numeric(maf.df[maf.df$ID == targetSNP, 7])) && is.na(as.numeric(trans.maf.df[trans.maf.df$SNP == targetSNP, 2]))) {
+            #   This edge case is for when MAF doesn't exist in either MAF file provided.
+            cat("Target SNP:", targetSNP, "doesn't exist in either VCF file or 9k genotyping data for 803 landrace accessions. Therefore, no MAF or physical position exists for this SNP. We will save this SNP in it's own file and exit script.\n")
+            #   Set target.index to be NA if this case is met
+            target.index <- NA
         } else if (is.na(as.numeric(maf.df[maf.df$ID == targetSNP, 7]))) {
             cat("Target SNP: ")
             cat(targetSNP)
@@ -284,11 +289,6 @@ main <- function() {
                 x = rownames(tmp.r2.df) == targetSNP, # extract row containing fake target SNP
                 arr.ind = TRUE # return array index
             )
-        } else if (is.na(as.numeric(maf.df[maf.df$ID == targetSNP, 7])) && is.na(as.numeric(trans.maf.df[trans.maf.df$SNP == targetSNP, 2]))) {
-            #   This edge case is for when MAF doesn't exist in either MAF file provided.
-            cat("Target SNP:", targetSNP, "doesn't exist in either VCF file or 9k genotyping data for 803 landrace accessions. Therefore, no MAF or physical position exists for this SNP. We will save this SNP in it's own file and exit script.\n")
-            #   Set target.index to be NA if this case is met
-            target.index <- NA
         } else {
             cat("Target SNP:", targetSNP, "isn't in LD analysis matrix, will pick closest MAF SNP from 62 NAM Parents VCF to use as fake target SNP.\n")
             #   Extract MAF for significant SNP from master df containing all MAF values for all SNPs
