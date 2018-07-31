@@ -10,7 +10,7 @@
 #   Where:
 #   1) [fst.txt] contains our Fst results and the following columns:
 #       SNP, Chromosome, Cumulative_cM, FST, Chr_2016, and PhysPos_2016
-#   2) [gene_hits.txt] is a file with SNPs that are gene hits. The column name must be "9k_SNPs" for script to work
+#   2) [gene_hits.txt] is a file with SNPs that are gene hits. The column name must be "SNPs_9k" for script to work
 #   3) [outlier_threshold] is our fst outlier threshold (i.e. for 97.5% threshold, use 0.975)
 #   4) [plot_title] must be wrapped in double quotes if there are spaces
 #   5) [out_dir] is the full filepath to our output directory. NOTE: remove ending "/"
@@ -28,6 +28,16 @@ readData <- function(filename) {
     #   Remove rows with missing physical position
     df.filter <- df[!is.na(df$PhysPos_2016), ]
     return(df.filter)
+}
+
+readGeneHits <- function(filename) {
+    df <- read.table(
+        file = filename,
+        header = TRUE,
+        sep = "\t",
+        na.strings = "NA"
+    )
+    return(df)
 }
 
 #   Function to replace "chr" and "H" with nothing
@@ -94,7 +104,7 @@ plot.manhattan <- function(df, fst.outlier.threshold, plot.title, ticks) {
         y = df.odd$FST,
         col = adjustcolor(col = "gray10", alpha.f = 0.9),
         xlim = c(0, 4569031868),
-        ylim = c(0, 1),
+        ylim = c(0, 0.8),
         pch = 1,
         cex = 0.6,
         cex.lab = 1.4,
@@ -112,7 +122,7 @@ plot.manhattan <- function(df, fst.outlier.threshold, plot.title, ticks) {
         y = df.even$FST,
         col = adjustcolor(col = "gray70", alpha.f = 0.9),
         xlim = c(0, 4569031868),
-        ylim = c(0, 1),
+        ylim = c(0, 0.8),
         pch = 1,
         cex = 0.6,
         cex.lab = 1.4,
@@ -173,7 +183,7 @@ main <- function() {
     
     #   Read in Fst and gene hits files
     fst.df <- readData(filename = fst.fp)
-    genehits.df <- readData(filename = genehits.fp)
+    genehits.df <- readGeneHits(filename = genehits.fp)
     
     #   Compute cutoff fst value for n% outlier threshold
     #   This is the value that will be used in the plots later on
@@ -221,7 +231,7 @@ main <- function() {
 
     #   Generate Plots
     #   Create subset containing SNPs that hit interesting genes
-    genehits.subset <- fst.dfrs[fst.dfrs$SNP %in% genehits.df$X9k_SNPs, ]
+    genehits.subset <- fst.dfrs[fst.dfrs$SNP %in% genehits.df$SNPs_9k, ]
     
     #   Make plot
     pdf(file = paste0(out.dir, "/", out.name), width = 12, height = 8)
