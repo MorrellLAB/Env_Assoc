@@ -137,16 +137,22 @@ plot.manhattan <- function(df, fst.outlier.threshold, plot.title, ticks) {
     axis(side = 1, at = ticks[1, ], labels = c("1H", "2H", "3H", "4H", "5H", "6H", "7H"), tick = FALSE)
     #   Horizontal line for Fst outlier threshold
     abline(h = fst.outlier.threshold, lty = 3, lwd = 1.5, col = "black")
-    legend(
-        "topright",
-        bty = 'n',
-        c("Gene hits", "Fst Outlier Threshold"),
-        lty = c(0, 3), # first slot put nothing, second slot use dotted line
-        pch = c(20, NA), # first slot put filled circle, second slot put nothing
-        col = c("blue", "black"),
-        cex = 0.75,
-        pt.cex = 1.2
-    )
+    #   Uncomment if you want legend to be added
+    #   This is commented out b/c we are putting 4 plots into one figure
+    #   and we only want a single legend. This is here to generate
+    #   the legend, so uncomment only when necessary.
+    # legend(
+    #     "topright",
+    #     bty = 'n',
+    #     c("Gene hits", "Fst Outlier Threshold"),
+    #     lty = c(0, 3), # first slot put nothing, second slot use dotted line
+    #     lwd = 1.8,
+    #     pch = c(19, NA), # first slot put filled circle, second slot put nothing
+    #     col = c("blue", "black"),
+    #     cex = 1.4,
+    #     pt.cex = 1.6,
+    #     pt.lwd = 1.6
+    # )
 }
 
 highlight.gene.hits <- function(df, plot.title) {
