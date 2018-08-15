@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l mem=22gb,nodes=1:ppn=16,walltime=02:00:00
+#PBS -l mem=22gb,nodes=1:ppn=16,walltime=01:00:00
 #PBS -m abe
 #PBS -M liux1299@umn.edu
 #PBS -q lab
@@ -27,7 +27,7 @@ BED_SUFFIX=_9k_masked_90idt_100000win.bed
 #   BED file containing all transcript representatives
 TRANSCRIPTS=/panfs/roc/groups/9/morrellp/llei/Envro_ass_landrace/Repr_Transcript_gtf/Repr_only_Transcripts.bed
 #   Where do our output files go?
-OUT_DIR=/home/morrellp/liux1299/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/fst_outlier_snps_200Kb/0.20_threshold/gene_intervals
+OUT_DIR=/home/morrellp/liux1299/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/fst_outlier_snps_200Kb/0.20_threshold_99th/gene_intervals
 
 #   Pull functions from fst_gene_intervals.sh script
 source ${SCRIPT_DIR}/fst_gene_intervals.sh

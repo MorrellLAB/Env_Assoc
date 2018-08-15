@@ -1,8 +1,8 @@
 #!/bin/bash
-#PBS -l mem=62gb,nodes=1:ppn=24,walltime=01:00:00
+#PBS -l mem=22gb,nodes=1:ppn=16,walltime=01:00:00
 #PBS -m abe
 #PBS -M liux1299@umn.edu
-#PBS -q mesabi
+#PBS -q lab
 
 #   This script stores filepaths for fst_gene_intervals.sh and calls on main
 #   function to do the work.
