@@ -62,7 +62,7 @@ get_recomb_rate <- function(snp) {
 }
 
 
-##Adjust a little! 
+## creat a full picture fo all chromosomes! Adjust a little! 
 
 pdf(file="/Users/lilei/Dropbox (Morrell Lab)/Landrace_Environmental_Assocation/Analyses/SNP_density/exon_9k_SNPs_2M.pdf", 10, 6)
 
