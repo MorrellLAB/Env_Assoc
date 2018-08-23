@@ -99,19 +99,19 @@ str(humsig)
 pdf(file="/Users/lilei/Dropbox (Morrell Lab)/Landrace_Environmental_Assocation/Analyses/outliers/outlier_99th.pdf", 10, 6)
 ggplot(Elv) +
   geom_point(aes(x=PhysPos_2016/1000000, y=5), data=Elv, shape=21,fill="#0000FF", color="#0000FF", size=1.5, alpha=0.5)+
-  geom_point(aes(x=PhysPos_2016/1000000, y=10), data=Lat_30_40_above, shape=22,fill="#0000FF", color="#0000FF", size=1.5, alpha=0.5) +
-  geom_point(aes(x=PhysPos_2016/1000000, y=15), data=Lat_30_40_less, shape=23,fill="#0000FF", color="#0000FF", size=1.5, alpha=0.5) +
-  geom_point(aes(x=PhysPos_2016/1000000, y=20), data=habit, shape=10,fill="#0000FF", color="#0000FF", size=1.5, alpha=0.5) +
-  geom_point(aes(x=PhysPos_2016/1000000, y=25), data=preci, shape=9, fill="#0000FF", color="#0000FF", size=1.5, alpha=0.5) +
-  geom_point(aes(x=PhysPos_2016/1000000, y=30), data=temp, shape=13, fill="#0000FF", color="#0000FF", size=1.5, alpha=0.5) +
-  geom_point(aes(x=PhysPos_2016/1000000, y=35), data=geo, shape=11, fill="#0000FF", color="#0000FF", size=1.5, alpha=0.5) +
+  geom_point(aes(x=PhysPos_2016/1000000, y=10), data=Lat_30_40_above, shape=21,fill="#0000FF", color="#0000FF", size=1.5, alpha=0.5) +
+  geom_point(aes(x=PhysPos_2016/1000000, y=15), data=Lat_30_40_less, shape=21,fill="#0000FF", color="#0000FF", size=1.5, alpha=0.5) +
+  geom_point(aes(x=PhysPos_2016/1000000, y=20), data=habit, shape=21,fill="#0000FF", color="#0000FF", size=1.5, alpha=0.5) +
+  geom_point(aes(x=PhysPos_2016/1000000, y=25), data=preci, shape=21, fill="#0000FF", color="#0000FF", size=1.5, alpha=0.5) +
+  geom_point(aes(x=PhysPos_2016/1000000, y=30), data=temp, shape=21, fill="#0000FF", color="#0000FF", size=1.5, alpha=0.5) +
+  geom_point(aes(x=PhysPos_2016/1000000, y=35), data=geo, shape=21, fill="#0000FF", color="#0000FF", size=1.5, alpha=0.5) +
   geom_point(aes(x=PhysPos_2016/1000000, y=5), data=HEout, shape=21, fill="#17202A", color="#17202A", size=1.5, alpha=1) +
-  geom_point(aes(x=PhysPos_2016/1000000, y=10), data=HLout, shape=22,fill="#17202A", color="#17202A", size=1.5, alpha=1) +
-  geom_point(aes(x=PhysPos_2016/1000000, y=15), data=LLout, shape=23,fill="#17202A", color="#17202A", size=1.5, alpha=1) +
-  geom_point(aes(x=PhysPos_2016/1000000, y=20), data=GHout, shape=10,fill="#17202A", color="#17202A", size=1.5, alpha=1) +
-  geom_point(aes(x=PhysPos_2016/1000000, y=25), data=humsig, shape=9, fill="#17202A", color="#17202A", size=1.5, alpha=1) +
-  geom_point(aes(x=PhysPos_2016/1000000, y=30), data=tempsig, shape=13, fill="#17202A", color="#17202A", size=1.5, alpha=1) +
-  geom_point(aes(x=PhysPos_2016/1000000, y=35), data=geosig, shape=11, fill="#17202A", color="#17202A", size=1.5, alpha=1) +
+  geom_point(aes(x=PhysPos_2016/1000000, y=10), data=HLout, shape=21,fill="#17202A", color="#17202A", size=1.5, alpha=1) +
+  geom_point(aes(x=PhysPos_2016/1000000, y=15), data=LLout, shape=21,fill="#17202A", color="#17202A", size=1.5, alpha=1) +
+  geom_point(aes(x=PhysPos_2016/1000000, y=20), data=GHout, shape=21,fill="#17202A", color="#17202A", size=1.5, alpha=1) +
+  geom_point(aes(x=PhysPos_2016/1000000, y=25), data=humsig, shape=21, fill="#17202A", color="#17202A", size=1.5, alpha=1) +
+  geom_point(aes(x=PhysPos_2016/1000000, y=30), data=tempsig, shape=21, fill="#17202A", color="#17202A", size=1.5, alpha=1) +
+  geom_point(aes(x=PhysPos_2016/1000000, y=35), data=geosig, shape=21, fill="#17202A", color="#17202A", size=1.5, alpha=1) +
   facet_grid(Chromosome~.) +
   scale_y_continuous(limits=c(0, 40), breaks=seq(0,40,by=5)) +
   scale_x_continuous(limits=c(0, 725), breaks=seq(0, 725, by=50)) +
