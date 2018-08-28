@@ -1,0 +1,36 @@
+#!/bin/bash
+#PBS -l mem=22gb,nodes=1:ppn=16,walltime=01:00:00
+#PBS -m abe
+#PBS -M liux1299@umn.edu
+#PBS -q lab
+
+#   This script stores filepaths for fst_gene_intervals.sh and calls on main
+#   function to do the work.
+
+set -e
+set -o pipefail
+
+#   Dependencies
+module load bedtools_ML/2.23.0
+module load parallel
+
+#   User provided arguments
+#   Where is the directory containing this script?
+#   Make sure all scripts needed are in same directory as this script
+SCRIPT_DIR=/home/morrellp/liux1299/GitHub/Env_Assoc/script/LD_Analysis
+#   List of sorted BED files, these are the windows around the significant SNP
+#   that we are interested in
+BED_LIST=/home/morrellp/liux1299/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/fst_outlier_snps_200Kb/0.50_threshold_99th/bed_win_list.txt
+#   BED file prefix and suffix
+BED_PREFIX=ld_Barley_NAM_200Kb_
+BED_SUFFIX=_9k_masked_90idt_100000win.bed
+#   BED file containing all transcript representatives
+TRANSCRIPTS=/panfs/roc/groups/9/morrellp/llei/Envro_ass_landrace/Repr_Transcript_gtf/Repr_only_Transcripts.bed
+#   Where do our output files go?
+OUT_DIR=/home/morrellp/liux1299/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/fst_outlier_snps_200Kb/0.50_threshold_99th/gene_intervals
+
+#   Pull functions from fst_gene_intervals.sh script
+source ${SCRIPT_DIR}/fst_gene_intervals.sh
+
+#   Do the work
+main "${BED_LIST}" "${BED_PREFIX}" "${BED_SUFFIX}" "${TRANSCRIPTS}" "${OUT_DIR}"
