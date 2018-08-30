@@ -183,8 +183,8 @@ plotLDdecay <- function(ldData, geneInt.df, physPosData, t.snp, original.t.snp, 
         cex = 0.9,
         lwd = 1.5,
         col = "gray25",
-        cex.main = 1.7,
-        cex.lab = 1.6,
+        cex.main = 1.6,
+        cex.lab = 1.8,
         xlab = "Physical Distance (Kb)",
         ylab = ylabel,
         main = paste(
@@ -196,8 +196,8 @@ plotLDdecay <- function(ldData, geneInt.df, physPosData, t.snp, original.t.snp, 
             as.character(unique(ldData$tSnpPhysPos)),
             "bp )")
     )
-    axis(side = 1, at = seq(from = winStart, to = winEnd, by = 20), tick = TRUE, pos = 0, cex.axis = 1.2)
-    axis(side = 2, at = seq(from = 0, to = 1.0, by = 0.2), tick = TRUE, cex.axis = 1.2)
+    axis(side = 1, at = seq(from = winStart, to = winEnd, by = 50), tick = TRUE, pos = 0, cex.axis = 1.4)
+    axis(side = 2, at = seq(from = 0, to = 1.0, by = 0.2), tick = TRUE, cex.axis = 1.4)
     segments(x0 = 0, y0 = 0, x1 = 0, y1 = 1, lty = 3, lwd = 1.5)
     if (length(geneInt.df$InterDist.start) >= 1) {
         #   Add rectangle for every gene in data frame

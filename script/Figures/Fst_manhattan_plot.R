@@ -107,11 +107,11 @@ plot.manhattan <- function(df, fst.outlier.threshold, plot.title, ticks) {
         ylim = c(0, 0.8),
         pch = 1,
         cex = 0.6,
-        cex.lab = 1.4,
+        cex.lab = 1.8,
         cex.main = 1.6,
-        cex.axis = 1.2,
-        xlab = "Chromosome",
-        ylab = expression('F'[ST]), # subscript
+        cex.axis = 1.4,
+        xlab = "Physical Position (Mb)",
+        ylab = expression(italic('F')[ST]), # italicize 'F' and subscript 'ST'
         xaxt = "n",
         main = plot.title
     )
@@ -125,16 +125,16 @@ plot.manhattan <- function(df, fst.outlier.threshold, plot.title, ticks) {
         ylim = c(0, 0.8),
         pch = 1,
         cex = 0.6,
-        cex.lab = 1.4,
+        cex.lab = 1.8,
         cex.main = 1.6,
-        cex.axis = 1.2,
-        xlab = "Chromosome",
-        ylab = expression('F'[ST]), # subscript
+        cex.axis = 1.4,
+        xlab = "Physical Position (Mb)",
+        ylab = expression(italic('F')[ST]), # italicize 'F' and subscript 'ST'
         xaxt = "n",
         main = plot.title
     )
     axis(side = 1, at = c(0, ticks[2, ]), labels = FALSE, tick = TRUE)
-    axis(side = 1, at = ticks[1, ], labels = c("1H", "2H", "3H", "4H", "5H", "6H", "7H"), tick = FALSE)
+    axis(side = 1, at = ticks[1, ], labels = c("1H", "2H", "3H", "4H", "5H", "6H", "7H"), tick = FALSE, cex.axis = 1.4)
     #   Horizontal line for Fst outlier threshold
     abline(h = fst.outlier.threshold, lty = 3, lwd = 1.5, col = "black")
     #   Uncomment if you want legend to be added
@@ -144,9 +144,9 @@ plot.manhattan <- function(df, fst.outlier.threshold, plot.title, ticks) {
     # legend(
     #     "topright",
     #     bty = 'n',
-    #     c("Gene hits", "Fst Outlier Threshold"),
+    #     legend = c("Gene hits", expression(italic('F')[ST]*' Outlier Threshold')),
     #     lty = c(0, 3), # first slot put nothing, second slot use dotted line
-    #     lwd = 1.8,
+    #     lwd = 3,
     #     pch = c(19, NA), # first slot put filled circle, second slot put nothing
     #     col = c("blue", "black"),
     #     cex = 1.4,
@@ -166,11 +166,11 @@ highlight.gene.hits <- function(df, plot.title) {
         ylim = c(0, 0.8),
         pch = 20,
         cex = 1,
-        cex.lab = 1.4,
+        cex.lab = 1.8,
         cex.main = 1.6,
-        cex.axis = 1.2,
-        xlab = "Chromosome",
-        ylab = expression('F'[ST]), # subscript
+        cex.axis = 1.4,
+        xlab = "Physical Position (Mb)",
+        ylab = expression(italic('F')[ST]), # italicize 'F' and subscript 'ST'
         xaxt = "n",
         main = plot.title
     )
