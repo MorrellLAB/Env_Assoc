@@ -1,0 +1,3 @@
+[submodule "script/SNP_Utils"]
+	path = script/SNP_Utils
+	url = https://github.com/mojaveazure/SNP_Utils
