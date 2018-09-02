@@ -30,7 +30,7 @@ TRANSCRIPTS=/panfs/roc/groups/9/morrellp/llei/Envro_ass_landrace/Repr_Transcript
 OUT_DIR=/home/morrellp/liux1299/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/fst_outlier_snps_200Kb/0.20_threshold_99th/gene_intervals
 
 #   Pull functions from fst_gene_intervals.sh script
-source ${SCRIPT_DIR}/fst_gene_intervals.sh
+source ${SCRIPT_DIR}/gene_intervals.sh
 
 #   Do the work
 main "${BED_LIST}" "${BED_PREFIX}" "${BED_SUFFIX}" "${TRANSCRIPTS}" "${OUT_DIR}"
