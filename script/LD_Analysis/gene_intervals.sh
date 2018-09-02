@@ -1,29 +1,10 @@
 #!/bin/bash
 
-#PBS -l mem=22gb,nodes=1:ppn=16,walltime=10:00:00
-#PBS -m abe
-#PBS -M liux1299@umn.edu
-#PBS -q lab
+#   This script stores all functions needed to generate gene intervals
+#   for fst outliers LD decay plots.
 
 set -e
-set -u
 set -o pipefail
-
-#   Dependencies
-module load bedtools_ML/2.23.0
-module load parallel
-
-#   User provided arguments
-#   List of sorted BED files, these are the windows around the significant SNP
-#   that we are interested in
-BED_LIST=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/gwas_sig_snps_200Kb/extracted_window/bed_win_list.txt
-#   BED file prefix and suffix
-BED_PREFIX=ld_Barley_NAM_200Kb_
-BED_SUFFIX=_9k_masked_90idt_100000win.bed
-#   BED file containing all transcript representatives
-TRANSCRIPTS=/panfs/roc/groups/9/morrellp/llei/Envro_ass_landrace/Repr_Transcript_gtf/Repr_only_Transcripts.bed
-#   Where do our output files go?
-OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/gwas_sig_snps_200Kb/gene_intervals
 
 function bedClosest() {
     local bed_file=$1
@@ -41,10 +22,18 @@ function bedClosest() {
 
 export -f bedClosest
 
-#   Check if output directory exists, if not, make it
-mkdir -p "${OUT_DIR}"
-#   Store list of sorted BED files in an array
-BED_ARRAY=($(cat /home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/gwas_sig_snps_200Kb/extracted_window/bed_win_list.txt))
+function main() {
+    local bed_list=$1
+    local bed_prefix=$2
+    local bed_suffix=$3
+    local transcripts=$4
+    local out_dir=$5
+    #   Check if output directory exists, if not, make it
+    mkdir -p "${out_dir}"
+    #   Store list of sorted BED files in an array
+    bed_array=($(cat "${bed_list}"))
+    #   Call on function to extract transcript regions that overlap with significant SNP windows
+    parallel bedClosest {} "${bed_prefix}" "${bed_suffix}" "${transcripts}" "${out_dir}" ::: "${bed_array[@]}"
+}
 
-#   Call on function to extract transcript regions that overlap with significant SNP windows
-parallel bedClosest {} "${BED_PREFIX}" "${BED_SUFFIX}" "${TRANSCRIPTS}" "${OUT_DIR}" ::: "${BED_ARRAY[@]}"
+export -f main
