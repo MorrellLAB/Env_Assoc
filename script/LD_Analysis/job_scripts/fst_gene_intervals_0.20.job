@@ -29,7 +29,7 @@ TRANSCRIPTS=/panfs/roc/groups/9/morrellp/llei/Envro_ass_landrace/Repr_Transcript
 #   Where do our output files go?
 OUT_DIR=/home/morrellp/liux1299/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/fst_outlier_snps_200Kb/0.20_threshold/gene_intervals
 
-#   Pull functions from fst_gene_intervals.sh script
+#   Pull functions from script
 source ${SCRIPT_DIR}/gene_intervals.sh
 
 #   Do the work
