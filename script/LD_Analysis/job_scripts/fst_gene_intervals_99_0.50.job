@@ -4,7 +4,7 @@
 #PBS -M liux1299@umn.edu
 #PBS -q lab
 
-#   This script stores filepaths for fst_gene_intervals.sh and calls on main
+#   This script stores filepaths for gene_intervals.sh and calls on main
 #   function to do the work.
 
 set -e
