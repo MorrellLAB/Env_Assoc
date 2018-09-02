@@ -1,0 +1,49 @@
+#!/bin/bash
+#PBS -l mem=22gb,nodes=1:ppn=16,walltime=03:00:00
+#PBS -m abe
+#PBS -M liux1299@umn.edu
+#PBS -q lab
+
+set -e
+set -o pipefail
+
+module load R/3.4.3
+module load python2/2.7.8 # Tom's VCF_To_Htable-TK.py script runs in Python 2
+module load vcflib_ML/1.0.0
+module load parallel
+
+#   Usage message:
+#       This script performs LD analysis on 100Kb windows around significant SNPs from Environmental
+#       Associations project GWAS analysis. This script pulls together all parts of the analysis
+#       performed by multiple scripts.
+#       Please fill out user provided argument fields and submit script as job.
+
+
+#   User provided arguments
+#   Where is the directory containing this script?
+#   Make sure all scripts needed are in same directory as this script
+SCRIPT_DIR=/home/morrellp/liux1299/GitHub/Env_Assoc/script/LD_Analysis
+#   List of significant SNP names based on Fumi's GWAS analysis
+GWAS_SIG_SNPS=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/data/gwas_sig_snp_names_uniq.txt
+#   Need sorted_all_9k_masked_90idt.vcf because 157 out of 158 significant SNPs exist
+#       in this VCF file while only 95 of the significant SNPs exist in the
+#       OnlyLandrace_Barley_NAM_Parents_Final_renamed.vcf file
+VCF_9K=/home/morrellp/liux1299/GitHub/9k_BOPA_SNP/BOPA_9k_vcf_Morex_refv1/sorted_all_9k_masked_90idt.vcf
+#   VCF file from dataset we are interested in (i.e. OnlyLandrace_Barley_NAM_Parents_Final_renamed.vcf)
+MAIN_VCF=/panfs/roc/groups/9/morrellp/shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/data/NAM_landraces_100_DP2_renamed_2018-05-21.vcf
+#   window size (bp) upstream/downstream of SNP for extract_BED.R
+BP=100000
+#   Minor Allele Frequency threshold to use for VCF to Htable conversion (i.e. 0.01 for 1% MAF)
+MAF=0.01
+#   Missing data threshold to use for filtering (i.e. 0.15 for 15% missing data)
+P_MISSING=0.70
+#   What prefix do we want to use for our output files?
+PREFIX=ld_Barley_NAM_200Kb_0.70
+#   Where is our output directory?
+OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/gwas_sig_snps_200Kb/0.70_threshold
+
+#   Pull functions from LD_analysis_fstOutliers.sh script
+source "${SCRIPT_DIR}"/LD_analysis_gwas.sh
+
+#   Run anaylsis
+main "${SCRIPT_DIR}" "${GWAS_SIG_SNPS}" "${VCF_9K}" "${MAIN_VCF}" "${BP}" "${MAF}" "${P_MISSING}" "${PREFIX}" "${OUT_DIR}"
