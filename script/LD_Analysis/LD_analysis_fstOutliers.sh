@@ -206,7 +206,7 @@ function main() {
     delete=($(cat "${out_dir}/extracted_sig_snps_vcf/sig_snp_not_in_9k.txt"))
     echo ${snp_list[@]} | tr ' ' '\n' > "${out_dir}/temp/tmp_snp_list.txt"
     snp_list_filt=($(grep -vf "${out_dir}/extracted_sig_snps_vcf/sig_snp_not_in_9k.txt" "${out_dir}/temp/tmp_snp_list.txt"))
-    #rm "${out_dir}/temp/tmp_snp_list.txt"
+    rm "${out_dir}/temp/tmp_snp_list.txt"
     echo "Done removing non-existent SNP from bash array."
     echo "Number of fst outlier SNPs that exist in 9k_masked_90idt.vcf file:"
     echo ${#snp_list_filt[@]}
