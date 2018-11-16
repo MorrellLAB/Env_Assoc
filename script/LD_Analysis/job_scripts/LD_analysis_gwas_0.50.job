@@ -1,8 +1,8 @@
 #!/bin/bash
-#PBS -l mem=22gb,nodes=1:ppn=16,walltime=03:00:00
+#PBS -l mem=62gb,nodes=1:ppn=24,walltime=48:00:00
 #PBS -m abe
 #PBS -M liux1299@umn.edu
-#PBS -q lab
+#PBS -q mesabi
 
 set -e
 set -o pipefail
@@ -24,7 +24,7 @@ module load parallel
 #   Make sure all scripts needed are in same directory as this script
 SCRIPT_DIR=/home/morrellp/liux1299/GitHub/Env_Assoc/script/LD_Analysis
 #   List of significant SNP names based on Fumi's GWAS analysis
-GWAS_SIG_SNPS=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/data/gwas_sig_snp_names_uniq.txt
+GWAS_SIG_SNPS=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/data/uniq_fdr0.25_all_variables_sorted_2018-11-15.txt
 #   Need sorted_all_9k_masked_90idt.vcf because 157 out of 158 significant SNPs exist
 #       in this VCF file while only 95 of the significant SNPs exist in the
 #       OnlyLandrace_Barley_NAM_Parents_Final_renamed.vcf file
@@ -40,7 +40,7 @@ P_MISSING=0.50
 #   What prefix do we want to use for our output files?
 PREFIX=ld_Barley_NAM_200Kb_0.50
 #   Where is our output directory?
-OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/gwas_sig_snps_200Kb/0.50_threshold
+OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/gwas_sig_snps_200Kb/0.50_threshold_updated
 
 #   Pull functions from LD_analysis_fstOutliers.sh script
 source "${SCRIPT_DIR}"/LD_analysis_gwas.sh

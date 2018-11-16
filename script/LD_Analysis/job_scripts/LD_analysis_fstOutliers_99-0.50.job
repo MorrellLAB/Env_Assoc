@@ -24,7 +24,7 @@ module load parallel
 #   Make sure all scripts needed are in same directory as this script
 SCRIPT_DIR=/home/morrellp/liux1299/GitHub/Env_Assoc/script/LD_Analysis
 #   List of sorted fst oulier SNP names based on Ana's fstOutlier analysis
-FST_OUTLIER_SNPS=/home/morrellp/liux1299/Projects/Land_Env_Assoc/Analysis/LD_Analysis/data/FstOutliers_uniq_ele_lati_gh_99th_sorted.txt
+FST_OUTLIER_SNPS=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/data/Fst_all_99th_outliers_sorted_2018-11-15.txt
 #   Need sorted_all_9k_masked_90idt.vcf
 VCF_9K=/home/morrellp/liux1299/GitHub/9k_BOPA_SNP/BOPA_9k_vcf_Morex_refv1/sorted_all_9k_masked_90idt.vcf
 #   VCF file from dataset we are interested in (i.e. OnlyLandrace_Barley_NAM_Parents_Final_renamed.vcf)
@@ -38,7 +38,7 @@ P_MISSING=0.50
 #   What prefix do we want to use for our output files?
 PREFIX=ld_Barley_NAM_200Kb_0.50
 #   Where is our output directory?
-OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/fst_outlier_snps_200Kb/0.50_threshold_99th
+OUT_DIR=/home/morrellp/liux1299/Shared/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/fst_outlier_snps_200Kb/0.50_threshold_99th_updated
 
 #   Pull functions from LD_analysis_fstOutliers.sh script
 source "${SCRIPT_DIR}"/LD_analysis_fstOutliers.sh
