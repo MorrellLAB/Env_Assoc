@@ -20,14 +20,14 @@ module load parallel
 SCRIPT_DIR=/home/morrellp/liux1299/GitHub/Env_Assoc/script/LD_Analysis
 #   List of sorted BED files, these are the windows around the significant SNP
 #   that we are interested in
-BED_LIST=/home/morrellp/liux1299/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/fst_outlier_snps_200Kb/0.50_threshold_99th/bed_win_list.txt
+BED_LIST=/home/morrellp/liux1299/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/fst_outlier_snps_200Kb/0.50_threshold_99th_updated/bed_win_list.txt
 #   BED file prefix and suffix
 BED_PREFIX=ld_Barley_NAM_200Kb_
 BED_SUFFIX=_9k_masked_90idt_100000win.bed
 #   BED file containing all transcript representatives
 TRANSCRIPTS=/panfs/roc/groups/9/morrellp/llei/Envro_ass_landrace/Repr_Transcript_gtf/Repr_only_Transcripts.bed
 #   Where do our output files go?
-OUT_DIR=/home/morrellp/liux1299/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/fst_outlier_snps_200Kb/0.50_threshold_99th/gene_intervals
+OUT_DIR=/home/morrellp/liux1299/Projects/Land_Env_Assoc/Analysis/LD_Analysis/results/fst_outlier_snps_200Kb/0.50_threshold_99th_updated/gene_intervals
 
 #   Pull functions from script
 source ${SCRIPT_DIR}/gene_intervals.sh
