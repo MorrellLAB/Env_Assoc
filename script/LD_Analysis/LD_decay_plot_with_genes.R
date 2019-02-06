@@ -368,6 +368,16 @@ main <- function() {
                 windowSize = window,
                 outputDir = out.directory
             )
+            
+            #   Save original SNP and representative SNP names for downstream analyses
+            snp_names <- data.frame(originalSNP = original.targetSNP, representativeSNP = targetSNP)
+            #   Save data frame of original and representative SNP names to file
+            write.table(x = snp_names,
+                        file = paste0(outDir, original.targetSNP, "_representative_snp_names.txt"),
+                        quote = FALSE,
+                        sep = "\t",
+                        row.names = FALSE
+            )
         }
     }
 
@@ -378,7 +388,8 @@ main <- function() {
         r2.fp,
         geneInt.fp,
         phys.fp,
-        MoreArgs = list(maf.df = maf, trans.maf.df = trans.maf, file.prefix = prefix, window = winSize, out.directory = outDir)
+        MoreArgs = list(maf.df = maf, trans.maf.df = trans.maf, file.prefix = prefix,
+                        window = winSize,out.directory = outDir)
     )
 }
 
