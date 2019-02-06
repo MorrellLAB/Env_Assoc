@@ -372,8 +372,9 @@ main <- function() {
             #   Save original SNP and representative SNP names for downstream analyses
             snp_names <- data.frame(originalSNP = original.targetSNP, representativeSNP = targetSNP)
             #   Save data frame of original and representative SNP names to file
+            dir.create(file.path(outDir, "snp_names"))
             write.table(x = snp_names,
-                        file = paste0(outDir, original.targetSNP, "_representative_snp_names.txt"),
+                        file = paste0(outDir, "snp_names", original.targetSNP, "_representative_snp_names.txt"),
                         quote = FALSE,
                         sep = "\t",
                         row.names = FALSE
