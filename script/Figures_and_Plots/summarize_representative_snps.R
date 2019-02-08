@@ -154,38 +154,34 @@ main <- function() {
     summary(c(rd$posDiff, rdfst$posDiff))
     sd(c(rd$posDiff, rdfst$posDiff))
     
+    # Plotting
+    # Convert MAF diff values into long format for grouped violin plot
+    mplot_df <- data.frame(mafDiff = c(rd$mafDiff, rdfst$mafDiff),
+                           groupLab = rep("combinedMafDiff", length(c(rd$mafDiff, rdfst$mafDiff))))
+    tmp_gwas_maf_df <- data.frame(mafDiff = rd$mafDiff, groupLab = rep("gwasMafDiff", length(rd$mafDiff)))
+    tmp_fst_maf_df <- data.frame(mafDiff = rdfst$mafDiff, groupLab = rep("fstMafDiff", length(rdfst$mafDiff)))
+    mplot_df <- rbind(mplot_df, tmp_gwas_maf_df, tmp_fst_maf_df)
     # Generate plots for GWAS and Fst outlier SNPs MAF differences
-    # GWAS sig SNPs
-    g <- ggplot(rd, aes(x = mafDiff)) + geom_histogram(color = "black", fill = "gray70", bins = 20) +
-        theme_classic(base_size = 14) + ylim(0, 60) + xlab("Differences in MAF") + ylab("Frequency") +
-        ggtitle("Distribution of differences in MAF\nGWAS Significant SNPs") +
-        theme(plot.title = element_text(hjust = 0.5))
-    # Fst outlier SNPs
-    f <- ggplot(rdfst, aes(x = mafDiff)) + geom_histogram(color = "black", fill = "gray70", bins = 20) +
-        theme_classic(base_size = 14) + ylim(0, 60) + xlab("Differences in MAF") + ylab("Frequency") +
-        ggtitle("Distribution of differences in MAF\nFst Outlier SNPs") +
-        theme(plot.title = element_text(hjust = 0.5))
-    # Combined GWAS sig SNPs and Fst outlier SNPs
-    combined_df <- rbind(rd, rdfst)
-    c <- ggplot(combined_df, aes(x = mafDiff)) + geom_histogram(color = "black", fill = "gray70", bins = 20) +
-        theme_classic(base_size = 14) + ylim(0, 60) + xlab("Differences in MAF") + ylab("Frequency") +
-        ggtitle("Distribution of differences in MAF\nCombined GWAS and Fst Outlier SNPs") +
-        theme(plot.title = element_text(hjust = 0.5))
+    m <- ggplot(mplot_df, aes(x = groupLab, y = mafDiff)) + geom_boxplot(width = 0.1) +
+        theme_classic(base_size = 14) + 
+        scale_x_discrete(labels = c(expression(paste("GWAS + ", italic('F' ['ST']))), "GWAS", expression(italic('F' ['ST'])))) +
+        xlab("Representative SNPs") + ylab("MAF Differences") + ggtitle("Differences in MAF between SNPs") +
+        theme(plot.title = element_text(hjust = 0.5)) + ylim(0, 0.4)
     
     # Convert position diff values into long format for grouped boxplot
-    bplot_df <- data.frame(PosDiff = c(rd$posDiff, rdfst$posDiff), groupLab = rep("combinedPosDiff", length(c(rd$posDiff, rdfst$posDiff))))
+    bplot_df <- data.frame(PosDiff = c(rd$posDiff, rdfst$posDiff),
+                           groupLab = rep("combinedPosDiff", length(c(rd$posDiff, rdfst$posDiff))))
     tmp_gwas_df <- data.frame(PosDiff = rd$posDiff, groupLab = rep("gwasPosDiff", length(rd$posDiff)))
     tmp_fst_df <- data.frame(PosDiff = rdfst$posDiff, groupLab = rep("fstPosDiff", length(rdfst$posDiff)))
     bplot_df <- rbind(bplot_df, tmp_gwas_df, tmp_fst_df)
     # Generate plots for GWAS and Fst outlier SNPs physical position differences
-    boxplot(bplot_df$PosDiff ~ bplot_df$groupLab)
-    
     b <- ggplot(bplot_df, aes(x = groupLab, y = PosDiff)) + geom_violin() + geom_boxplot(width = 0.1) +
-        theme_classic(base_size = 14) + scale_x_discrete(labels = c("Combined\nGWAS and Fst", "GWAS", "Fst")) +
+        theme_classic(base_size = 14) + 
+        scale_x_discrete(labels = c(expression(paste("GWAS + ", italic('F' ['ST']))), "GWAS", expression(italic('F' ['ST'])))) +
         xlab("Representative SNPs") + ylab("Physical Position (bp)") + ggtitle("Distance between SNPs") +
         theme(plot.title = element_text(hjust = 0.5))
     # Arrange into 4 panels
-    grid.arrange(g, f, c, b, nrow = 2)
+    grid.arrange(m, b, nrow = 1)
 }
 
 main() # Run the program
