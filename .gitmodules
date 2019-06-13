@@ -1,3 +1,9 @@
 [submodule "script/SNP_Utils"]
 	path = script/SNP_Utils
 	url = https://github.com/mojaveazure/SNP_Utils
+[submodule "script/sequence_handling/Barley_NAM_Parents"]
+	path = script/sequence_handling/Barley_NAM_Parents
+	url = https://github.com/MorrellLAB/Barley_NAM_Parents.git
+[submodule "script/sequence_handling/IPK_Landraces"]
+	path = script/sequence_handling/IPK_Landraces
+	url = https://github.com/MorrellLAB/IPK_Landrances.git
